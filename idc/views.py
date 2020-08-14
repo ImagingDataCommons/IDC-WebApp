@@ -152,7 +152,6 @@ def help_page(request):
     return render(request, 'idc/help.html',{'request': request})
 
 # Data exploration and cohort creation page
-@login_required
 def explore_data_page(request):
     attr_by_source = {}
     attr_sets = {}
