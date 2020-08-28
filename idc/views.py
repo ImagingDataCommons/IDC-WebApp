@@ -45,7 +45,36 @@ WEBAPP_LOGIN_LOG_NAME = settings.WEBAPP_LOGIN_LOG_NAME
 # The site's homepage
 @never_cache
 def landing_page(request):
-    return render(request, 'idc/landing.html', {'request': request, })
+    collex = Collection.objects.filter(active=True, subject_count__gt=6).values()
+
+    sapien_counts = {}
+
+    changes = {
+        'Renal': 'Kidney',
+        'Head-Neck': 'Head and Neck',
+        'Colon': 'Colorectal',
+        'Rectum': 'Colorectal'
+    }
+
+    for collection in collex:
+        loc = collection['location']
+        if collection['location'] in changes:
+            loc = changes[collection['location']]
+        if loc not in sapien_counts:
+            sapien_counts[loc] = 0
+        sapien_counts[loc] += collection['subject_count']
+
+    ex_tooltips = {
+        '1.3.6.1.4.1.14519.5.2.1.6279.6001.224985459390356936417021464571': '<p>Patient ID: LIDC-IDRI-0834</p><p>Modality: CT</p>',
+        '1.3.6.1.4.1.14519.5.2.1.1706.4001.149500105036523046215258942545': '<p>Patient ID: TCGA-02-0006</p><p>Modality: MR</p>',
+        '1.3.6.1.4.1.14519.5.2.1.2744.7002.950936925946327395356711739684': '<p>Patient ID: QIN-HEADNECK-01-0228</p><p>Modality: PET</p>'
+    }
+
+    return render(request, 'idc/landing.html', {
+        'request': request,
+        'case_counts': [{'site': x, 'cases':sapien_counts[x], 'fileCount':0 } for x in sapien_counts.keys()],
+        'example_tooltips': ex_tooltips
+    })
 
 # Displays the privacy policy
 @never_cache
@@ -150,6 +179,10 @@ def health_check(request, match):
 # Returns the basic help page (will direct to contact info and readthedocs
 def help_page(request):
     return render(request, 'idc/help.html',{'request': request})
+
+def quota_page(request):
+    return render(request, 'idc/quota.html', {'request': request, 'quota': settings.IMG_QUOTA})
+
 
 # Data exploration and cohort creation page
 def explore_data_page(request):
