@@ -32,9 +32,9 @@ from django.contrib import messages
 from google_helpers.stackdriver import StackDriverLogger
 from cohorts.models import Cohort, Cohort_Perms
 from idc_collections.models import Program, Attribute_Display_Values, DataSource, DataVersion, Collection, DataSetType
+from idc_collections.collex_metadata_utils import get_collex_metadata
 from allauth.socialaccount.models import SocialAccount
 from django.http import HttpResponse, JsonResponse
-from .metadata_utils import get_collex_metadata
 
 debug = settings.DEBUG
 logger = logging.getLogger('main_logger')
@@ -250,7 +250,7 @@ def explore_data_page(request):
 
         start = time.time()
         source_metadata = get_collex_metadata(
-            filters, fields, record_limit=1000, counts_only=counts_only, with_ancillary = with_related,
+            filters, fields, record_limit=2000, counts_only=counts_only, with_ancillary = with_related,
             collapse_on = collapse_on, order_docs = order_docs, sources = sources, versions = versions
         )
         stop = time.time()
@@ -403,6 +403,7 @@ def explore_data_page(request):
         context['order']={}
         context['order']['derived_set']=['dicom_derived_all:segmentation','dicom_derived_all:qualitative','dicom_derived_all:quantitative']
         return render(request, 'idc/explore.html', context)
+
 
 # @login_required
 # def ohif_test_page(request):
