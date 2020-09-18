@@ -19,7 +19,7 @@
 require.config({
     baseUrl: STATIC_FILES_URL+'js/',
     paths: {
-        jquery: 'libs/jquery-1.11.1.min',
+        jquery: 'libs/jquery-3.5.1',
         bootstrap: 'libs/bootstrap.min',
         jqueryui: 'libs/jquery-ui.min',
         underscore: 'libs/underscore-min',
@@ -27,7 +27,8 @@ require.config({
         base: 'base',
         bq_export: 'export_to_bq',
         imagesearch: 'image_search',
-        gcs_export: 'export_to_gcs'
+        gcs_export: 'export_to_gcs',
+        //d3: 'libs/d3.v5.min'
     },
     shim: {
         'bootstrap': ['jquery'],
@@ -35,7 +36,6 @@ require.config({
         'tokenfield': ['jquery', 'jqueryui'],
         'underscore': {exports: '_'},
         'base': ['jquery', 'jqueryui', 'bootstrap', 'underscore'],
-        'imagesearch': ['plotly']
     }
 });
 
