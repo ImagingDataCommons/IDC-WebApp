@@ -28,6 +28,7 @@ admin.autodiscover()
 urlpatterns = [
 
     url(r'^$', views.landing_page, name='landing_page'),
+    url(r'^quota/', views.quota_page, name='quota_page'),
     url(r'^test_methods/', views.test_methods, name='test_methods'),
     url(r'^style_guide/', views.css_test),
     url(r'^users/(?P<user_id>\d+)/$', views.user_detail, name='user_detail'),
@@ -40,7 +41,6 @@ urlpatterns = [
 
     url(r'^help/', views.help_page, name='help'),
     url(r'^explore/', views.explore_data_page, name='explore_data'),
-
     # url(r'^viewer/', views.ohif_viewer_page, name='ohif_view'),
     # url(r'^callback', views.ohif_callback_page, name='ohif_callback'),
     # url(r'^ocallback/', views.ohif_callback_page, name='ohif_callback'),
@@ -51,6 +51,7 @@ urlpatterns = [
     url(r'^dashboard/', views.dashboard_page, name='dashboard'),
     url(r'^extended_login/$', views.extended_login_view, name='extended_login'),
     url(r'^privacy/', views.privacy_policy, name='privacy'),
+    url(r'^collaborators/', views.collaborators, name='collaborators'),
     url(r'^collections/', include('idc_collections.urls')),
     url(r'^share/', include('sharing.urls')),
 ]
