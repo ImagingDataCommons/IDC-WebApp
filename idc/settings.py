@@ -134,7 +134,7 @@ IS_DEV = (os.environ.get('IS_DEV', 'False') == 'True')
 IS_APP_ENGINE_FLEX = os.getenv('GAE_INSTANCE', '').startswith(APP_ENGINE_FLEX)
 IS_APP_ENGINE = os.getenv('SERVER_SOFTWARE', '').startswith(APP_ENGINE)
 
-VERSION = "{}.{}".format("local-dev", datetime.datetime.now().strftime('%d%m%Y%H%M'))
+VERSION = "{}.{}".format("local-dev", datetime.datetime.now().strftime('%Y%m%d%H%M'))
 
 if exists(join(dirname(__file__), '../version.env')):
     dotenv.read_dotenv(join(dirname(__file__), '../version.env'))
@@ -142,7 +142,7 @@ else:
     if IS_DEV:
         import git
         repo = git.Repo(path="/home/vagrant/www/",search_parent_directories=True)
-        VERSION = "{}.{}.{}".format("local-dev", datetime.datetime.now().strftime('%d%m%Y%H%M'),
+        VERSION = "{}.{}.{}".format("local-dev", datetime.datetime.now().strftime('%Y%m%d%H%M'),
                                     str(repo.head.object.hexsha)[-6:])
 
 APP_VERSION = os.environ.get("APP_VERSION", VERSION)
@@ -584,7 +584,7 @@ SITE_GOOGLE_ANALYTICS_TRACKING_ID = os.environ.get('SITE_GOOGLE_ANALYTICS_TRACKI
 # equal just under the 32M limit. If each individual listing is ever lengthened or shortened this
 # number should be adjusted
 MAX_FILE_LIST_REQUEST = 65000
-MAX_BQ_RECORD_RESULT = int(os.environ.get('MAX_BQ_RECORD_RESULT', '1000'))
+MAX_BQ_RECORD_RESULT = int(os.environ.get('MAX_BQ_RECORD_RESULT', '5000'))
 
 # Rough max file size to allow for eg. barcode list upload, to prevent triggering RequestDataTooBig
 FILE_SIZE_UPLOAD_MAX = 1950000
