@@ -95,11 +95,16 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             if (reset) {
                 strt = $('#' + slideDiv).slider("option", "min");
                 end = $('#' + slideDiv).slider("option", "max");
+                $('#' + slideDiv).removeClass('used');
+            }
+            else{
+                $('#' + slideDiv).addClass('used');
             }
 
              vals = [strt, end];
-            $('#' + slideDiv).find('.ui-slider-handle').each( function(index){
-                $(this).find('.slide_tooltip').text( vals[index].toString() );
+
+            $('#' + slideDiv).find(".slide_tooltip").each(function(index){
+                $(this).text(vals[index].toString());
             });
 
             $('#' + slideDiv).slider("values", "0", strt);
@@ -144,7 +149,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
 
             if (updateNow) {
-                updatePlotBinsForSliders(slideDiv);
+                //updatePlotBinsForSliders(slideDiv);
                 mkFiltText();
                 updateFacetsData(true);
             }
@@ -414,15 +419,15 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             $('.'+graphClass).animate({height: height}, 800);
         };
 
-        window.addNone = function(elem, parStr)
+        window.addNone = function(elem, parStr, updateNow)
         {
             var id = parStr+$(elem).parent()[0].id+"_btw";
 
             if (elem.checked){
                 if (!(id in window.filterObj)) {
-                    window.filterObj[id] = new Object();
+                    window.filterObj[id] = new Array();
                 }
-                window.filterObj[id]['none'] = true;
+                window.filterObj[id]['none'] = true;_
             }
 
             else{
@@ -438,9 +443,12 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 checkTcga();
             }
             var slideNm = $(elem).parent()[0].id+"_slide";
-            updatePlotBinsForSliders(slideNm);
+            //updatePlotBinsForSliders(slideNm);
             mkFiltText();
-            updateFacetsData(true);
+
+            if (updateNow) {
+                updateFacetsData(true);
+            }
         }
 
         var updatePlotBinsForSliders =  function(slideName){
@@ -454,7 +462,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
             var wNone = false;
             if ( ($('#'+slideName).parent().children("input:checkbox").length>0) ){
-                wNone = $('#'+slideName).parent().children("input:checkbox")[0].checked;
+                wNone = $('#'+slideName).parent().children("input:checkbox").prop('checked');
             }
             var i=0;
 
@@ -469,12 +477,12 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                          }
 
                      }
-                     if ( ((valArr[0]==='*') || (endInd>= valArr[0])) && ((valArr[1]==='*') || (strtInd< valArr[1])) ){
+                     /* if ( ((valArr[0]==='*') || (endInd>= valArr[0])) && ((valArr[1]==='*') || (strtInd< valArr[1])) ){
                          $(this).parent().children('.plot_count').addClass('plotit');
                      }
                      else{
                          $(this).parent().children('.plot_count').removeClass('plotit');
-                     }
+                     } */
                  }
                  else if (val.includes('None')){
                      if (wNone){
@@ -490,22 +498,41 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
         }
 
-        var mkSlider = function (divName, min, max, step, isInt, wNone, parStr) {
-             var tooltipL = $('<div class="slide_tooltip tooltipL" />').text('stuff').css({
+
+        var mkSlider = function (divName, min, max, step, isInt, wNone, parStr, attr_id, attr_name) {
+
+            var tooltipL = $('<div class="slide_tooltip tooltipL slide_tooltipT" />').text('stuff').css({
                position: 'absolute',
                top: -25,
                left: -5,
-                }).hide();
+                });
 
-             var tooltipR = $('<div class="slide_tooltip tooltipR" />').text('stuff').css({
+             var tooltipR = $('<div class="slide_tooltip slide_tooltipB tooltipR" />').text('stuff').css({
                position: 'absolute',
-               top: -25,
+               top: 20,
                right: -5,
-                }).hide();
+                });
+
+
+              var labelMin = $('<div class="labelMin"/>').text(min).css({
+                  position: 'absolute',
+                  top:-7,
+                  left: -22,
+                });
+
+
+            var labelMax = $('<div class="labelMax" />').text(max);
+
+            labelMax.css({
+                position: 'absolute',
+                top: -7,
+                right: -14-8*max.toString().length,
+                });
 
 
 
             var slideName = divName + '_slide';
+
             var inpName = divName + '_input';
             var strtInp = min + '-' + max;
             var nm=new Array();
@@ -516,13 +543,14 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             }
             nm.push(divName);
             var filtName = nm.join('.') + '_btw';
-            $('#' + divName).append('<div id="' + slideName + '"></div>  <input id="' + inpName + '" type="text" value="' + strtInp + '" style="display:none"> <button style="display:inline-block;" onclick=\'setSlider("' + slideName + '",true,0,0,' + String(isInt) + ', true)\'>Reset</button>');
 
-            /*
+            $('#' + divName).append('<div id="' + slideName + '"></div>  <input id="' + inpName + '" type="text" value="' + strtInp + '" style="display:none"> <button class="reset"" style="display:block;margin-top:18px" onclick=\'setSlider("' + slideName + '",true,0,0,' + String(isInt) + ', true)\'>Clear Slider</button>');
+             $('#'+slideName).append(labelMin);
+
              if (wNone){
-                $('#' + divName).append( '<input type="checkbox" onchange="addNone(this, \''+parStr+'\')"> None' );
+                $('#' + divName).append( '<input type="checkbox" data-attr-par="'+parStr+'" class="noneBut" onchange="addNone(this, \''+parStr+'\', true)"> None' );
             }
-             */
+
 
             $('#' + slideName).slider({
                 values: [min, max],
@@ -536,23 +564,17 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
                      $(this).find('.slide_tooltip').each( function(index){
                         $(this).text( ui.values[index].toString() );
-                        $(this).show();
+
                     });
 
                 },
 
-
-
                 stop: function (event, ui) {
-                    //   updateSliderSelection(inpDiv, displaySet, header, attributeName, isInt);
-
-
+                    $('#' + slideName).addClass('used');
                     var val = $('#' + inpName)[0].value;
                     var valArr = val.split('-');
                     var attVal = [];
                     if (isInt) {
-                        //attVal = [parseInt(valArr[0]), parseInt(valArr[1])];
-                        // edge effect
                         attVal = [parseInt(valArr[0]), parseInt(valArr[1]) - 1];
                     } else {
                         attVal = [parseFloat(valArr[0]), parseFloat(valArr[1])];
@@ -566,23 +588,21 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     if (filtName.startsWith('tcga_clinical')) {
                         checkTcga();
                     }
-                     updatePlotBinsForSliders(slideName);
                     mkFiltText();
                     updateFacetsData(true);
 
                 }
             }).find('.ui-slider-range').append(tooltipL).append(tooltipR);
 
-            //$('#' + slideName).find('.ui-slider-range').append(tooltipR);
 
-            $('#' + slideName).hover(
+             $('#' + slideName).hover(
                     function(){
                         //$(this).removeClass("ui-state-active");
-                       $(this).parent().find('.slide_tooltip').show();
+                       $(this).parent().find('.slide_tooltip');
                     }
                   ,
                     function(){
-                       $(this).parent().find('.slide_tooltip').hide();
+                       $(this).parent().find('.slide_tooltip');
                     }
                 );
 
@@ -596,12 +616,20 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                         }
                    });
 
+             $('#'+slideName).data('min',min);
+            $('#'+slideName).data('max',max);
+
+
+            $('#' + slideName).data("filter-attr-id",attr_id);
+            $('#' + slideName).data("filter-display-attr",attr_name);
+
+            $('#'+slideName).append(labelMax);
 
 
             $('#'+ divName+'_list').addClass('hide');
             $('#'+ divName).find('.more-checks').addClass('hide');
             $('#'+ divName).find('.less-checks').addClass('hide');
-             $('#'+ divName).find('.hide-zeros').addClass('hide');
+            $('#'+ divName).find('.hide-zeros').addClass('hide');
         };
 
         var editProjectsTableAfterFilter = function (tableId, collFilt, collectionsData) {
@@ -865,7 +893,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                         var studyId = curData.StudyInstanceUID;
                         var ppStudyId = pretty_print_id(studyId);
                         var fetchUrl = DICOM_STORE_PATH + studyId;
-                        var hrefTxt = ppStudyId + '</a><span class="tooltiptext_ex">' + studyId + '</span>';
+                        var hrefTxt = ppStudyId + '</a>';
                         //var hrefTxt =  ppStudyId + '<span class="tooltiptext_ex">' + studyId + '</span>';
                         var pclass = 'project_' + projectId;
                         var newHtml = '';
@@ -882,13 +910,18 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                             var hrefSeriesTxt = ppSeriesId + '<span class="tooltiptext_ex">' + seriesId + '</span>';
                             var seriesTxt = ppSeriesId + '<span class="tooltiptext_ex">' + seriesId + '</span>';
 
-                            newHtml = '<tr id="' + rowId + '" class="' + pclass + ' ' + studyClass + ' text_head"><td class="col1 tooltip_ex">' + hrefTxt + '</td><td>' + seriesNumber + '</td><td class="col1">' + modality + '</td><td class="col1">' + bodyPartExamined + '</td><td>' + seriesDescription + '</td>';
+                            newHtml = '<tr id="' + rowId + '" class="' + pclass + ' ' + studyClass + ' text_head">' +
+                                '<td class="col1 study-id study-id-col" data-study-id="'+studyId+'">' + hrefTxt + '</td>' +
+                                '<td class="series-number">' + seriesNumber + '</td>' +
+                                '<td class="col1 modality">' + modality + '</td>' +
+                                '<td class="col1 body-part-examined">' + bodyPartExamined + '</td>' +
+                                '<td class="series-description">' + seriesDescription + '</td>';
                             if ((modality ==='SEG') || (modality ==='RTSTRUCT')){
-                            newHtml += '<td class="ohif greyout tooltip_ex"><span class="tooltiptext_ex">Please open at the study level to see this series</span><a   href="/" onclick="return false;"><img src="' + STATIC_FILES_URL + 'img/ohif_sm.png"></a></td></tr>';
+                            newHtml += '<td class="ohif tooltip_ex"><span class="tooltiptext_ex">Please open at the study level to see this series</span><a   href="/" onclick="return false;"><i class="fa fa-eye-slash"></i></td></tr>';
 
                             }
                             else {
-                            newHtml += '<td class="ohif"><a   href="' + fetchUrlSeries + '" target="_blank"><img src="' + STATIC_FILES_URL + 'img/ohif_sm.png"></a></td></tr>';
+                            newHtml += '<td class="ohif"><a   href="' + fetchUrlSeries + '" target="_blank"><i class="fa fa-eye"></i></td></tr>';
                             }
                         }
                           else{
@@ -902,10 +935,20 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                                 }
                                 newSelStudies[projectId].push(studyId);
 
-                                newHtml = '<tr id="' + rowId + '" class="' + pclass + ' text_head selected_grey" onclick="(toggleStudy(this,\'' + studyId + '\',\'' + projectId + '\'))"><td class="col1">' + projectId + '</td><td class="col1">' + patientId + '</td><td class="col2 tooltip_ex">' + hrefTxt + '</td><td class="col1">' + studyDescription + '</td><td class="ohif"><a  href="' + fetchUrl + '" target="_blank"><img src="'+STATIC_FILES_URL+'img/ohif_sm.png"></a></td></tr>'
+                                newHtml = '<tr id="' + rowId + '" class="' + pclass + ' text_head selected_grey" onclick="(toggleStudy(this,\'' + studyId + '\',\'' + projectId + '\'))">' +
+                                    '<td class="col1 project-name">' + projectId + '</td>' +
+                                    '<td class="col1 case-id">' + patientId +
+                                    '</td><td class="col2 study-id study-id-col" data-study-id="'+studyId+'">' + hrefTxt + '</td>' +
+                                    '<td class="col1 study-description">' + studyDescription + '</td>' +
+                                    '<td class="ohif open-viewer"><a  href="' + fetchUrl + '" target="_blank"><i class="fa fa-eye"></i></a></td></tr>'
 
                             } else {
-                                newHtml = '<tr id="' + rowId + '" class="' + pclass + ' text_head" onclick="(toggleStudy(this,\'' + studyId + '\',\'' + projectId + '\'))"><td class="col1">' + projectId + '</td><td class="col1">' + patientId + '</td><td class="col2 tooltip_ex">' + hrefTxt + '</td><td class="col1">' + studyDescription + '</td><td class="ohif"><a  href="' + fetchUrl + '" target="_blank"><img src="'+STATIC_FILES_URL+'img/ohif_sm.png"></a></td></tr>'
+                                newHtml = '<tr id="' + rowId + '" class="' + pclass + ' text_head" onclick="(toggleStudy(this,\'' + studyId + '\',\'' + projectId + '\'))">' +
+                                    '<td class="col1 project-name">' + projectId + '</td>' +
+                                    '<td class="col1 case-id">' + patientId + '</td>' +
+                                    '<td class="col2 study-id study-id-col" data-study-id="'+studyId+'">' + hrefTxt + '</td>' +
+                                    '<td class="col1 study-description">' + studyDescription + '</td>' +
+                                    '<td class="ohif open-viewer"><a  href="' + fetchUrl + '" target="_blank"><i class="fa fa-eye"></i></a></td></tr>'
                             }
                         }
                         //var rowId='study_'+projectId+'_'+patientIndex[patientId].toString()+"_"+studyIndex[studyId].toString();
@@ -1322,13 +1365,21 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     nmA = ckey.split('.');
                     nm=nmA[nmA.length-1];
                     if (nm.endsWith('_btw')){
-                        if ('rng' in window.filterObj[ckey]){
+
+                        if (  ('rng' in window.filterObj[ckey]) && ('none' in window.filterObj[ckey]) ){
+                            filtObj[nm] = [window.filterObj[ckey]['rng'],'None']
+                        }
+
+                        else if ('rng' in window.filterObj[ckey]){
                             filtObj[nm] = window.filterObj[ckey]['rng']
                         }
-                        if ('none' in window.filterObj[ckey]){
+                        else if ('none' in window.filterObj[ckey]){
                             noneKey=nm.replace('_btw','');
-                            filtObj[noneKey]='None';
+                            filtObj[noneKey]=['None'];
                         }
+
+
+
                     }
                     else {
                         filtObj[nm] = window.filterObj[ckey];
@@ -1347,8 +1398,8 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             var url = '/explore/?counts_only=True&is_json=true&is_dicofdic=True&data_source_type=' + ($("#data_source_type option:selected").val() || 'S');
             var parsedFiltObj=parseFilterObj();
             if (Object.keys(parsedFiltObj).length > 0) {
-
-                url += '&filters=' + JSON.stringify(parsedFiltObj);
+                 url += '&filters=' + JSON.stringify(parsedFiltObj);
+                 //url += '&filters='+JSON.stringify({"age_at_diagnosis":['None' ]});
             }
 
             url = encodeURI(url);
@@ -1361,19 +1412,18 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 type: 'get',
                 contentType: 'application/x-www-form-urlencoded',
                 success: function (data) {
-
-                    var isFiltered = true;
-                    if ($('#search_def p').length>0){
-                      $('#save-cohort-btn').prop('disabled','');
-                      if(user_is_auth) {
-                        $('#save-cohort-btn').prop('title','');
-                        }
-                   }
-                    else{
-                        isFiltered = false;
-                       $('#save-cohort-btn').prop('disabled','disabled');
+                    var isFiltered = Boolean($('#search_def p').length>0);
+                    if (isFiltered && data.total > 0){
+                        $('#save-cohort-btn').prop('disabled','');
                         if(user_is_auth) {
-                            $('#save-cohort-btn').prop('title','Please select at least one filter.');
+                            $('#save-cohort-btn').prop('title','');
+                        }
+                    } else {
+                        $('#save-cohort-btn').prop('disabled','disabled');
+                        if(user_is_auth) {
+                            $('#save-cohort-btn').prop('title',data.total > 0 ? 'Please select at least one filter.' : 'There are no cases in this cohort.');
+                        } else {
+                            $('#save-cohort-btn').prop('title','Log in to save.');
                         }
                     }
                     //updateCollectionTotals(data.total, data.origin_set.attributes.collection_id);
@@ -1383,8 +1433,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     dicofdic= {'unfilt': data.origin_set.All.attributes, 'filt':''}
                     if (isFiltered){
                         dicofdic['filt']=data.filtered_counts.origin_set.All.attributes;
-                    }
-                    else {
+                    } else {
                         dicofdic['filt']=data.origin_set.All.attributes;
                     }
 
@@ -1413,18 +1462,13 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                                 }
                             }
                         }
-                    }
-                    else{
+                    } else{
                         $('#search_derived_set').addClass('disabled');
                     }
-
 
                     for (var i=0; i< derivedAttrs.length;i++) {
                         updateFilterSelections(derivedAttrs[i], {});
                     }
-
-
-
 
                     createPlots('search_derived_set');
 
@@ -1447,7 +1491,6 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     }
 
                     createPlots('search_related_set');
-
 
                     var collFilt = new Array();
                     if ('collection_id' in parsedFiltObj){
@@ -1524,10 +1567,27 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
             var isSlider = $('#'+filterId).find('#'+filterId+'_slide').length>0 ? true : false;
             if (isSlider) {
-                maxx = $('#'+filterId).data('attr-max').toString();
-                if(label == 'None') {
+                var maxx=$('#' + filterId).data('attr-max');
+                var minx=$('#' + filterId).data('attr-min');
 
-                } else {
+
+                if ($('#'+filterId).find('.noneBut').length>0) {
+                    var inpElem = $('#'+filterId).find('.noneBut')[0];
+                }
+
+                if(label == 'None') {
+                    setSlider(filterId+"_slide", true, 0, maxx, true,false);
+                     //var inpElem = $('#'+filterId).find('.noneBut')[0];
+                     inpElem.checked=true;
+                     var parStr = $(inpElem).data("attr-par");
+                    window.addNone(inpElem,parStr,true);
+                }
+                else {
+                    if (! (typeof(inpElem)==="undefined")){
+                        inpElem.checked=false;
+                        var parStr = $(inpElem).data("attr-par");
+                        window.addNone(inpElem,parStr,false);
+                    }
                     var selArr = label.split(' To ');
                     var strt = parseInt((selArr[0] === '*') ? '0' : selArr[0]);
                     var end = parseInt((selArr[1] === '*') ? maxx : selArr[1]);
@@ -1559,6 +1619,14 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             var margin = 50;
             var radius = Math.min(width, height) / 2 - margin;
             var radiusB = 1.2*radius;
+            var mx =0;
+            var mn =0;
+
+            var filterId=plotId.replace("_chart","");
+            if ( $('#'+filterId).data('attr-max') ) {
+                //var mn = $('#' + slideId).data('min');
+                var mx = $('#' + filterId).data('attr-max');
+            }
 
             // append the svg object to the div called 'my_dataviz'
             var svg = d3.select("#"+plotId)
@@ -1657,7 +1725,9 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                txtbx.selectAll('*').attr("x",xpos);
                txtbx.selectAll('*').attr("y",ypos+30);
                tspans=txtbx.node().childNodes;
-               tspans[0].textContent = d.data.key;
+
+
+               tspans[0].textContent = d.data.key.replace('* To',mn.toString()+' To').replace('To *', 'To '+mx.toString());
                tspans[1].textContent = d.data.value;
                tspans[2].textContent = frac.toString()+"%";
                txtbx.attr("opacity",1);
@@ -1825,13 +1895,47 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
         var updateFilters = function (filterCat, dic, dataFetched) {
             var hasSlider = ( $('#'+filterCat+'_slide').length>0 );
+
+            /*
+            if (hasSlider){
+                min=0;
+                max=0;
+                if (dic['filt'].hasOwnProperty('min_max') && (dic['filt']['min_max'].hasOwnProperty('min')) ) {
+                    min = Math.floor(dic['filt']['min_max']['min']);
+                    max = Math.ceil(dic['filt']['min_max']['max']);
+                }
+
+
+
+                $('#'+filterCat+'_slide').slider('option','min',min);
+                $('#'+filterCat+'_slide').slider('option','max', max);
+
+                vals = $('#'+filterCat+'_slide').slider('option','values');
+                if ( (vals[0] < min) || !( $('#'+filterCat+'_slide').hasClass('used')   )){
+                    vals[0] = min;
+                }
+                if ((vals[1]> max) || !(  $('#'+filterCat+'_slide').hasClass('used')  )){
+                    vals[1] = max;
+                }
+                $('#'+filterCat+'_slide').slider('option','values', vals);
+                $('#'+filterCat+'_slide').find('.tooltipL').text(vals[0]);
+                $('#'+filterCat+'_slide').find('.tooltipR').text(vals[1]);
+                $('#'+filterCat+'_input').val(vals[0]+'-'+vals[1]);
+
+                $('#'+filterCat+'_slide').find('.labelMin').text(min);
+                $('#'+filterCat+'_slide').find('.labelMax').text(max);
+
+
+            }
+            */
+
             var allListItems=$('#'+filterCat).children('ul').children('li');
             var allFilters=allListItems.children().children('input:checkbox');
             var checkedFilters=allListItems.children().children('input:checked');
             var showZeros = true;
             var isSearchConf = ($('#'+filterCat).closest('.search-configuration').find('#hide-zeros').length>0);
 
-            if ( isSearchConf  && ($('#'+filterCat).closest('.search-configuration').find('#hide-zeros')[0].checked)){
+            if ( isSearchConf  && ($('#'+filterCat).closest('.search-configuration').find('#hide-zeros').prop('checked'))){
                 showZeros = false;
             }
 
@@ -1851,7 +1955,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             for (var i = 0; i < allFilters.length; i++) {
                 var elem = allFilters.get(i);
                 var val = $(elem)[0].value;
-                var checked = $(elem)[0].checked;
+                var checked = $(elem).prop('checked');
 
                 var spans = $(elem).parent().find('span');
                 var lbl = spans.get(0).innerHTML;
@@ -1983,17 +2087,17 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
              if ( !('Program' in window.filterObj) ){
                     window.filterObj['Program'] = new Array();
                 }
-                if (window.filterObj['Program'].indexOf('tcga')<0) {
-                    window.filterObj['Program'].push('tcga');
-                    window.filterObj['Program.tcga'] = ['tcga_blca','tcga_brca','tcga_cesc','tcga_coad','tcga_esca','tcga_gbm','tcga_hnsc','tcga_kich','tcga_kirc','tcga_kirp','tcga_lgg','tcga_lihc','tcga_luad','tcga_lusc','tcga_ov','tcga_prad','tcga_read','tcga_sarc','tcga_stad','tcga_thca','tcga_ucec'];
-                    $('#tcga_heading').parent().find('input:checkbox').prop('checked',true);
-                    $('#tcga_heading').parent().find('input:checkbox').prop('indeterminate',false);
+                if (window.filterObj['Program'].indexOf('TCGA')<0) {
+                    window.filterObj['Program'].push('TCGA');
+                    window.filterObj['Program.TCGA'] = ['tcga_blca','tcga_brca','tcga_cesc','tcga_coad','tcga_esca','tcga_gbm','tcga_hnsc','tcga_kich','tcga_kirc','tcga_kirp','tcga_lgg','tcga_lihc','tcga_luad','tcga_lusc','tcga_ov','tcga_prad','tcga_read','tcga_sarc','tcga_stad','tcga_thca','tcga_ucec'];
+                    $('#TCGA_heading').parent().find('input:checkbox').prop('checked',true);
+                    $('#TCGA_heading').parent().find('input:checkbox').prop('indeterminate',false);
                 }
 
         };
 
         var resetTcgaFilters = function(){
-            if ( ('Program' in window.filterObj) && (window.filterObj['Program'].indexOf('tcga')<0 )){
+            if ( ('Program' in window.filterObj) && (window.filterObj['Program'].indexOf('TCGA')<0 )){
                 $('#tcga_clinical').find('input:checkbox').prop('checked',false);
                 setSlider('age_at_diagnosis_slide',true,0,0,true, false);
                 var attKey =  Object.keys(window.filterObj);
@@ -2007,7 +2111,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
 
         var checkFilters = function(filterElem) {
-            var checked = $(filterElem)[0].checked;
+            var checked = $(filterElem).prop('checked');
             var neighbours =$(filterElem).parentsUntil('.list-group-item__body, .list-group-sub-item__body','ul').children().children().children('input:checkbox');
             var neighboursCk = $(filterElem).parentsUntil('.list-group-item__body, .list-group-sub-item__body','ul').children().children().children(':checked');
             var allChecked= false;
@@ -2202,115 +2306,104 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
 
         var filterItemBindings = function (filterId) {
-        $('#' + filterId).find('input:checkbox').on('click', function () {
-            handleFilterSelectionUpdate(this, true, true);
-        });
+            $('#' + filterId).find('input:checkbox').on('click', function () {
+                handleFilterSelectionUpdate(this, true, true);
+            });
 
-        /*
-        $('#' + filterId).find('.hide-zeros-a').on('click', function () {
-            $(this).parent().parent().children('.show-zeros').show();
-            $(this).parent().parent().children('.show-zeros').removeClass('notDisp');
-            $(this).parent().parent().children('.hide-zeros').addClass('notDisp');
-            $(this).parent().hide();
-            var filterCat =$(this).parent().parent()[0].id;
-            updateFilters(filterCat, {}, false);
-        });
-
-
-        $('#' + filterId).find('.show-zeros-a').on('click', function () {
-            $(this).parent().parent().children('.hide-zeros').show();
-            $(this).parent().parent().children('.hide-zeros').removeClass('notDisp');
-            $(this).parent().parent().children('.show-zeros').addClass('notDisp');
-            $(this).parent().hide();
-            var filterCat =$(this).parent().parent()[0].id;
-            updateFilters(filterCat, {}, false);
-
-        });
-
-         */
+            /*
+            $('#' + filterId).find('.hide-zeros-a').on('click', function () {
+                $(this).parent().parent().children('.show-zeros').show();
+                $(this).parent().parent().children('.show-zeros').removeClass('notDisp');
+                $(this).parent().parent().children('.hide-zeros').addClass('notDisp');
+                $(this).parent().hide();
+                var filterCat =$(this).parent().parent()[0].id;
+                updateFilters(filterCat, {}, false);
+            });
 
 
-        $('#' + filterId).find('.show-more').on('click', function () {
+            $('#' + filterId).find('.show-zeros-a').on('click', function () {
+                $(this).parent().parent().children('.hide-zeros').show();
+                $(this).parent().parent().children('.hide-zeros').removeClass('notDisp');
+                $(this).parent().parent().children('.show-zeros').addClass('notDisp');
+                $(this).parent().hide();
+                var filterCat =$(this).parent().parent()[0].id;
+                updateFilters(filterCat, {}, false);
 
-            $(this).parent().parent().find('.less-checks').show();
-            $(this).parent().parent().find('.less-checks').removeClass('notDisp');
-            $(this).parent().parent().find('.more-checks').addClass('notDisp');
-            $(this).parent().hide();
-            var extras = $(this).parent().parent().children('.search-checkbox-list').children('.extra-values')
+            });
 
-            if ( ($('#'+filterId).closest('.search-configuration').find('#hide-zeros').length>0)  && ($('#'+filterCat).closest('.search-configuration').find('#hide-zeros')[0].checked)){
-                extras=extras.not('.zeroed');
-            }
+             */
+
+            $('#' + filterId).find('.show-more').on('click', function () {
+
+                $(this).parent().parent().find('.less-checks').show();
+                $(this).parent().parent().find('.less-checks').removeClass('notDisp');
+                $(this).parent().parent().find('.more-checks').addClass('notDisp');
+                $(this).parent().hide();
+                var extras = $(this).parent().parent().children('.search-checkbox-list').children('.extra-values')
+
+                if ( ($('#'+filterId).closest('.search-configuration').find('#hide-zeros').length>0)  && ($('#'+filterId).closest('.search-configuration').find('#hide-zeros').prop('checked'))){
+                    extras=extras.not('.zeroed');
+                }
                 extras.show();
+            });
 
-        });
+            $('#' + filterId).find('.show-less').on('click', function () {
+                $(this).parent().parent().find('.more-checks').show();
+                $(this).parent().parent().find('.more-checks').removeClass('notDisp');
+                $(this).parent().parent().find('.less-checks').addClass('notDisp');
+                $(this).parent().hide();
+                $(this).parent().parent().children('.search-checkbox-list').children('.extra-values').hide();
+            });
 
+            $('#' + filterId).find('.check-all').on('click', function () {
+                //$('#' + filterId).find('.checkbox').find('input').prop('checked', true);
+                var filterElems = $(this).parentsUntil('.list-group-item').filter('.list-group-item__body').children('ul').children();
+                for (var ind =0;ind<filterElems.length;ind++)
+                {
+                    var ckElem = new Object();
+                    if ($(filterElems[ind]).children().filter('.list-group-item__heading').length>0){
+                        ckElem = $(filterElems[ind]).children().filter('.list-group-item__heading').children().filter('input:checkbox')[0];
+                    }
+                    else{
+                       ckElem=$(filterElems[ind]).children().filter('label').children().filter('input:checkbox')[0];
+                    }
 
-        $('#' + filterId).find('.show-less').on('click', function () {
-
-            $(this).parent().parent().find('.more-checks').show();
-            $(this).parent().parent().find('.more-checks').removeClass('notDisp');
-            $(this).parent().parent().find('.less-checks').addClass('notDisp');
-            $(this).parent().hide();
-            $(this).parent().parent().children('.search-checkbox-list').children('.extra-values').hide();
-
-
-        });
-
-
-        $('#' + filterId).find('.check-all').on('click', function () {
-            //$('#' + filterId).find('.checkbox').find('input').prop('checked', true);
-            var filterElems = $(this).parentsUntil('.list-group-item').filter('.list-group-item__body').children('ul').children();
-            for (var ind =0;ind<filterElems.length;ind++)
-            {
-                var ckElem = new Object();
-                if ($(filterElems[ind]).children().filter('.list-group-item__heading').length>0){
-                    ckElem = $(filterElems[ind]).children().filter('.list-group-item__heading').children().filter('input:checkbox')[0];
+                    ckElem.checked= true;
+                  //$(filterElem).prop('checked') = true;
+                  if (ind<filterElems.length-1) {
+                      handleFilterSelectionUpdate(ckElem, false, false);
+                  }
+                  else{
+                      handleFilterSelectionUpdate(ckElem, true, true);
+                  }
                 }
-                else{
-                   ckElem=$(filterElems[ind]).children().filter('label').children().filter('input:checkbox')[0];
+            });
+
+            $('#' + filterId).find('.uncheck-all').on('click', function () {
+                 //$('#' + filterId).find('.checkbox').find('input').prop('checked', true);
+                var filterElems = $(this).parentsUntil('.list-group-item').filter('.list-group-item__body').children('ul').children();
+                for (var ind =0;ind<filterElems.length;ind++)
+                {
+                    var ckElem = new Object();
+                    if ($(filterElems[ind]).children().filter('.list-group-item__heading').length>0){
+                        ckElem = $(filterElems[ind]).children().filter('.list-group-item__heading').children().filter('input:checkbox')[0];
+                    }
+                    else{
+                       ckElem=$(filterElems[ind]).children().filter('label').children().filter('input:checkbox')[0];
+                    }
+
+                  ckElem.checked = false;
+                    if (ind<filterElems.length-1) {
+                      handleFilterSelectionUpdate(ckElem, false, false);
+                  }
+                  else{
+                      handleFilterSelectionUpdate(ckElem, true, true);
+                  }
+
                 }
 
-                ckElem.checked= true;
-              //$(filterElem)[0].checked = true;
-              if (ind<filterElems.length-1) {
-                  handleFilterSelectionUpdate(ckElem, false, false);
-              }
-              else{
-                  handleFilterSelectionUpdate(ckElem, true, true);
-              }
-            }
-        });
-
-
-
-        $('#' + filterId).find('.uncheck-all').on('click', function () {
-             //$('#' + filterId).find('.checkbox').find('input').prop('checked', true);
-            var filterElems = $(this).parentsUntil('.list-group-item').filter('.list-group-item__body').children('ul').children();
-            for (var ind =0;ind<filterElems.length;ind++)
-            {
-                var ckElem = new Object();
-                if ($(filterElems[ind]).children().filter('.list-group-item__heading').length>0){
-                    ckElem = $(filterElems[ind]).children().filter('.list-group-item__heading').children().filter('input:checkbox')[0];
-                }
-                else{
-                   ckElem=$(filterElems[ind]).children().filter('label').children().filter('input:checkbox')[0];
-                }
-
-              ckElem.checked = false;
-                if (ind<filterElems.length-1) {
-                  handleFilterSelectionUpdate(ckElem, false, false);
-              }
-              else{
-                  handleFilterSelectionUpdate(ckElem, true, true);
-              }
-
-            }
-
-        });
-
-
-    }
+            });
+        };
 
         var clearFilter = function (filterElem) {
             if (filterElem.classList.contains('all')){
@@ -2333,24 +2426,25 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
      }
 
      var addSliders = function(id){
-            $('#'+id).find('.list-group-item__body').each(function(){
-                $(this).find('.more-checks').addClass('hide');
-                $(this).find('.less-checks').addClass('hide');
-                //var min = Math.ceil($(this).data('attr-min') * 1000)/1000;
-                //var min = Math.floor($(this).data('attr-min'));
-                var min = 0;
-                var max = Math.floor($(this).data('attr-max'));
-                if (this.id.startsWith('Glycolysis') ){
-                    min = 0;
-                    max = 300;
-                }
-                else if (this.id.startsWith('Percent') ){
-                    min = 0;
-                    max = 100;
-                }
-                //var max = Math.ceil($(this).data('attr-max') * 1000)/1000;
-                mkSlider($(this).prop('id'),min, max,1,true,false,'');
-            });
+
+        $('#'+id).find('.list-group-item__body').each(function(){
+            $(this).find('.more-checks').addClass('hide');
+            $(this).find('.less-checks').addClass('hide');
+            //var min = Math.ceil($(this).data('attr-min') * 1000)/1000;
+            //var min = Math.floor($(this).data('attr-min'));
+            var min = 0;
+            var max = Math.floor($(this).data('attr-max'));
+            /* if (this.id.startsWith('Glycolysis') ){
+                min = 0;
+                max = 300;
+            }
+            else if (this.id.startsWith('Percent') ){
+                min = 0;
+                max = 100;
+            } */
+            //var max = Math.ceil($(this).data('attr-max') * 1000)/1000;
+            mkSlider($(this).prop('id'),min, max,1,true,false,'', $(this).data('filter-attr-id'), $(this).data('filter-display-attr'));
+        });
      };
 
 
@@ -2369,9 +2463,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             //histObj.filterObj.collection_id = window.tcgaColls;
             window.filtHistory = new Array();
             window.filtHistory.push(histObj);
-            createPlots('search_orig_set');
-            createPlots('search_derived_set');
-            createPlots('tcga_clinical');
+
            /* addFilterBindings('search_orig_set');
             addFilterBindings('search_related_set');*/
 
@@ -2383,9 +2475,14 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             tableSortBindings('studies_table_head');
             tableSortBindings('series_table_head');
 
-            mkSlider('age_at_diagnosis',0,parseInt($('#age_at_diagnosis').data('attr-max')),1,true,true, 'tcga_clinical.');
+            mkSlider('age_at_diagnosis',0, parseInt($('#age_at_diagnosis').data('attr-max')),1,true,true, 'tcga_clinical.',
+                $('#age_at_diagnosis').data('filter-attr-id'), $('#age_at_diagnosis').data('filter-display-attr'));
 
             addSliders('quantitative');
+
+            createPlots('search_orig_set');
+            createPlots('search_derived_set');
+            createPlots('tcga_clinical');
 
             var numCol = $('#projects_table').children('tr').length
             $('#projects_panel').find('.total-file-count')[0].innerHTML = numCol.toString();
@@ -2413,34 +2510,159 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
     );
 
      var load_filters = function(filters) {
+         var sliders = [];
         _.each(filters, function(group){
             _.each(group['filters'], function(filter){
-                $('div.list-group-item__body[data-attr-id="'+filter['id']+'"]').collapse('show');
-                _.each(filter['values'], function(val){
-                    $('input[data-filter-attr-id="'+filter['id']+'"][value="'+val+'"]').prop("checked",true);
-                    checkFilters($('input[data-filter-attr-id="'+filter['id']+'"][value="'+val+'"]'));
-                });
+                let selector = 'div.list-group-item__body[data-filter-attr-id="'+filter['id']+'"], '+'div.list-group-sub-item__body[data-filter-attr-id="'+filter['id']+'"]';
+                $(selector).collapse('show');
+                $(selector).find('.show-more').triggerHandler('click');
+                $(selector).parents('.collection-list').collapse('show');
+                $(selector).parents('.tab-pane.search-set').length > 0 && $('a[href="#'+$(selector).parents('.tab-pane.search-set')[0].id + '"]').tab('show');
+                if($(selector).children('.ui-slider').length > 0) {
+                    sliders.push({
+                        'id':$('div.list-group-item__body[data-filter-attr-id="'+filter['id']+'"]').children('.ui-slider')[0].id,
+                        'left_val': filter['values'][0].indexOf(".") >= 0 ? parseFloat(filter['values'][0]) : parseInt(filter['values'][0]),
+                        'right_val': filter['values'][1].indexOf(".") >= 0 ? parseFloat(filter['values'][1]) : parseInt(filter['values'][1]),
+                    })
+                } else {
+                    _.each(filter['values'], function(val){
+                        $('input[data-filter-attr-id="'+filter['id']+'"][value="'+val+'"]').prop("checked",true);
+                        checkFilters($('input[data-filter-attr-id="'+filter['id']+'"][value="'+val+'"]'));
+                    });
+                }
             });
         });
+        if(sliders.length > 0) {
+            load_sliders(sliders, false);
+        }
+        console.debug("Making filter text...");
         mkFiltText();
         return updateFacetsData(true).promise();
      };
 
+     var load_sliders = function(sliders, do_update) {
+        _.each(sliders, function(slider) {
+            var slider_id = slider['id'];
+            setSlider(slider_id, false, slider['left_val'], slider['right_val'], true, false);
+            updatePlotBinsForSliders(slider_id);
+        });
+
+        if (do_update) {
+            mkFiltText();
+            updateFacetsData(true).promise();
+        }
+     };
+
      var cohort_loaded = false;
      $(window).on('load', function(){
-        if(is_cohort && !cohort_loaded) {
+         console.debug("Fired window.onload");
+         if(is_cohort && !cohort_loaded) {
+             console.debug("Unloaded cohort found, loading...");
              var loadPending = load_filters(cohort_filters);
              loadPending.done(function(){
-                cohort_loaded = true;
-                $('input[type="checkbox"]').prop("disabled","disabled");
-                $('div.ui-slider').siblings('button').prop('disabled','disabled');
-                $('input#hide-zeros').prop("disabled","");
-                $('input#hide-zeros').prop("checked",true);
-                $('input#hide-zeros').triggerHandler('change');
+                 console.debug("Load pending complete.");
+                 cohort_loaded = true;
+                 $('input[type="checkbox"]').prop("disabled","disabled");
+                 $('div.ui-slider').siblings('button').prop('disabled','disabled');
+                 $('input#hide-zeros').prop("disabled","");
+                 $('input#hide-zeros').prop("checked",true);
+                 $('input#hide-zeros').triggerHandler('change');
              });
         } else if(Object.keys(filters_for_load).length > 0) {
-            load_filters(filters_for_load);
-        } /* TODO: check for localStorage key of saved filters from a login */
+            var loadPending = load_filters(filters_for_load);
+            loadPending.done(function(){
+                console.debug("External filter load done.");
+            });
+        } else {
+            // check for localStorage key of saved filters from a login
+            load_anonymous_selection_data();
+            var has_sliders = (ANONYMOUS_SLIDERS !== null && ANONYMOUS_SLIDERS.length > 0);
+            var has_filters = (ANONYMOUS_FILTERS !== null && ANONYMOUS_FILTERS[0]['filters'].length > 0);
+            if (has_sliders) {
+                let loadPending = load_sliders(ANONYMOUS_SLIDERS, !has_filters);
+                loadPending.done(function(){
+                    console.debug("Sliders loaded from anonymous login.");
+                });
+            }
+            if (has_filters) {
+                let loadPending = load_filters(ANONYMOUS_FILTERS);
+                loadPending.done(function(){
+                    console.debug("Filters loaded from anonymous login.");
+                });
+            }
+        }
+    });
+
+    var ANONYMOUS_FILTERS = {};
+    var ANONYMOUS_SLIDERS = {};
+
+    var save_anonymous_selection_data = function() {
+        var groups = [];
+
+        // Get all checked filters
+        var filters = [];
+        $('.list-group-item__body').each(function() {
+            var $group = $(this);
+            var my_id = $group.data('attrId');
+            if (my_id != null)
+            {
+                var checkboxes = $group.find("input:checked");
+                if (checkboxes.length > 0)
+                {
+                    var values = [];
+                    checkboxes.each(function() {
+                        var $checkbox = $(this);
+                        var my_value = $checkbox[0].value;
+                        values.push(my_value);
+                    });
+                    filters.push({
+                        'id': my_id,
+                        'values': values,
+                    });
+                }
+            }
+        });
+
+        groups.push({'filters': filters});
+        var filterStr = JSON.stringify(groups);
+        sessionStorage.setItem('anonymous_filters', filterStr);
+
+        // Get all sliders with not default value
+        var sliders = [];
+        $('.ui-slider').each(function() {
+            var $this = $(this);
+            var slider_id = $this[0].id;
+            var left_val = $this.slider("values", 0);
+            var right_val = $this.slider("values", 1);
+            var min = $this.slider("option", "min");
+            var max = $this.slider("option", "max");
+            if (left_val !== min || right_val !== max) {
+                sliders.push({
+                   'id': slider_id,
+                    'left_val': left_val,
+                    'right_val': right_val,
+                });
+            }
+        });
+        var sliderStr = JSON.stringify(sliders);
+        sessionStorage.setItem('anonymous_sliders', sliderStr);
+    };
+
+    var load_anonymous_selection_data = function() {
+        // Load anonymous filters from session storage and clear it, so it is not always there
+        var filter_str = sessionStorage.getItem('anonymous_filters');
+        ANONYMOUS_FILTERS = JSON.parse(filter_str);
+        sessionStorage.removeItem('anonymous_filters');
+
+        var slider_str = sessionStorage.getItem('anonymous_sliders');
+        ANONYMOUS_SLIDERS = JSON.parse(slider_str);
+        sessionStorage.removeItem('anonymous_sliders');
+    };
+
+    $('#save-cohort-btn').on('click', function() {
+        if(!user_is_auth) {
+            save_anonymous_selection_data();
+        }
     });
 });
 

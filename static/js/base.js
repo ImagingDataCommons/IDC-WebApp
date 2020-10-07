@@ -200,10 +200,16 @@ define(['jquery', 'utils'], function($, utils) {
 
     // Resets forms in modals on hide. Suppressed warning when leaving page with dirty forms
     $('.modal').on('hide.bs.modal', function () {
-        if($(this).find('form').get().length) {
-            $(this).find('form').get(0).reset();
+        if(!$(this).prop("saving")) {
+            if($(this).find('form').get().length) {
+                $(this).find('form').get(0).reset();
+            }
         }
     });
+
+    $.getCookie = utils.getCookie;
+    $.setCookie = utils.setCookie;
+    $.removeCookie = utils.removeCookie;
 
     return {
         blacklist: /<script>|<\/script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|<iframe>|<\/iframe>/ig,
@@ -214,6 +220,12 @@ define(['jquery', 'utils'], function($, utils) {
         // at document load time
         setReloadMsg: function(type,text) {
             sessionStorage.setItem("reloadMsg",JSON.stringify({type: type, text: text}));
+        },
+        setCookie: function(name,val,expires_in,path) {
+            utils.setCookie(name,val,expires_in,path);
+        },
+        removeCookie: function(name, path) {
+            utils.removeCookie(name, path);
         },
         blockResubmit: utils.blockResubmit
     };
