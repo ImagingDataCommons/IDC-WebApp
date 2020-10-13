@@ -2501,7 +2501,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
         var filters = [];
         $('.list-group-item__body').each(function() {
             var $group = $(this);
-            var my_id = $group.data('attrId');
+            var my_id = $group.data('filter-attr-id');
             if (my_id != null)
             {
                 var checkboxes = $group.find("input:checked");
