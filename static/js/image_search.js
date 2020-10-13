@@ -2560,8 +2560,8 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
     $('#save-cohort-btn').on('click', function() {
         if(!user_is_auth) {
             save_anonymous_selection_data();
+            location.href=$(this).data('uri');
         }
-        location.href=$(this).data('uri');
     });
 
      var cohort_loaded = false;
