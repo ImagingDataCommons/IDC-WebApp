@@ -303,7 +303,7 @@ tr {
     word-wrap: break-word; }
 
 
-#studies_table_head th studies_table td {
+#studies_table_head th, #studies_table td {
     word-break: break-word; }
 #studies_table_head th.project-name, th.case-id, th.study-id,
 #studies_table td.project-name, td.case-id, td.study-id {
@@ -343,8 +343,8 @@ tr {
 #series_table td.series-description {
     width:32%;
 }
-#series_table_head th.text_data,
-#series_table td.text_data {
+#series_table_head th.open-viewer,
+#series_table td.open-viewer {
     width:13%;
 }
 

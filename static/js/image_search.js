@@ -18,75 +18,83 @@ require.config({
 });
 
 
-require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
-    function($, _, jqueryui, bootstrap, jquerydt ) {
+require([
+    'jquery',
+    'underscore',
+    'jquerydt',
+    'jqueryui',
+    'bootstrap',
+    'base'
+], function($, _, jqueryui, bootstrap, jquerydt ) {
 
-        window.filterObj = {};
-        window.projIdSel = [];
-        window.studyIdSel = [];
-        //window.tcgaColls = ["tcga_blca", "tcga_brca", "tcga_cesc", "tcga_coad", "tcga_esca", "tcga_gbm", "tcga_hnsc", "tcga_kich", "tcga_kirc", "tcga_kirp", "tcga_lgg", "tcga_lihc", "tcga_luad", "tcga_lusc", "tcga_ov", "tcga_prad", "tcga_read", "tcga_sarc", "tcga_stad", "tcga_thca", "tcga_ucec"];
-        window.projSets = new Object();
-        window.projSets['tcga']=["tcga_blca", "tcga_brca", "tcga_cesc", "tcga_coad", "tcga_esca", "tcga_gbm", "tcga_hnsc", "tcga_kich", "tcga_kirc", "tcga_kirp", "tcga_lgg", "tcga_lihc", "tcga_luad", "tcga_lusc", "tcga_ov", "tcga_prad", "tcga_read", "tcga_sarc", "tcga_stad", "tcga_thca", "tcga_ucec"];
-        window.projSets['rider']=["rider_lung_ct", "rider_phantom_pet_ct","rider_breast_mri", "rider_neuro_mri","rider_phantom_mri", "rider_lung_pet_ct"];
-        window.projSets['qin'] = ["qin_headneck","qin_lung_ct","qin_pet_phantom","qin_breast_dce_mri"];
+    $('.manifest-size-warning').hide();
 
-        var plotLayout = {
-            title: '',
-            autosize: true,
-            margin: {
-                l: 30,
-                r: 30,
-                b: 60,
-                t: 30,
-                pad: 0
+    window.filterObj = {};
+    window.projIdSel = [];
+    window.studyIdSel = [];
+    //window.tcgaColls = ["tcga_blca", "tcga_brca", "tcga_cesc", "tcga_coad", "tcga_esca", "tcga_gbm", "tcga_hnsc", "tcga_kich", "tcga_kirc", "tcga_kirp", "tcga_lgg", "tcga_lihc", "tcga_luad", "tcga_lusc", "tcga_ov", "tcga_prad", "tcga_read", "tcga_sarc", "tcga_stad", "tcga_thca", "tcga_ucec"];
+    window.projSets = new Object();
+    window.projSets['tcga']=["tcga_blca", "tcga_brca", "tcga_cesc", "tcga_coad", "tcga_esca", "tcga_gbm", "tcga_hnsc", "tcga_kich", "tcga_kirc", "tcga_kirp", "tcga_lgg", "tcga_lihc", "tcga_luad", "tcga_lusc", "tcga_ov", "tcga_prad", "tcga_read", "tcga_sarc", "tcga_stad", "tcga_thca", "tcga_ucec"];
+    window.projSets['rider']=["rider_lung_ct", "rider_phantom_pet_ct","rider_breast_mri", "rider_neuro_mri","rider_phantom_mri", "rider_lung_pet_ct"];
+    window.projSets['qin'] = ["qin_headneck","qin_lung_ct","qin_pet_phantom","qin_breast_dce_mri"];
+
+    var plotLayout = {
+        title: '',
+        autosize: true,
+        margin: {
+            l: 30,
+            r: 30,
+            b: 60,
+            t: 30,
+            pad: 0
+        },
+        xaxis: {type: 'category', dtick: 1}
+    };
+
+    var pieLayout = {
+        title: '',
+        autosize: true,
+        margin: {
+            l: 30,
+            r: 30,
+            b: 60,
+            t: 30,
+            pad: 0
+        },
+        showlegend: false,
+        legend: {
+            x: 2,
+            y: 0,
+            traceorder: 'normal',
+            font: {
+                family: 'sans-serif',
+                size: 4,
+                color: '#000'
             },
-            xaxis: {type: 'category', dtick: 1}
-        };
-
-        var pieLayout = {
-            title: '',
-            autosize: true,
-            margin: {
-                l: 30,
-                r: 30,
-                b: 60,
-                t: 30,
-                pad: 0
-            },
-            showlegend: false,
-            legend: {
-                x: 2,
-                y: 0,
-                traceorder: 'normal',
-                font: {
-                    family: 'sans-serif',
-                    size: 4,
-                    color: '#000'
-                },
-                bgcolor: '#E2E2E2',
-                bordercolor: '#FFFFFF',
-                borderwidth: 2
-            }
-        };
-
-        window.hidePanel=function(){
-            $('#lh_panel').hide();
-             $('#show_lh').show();
-             $('#show_lh').removeClass('hidden');
-            $('#rh_panel').removeClass('col-lg-9');
-            $('#rh_panel').removeClass('col-md-9');
-            $('#rh_panel').addClass('col-lg-12');
-            $('#rh_panel').addClass('col-md-12');
+            bgcolor: '#E2E2E2',
+            bordercolor: '#FFFFFF',
+            borderwidth: 2
         }
+    };
 
-         window.showPanel=function(){
-            $('#lh_panel').show();
-            $('#show_lh').hide();
-            $('#rh_panel').removeClass('col-lg-12');
-            $('#rh_panel').removeClass('col-md-12');
-            $('#rh_panel').addClass('col-lg-9');
-            $('#rh_panel').addClass('col-md-9');
-        }
+    window.hidePanel=function(){
+        $('#lh_panel').hide();
+         $('#show_lh').show();
+         $('#show_lh').removeClass('hidden');
+        $('#rh_panel').removeClass('col-lg-9');
+        $('#rh_panel').removeClass('col-md-9');
+        $('#rh_panel').addClass('col-lg-12');
+        $('#rh_panel').addClass('col-md-12');
+    };
+
+    window.showPanel=function(){
+        $('#lh_panel').show();
+        $('#show_lh').hide();
+        $('#rh_panel').removeClass('col-lg-12');
+        $('#rh_panel').removeClass('col-md-12');
+        $('#rh_panel').addClass('col-lg-9');
+        $('#rh_panel').addClass('col-md-9');
+    };
 
         window.setSlider = function (slideDiv, reset, strt, end, isInt, updateNow) {
             //var slideDiv = divName + "_slide";
@@ -831,7 +839,6 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             resetTableControls($('#' + seriesTableId), true, newScrollInd)
         }
 
-
         window.addStudyOrSeries = function (projectIdArr, studyIdArr, tableId, refresh) {
 
             changeAjax(true);
@@ -908,7 +915,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                             var studyClass = 'study_' + studyId.replace(/\./g, '-');
                             var fetchUrlSeries = fetchUrl + '?SeriesInstanceUID=' + seriesId;
                             var hrefSeriesTxt = ppSeriesId + '<span class="tooltiptext_ex">' + seriesId + '</span>';
-                            var seriesTxt = ppSeriesId + '<span class="tooltiptext_ex">' + seriesId + '</span>';
+                            var seriesTxt =     ppSeriesId + '<span class="tooltiptext_ex">' + seriesId + '</span>';
 
                             newHtml = '<tr id="' + rowId + '" class="' + pclass + ' ' + studyClass + ' text_head">' +
                                 '<td class="col1 study-id study-id-col" data-study-id="'+studyId+'">' + hrefTxt + '</td>' +
@@ -917,11 +924,11 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                                 '<td class="col1 body-part-examined">' + bodyPartExamined + '</td>' +
                                 '<td class="series-description">' + seriesDescription + '</td>';
                             if ((modality ==='SEG') || (modality ==='RTSTRUCT')){
-                            newHtml += '<td class="ohif tooltip_ex"><span class="tooltiptext_ex">Please open at the study level to see this series</span><a   href="/" onclick="return false;"><i class="fa fa-eye-slash"></i></td></tr>';
+                                newHtml += '<td class="ohif open-viewer"><a href="/" onclick="return false;"><i class="fa fa-eye-slash no-viewer-tooltip"></i></td></tr>';
 
                             }
                             else {
-                            newHtml += '<td class="ohif"><a   href="' + fetchUrlSeries + '" target="_blank"><i class="fa fa-eye"></i></td></tr>';
+                                newHtml += '<td class="ohif open-viewer"><a href="' + fetchUrlSeries + '" target="_blank"><i class="fa fa-eye"></i></td></tr>';
                             }
                         }
                           else{
@@ -958,6 +965,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                         $('#' + tableId).append(newHtml);
 
                     }
+
                     //newScrollInd = findScrollInd(tableId);
                     resetTableControls($('#' + tableId), false, 0);
 
@@ -1413,17 +1421,25 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 contentType: 'application/x-www-form-urlencoded',
                 success: function (data) {
                     var isFiltered = Boolean($('#search_def p').length>0);
-                    if (isFiltered && data.total > 0){
-                        $('#save-cohort-btn').prop('disabled','');
-                        if(user_is_auth) {
-                            $('#save-cohort-btn').prop('title','');
+                    if(is_cohort) {
+                        if(data.total > 65000) {
+                            $('.manifest-size-warning').show();
+                        } else {
+                            $('.manifest-size-warning').hide();
                         }
                     } else {
-                        $('#save-cohort-btn').prop('disabled','disabled');
-                        if(user_is_auth) {
-                            $('#save-cohort-btn').prop('title',data.total > 0 ? 'Please select at least one filter.' : 'There are no cases in this cohort.');
+                        if (isFiltered && data.total > 0){
+                            $('#save-cohort-btn').prop('disabled','');
+                            if(user_is_auth) {
+                                $('#save-cohort-btn').prop('title','');
+                            }
                         } else {
-                            $('#save-cohort-btn').prop('title','Log in to save.');
+                            $('#save-cohort-btn').prop('disabled','disabled');
+                            if(user_is_auth) {
+                                $('#save-cohort-btn').prop('title',data.total > 0 ? 'Please select at least one filter.' : 'There are no cases in this cohort.');
+                            } else {
+                                $('#save-cohort-btn').prop('title','Log in to save.');
+                            }
                         }
                     }
                     //updateCollectionTotals(data.total, data.origin_set.attributes.collection_id);
@@ -1448,7 +1464,10 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                             if ('attributes' in data.derived_set[facetSet]){
 
                                 dicofdic = {'unfilt': data.derived_set[facetSet].attributes, 'filt': ''}
-                                if (isFiltered){
+                                if (isFiltered && data.filtered_counts.hasOwnProperty('derived_set')
+                                    && data.filtered_counts.derived_set.hasOwnProperty(facetSet)
+                                    && data.filtered_counts.derived_set[facetSet].hasOwnProperty('attributes')
+                                ) {
                                     dicofdic['filt'] = data.filtered_counts.derived_set[facetSet].attributes;
                                 }
                                 else{
@@ -1693,6 +1712,18 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
            .domain(nonZeroLabels)
            .range(d3.schemeCategory10);
 
+           // don't color last pie slice the same as first
+           var colorPie = function(lbl){
+             var col="";
+               if ( (nonZeroLabels.length>1) & (lbl === nonZeroLabels[nonZeroLabels.length-1]) && (color(nonZeroLabels[0])===color(lbl))  ){
+                        col=color(nonZeroLabels[5]);
+               }
+               else{
+                   col=color(lbl);
+               }
+               return col;
+           }
+
            // Compute the position of each group on the pie:
           var pie = d3.pie()
           .value(function(d) {return d.value; }).sort(null);
@@ -1709,7 +1740,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
           .outerRadius(radius)
           )
           .attr('fill', function(d){ return(
-            color(d.data.key)  )
+            colorPie(d.data.key)  )
            })
           .attr("stroke", "black")
           .style("stroke-width", "0px")
@@ -2426,7 +2457,6 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
      }
 
      var addSliders = function(id){
-
         $('#'+id).find('.list-group-item__body').each(function(){
             $(this).find('.more-checks').addClass('hide');
             $(this).find('.less-checks').addClass('hide');
@@ -2446,6 +2476,8 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             mkSlider($(this).prop('id'),min, max,1,true,false,'', $(this).data('filter-attr-id'), $(this).data('filter-display-attr'));
         });
      };
+
+
 
      var load_filters = function(filters) {
          var sliders = [];
@@ -2630,8 +2662,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             tableSortBindings('studies_table_head');
             tableSortBindings('series_table_head');
 
-            mkSlider('age_at_diagnosis',0, parseInt($('#age_at_diagnosis').data('attr-max')),1,true,true, 'tcga_clinical.',
-                $('#age_at_diagnosis').data('filter-attr-id'), $('#age_at_diagnosis').data('filter-display-attr'));
+            mkSlider('age_at_diagnosis',0, parseInt($('#age_at_diagnosis').data('attr-max')),1,true,true, 'tcga_clinical.', $('#age_at_diagnosis').data('filter-attr-id'), $('#age_at_diagnosis').data('filter-display-attr'));
 
             addSliders('quantitative');
 
