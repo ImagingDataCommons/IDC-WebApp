@@ -42,10 +42,9 @@
             </div>
             <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4">
                 <div class="cohort-manifest pull-right">
-                    <div class="manifest-size-warning"><i class="fa fa-warning"></i></div>
-                    <a id="download-manifest" class="btn btn-default pull-right" title="Download this cohort's manifest." href="{% url 'cohort_manifest' cohort.id %}">
-                        Download Cohort Manifest
-                    </a>
+                 <button id="export-manifest" class="btn btn-special pull-right" data-toggle="modal"
+                        data-target="#export-manifest-modal"> Export Cohort Manifest
+                 </button>
                 </div>
             </div>
         </div>
@@ -63,16 +62,17 @@
 </script>
 
 {% with is_cohort=True %}
+    {% include "cohorts/export-manifest-modal.html" %}
     {% include "idc/explore_data_core.html" %}
 {% endwith %}
 
     <!-- Download In Progress Modal -->
-<div class="modal fade" id="download-in-progress" tabindex="-1" role="dialog" data-backdrop="static" aria-hidden="true">
+<div class="modal fade" id="manifest-in-progress" tabindex="-1" role="dialog" data-backdrop="static" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header"></div>
             <div class="modal-body">
-                <p><i class="fa fa-cog fa-spin"></i> Preparing manifest for download...</p>
+                <p><i class="fa fa-cog fa-spin"></i> Preparing cohort manifest...</p>
             </div>
             <div class="modal-footer"></div>
         </div>
@@ -85,8 +85,10 @@
     <script>
         var cohort_filters = {{ cohort_filters|safe }};
         var is_cohort = true;
-        var collection_tooltips = {{ collection_tooltips|safe }};
         var cohort_version = "{{ cohort_version|safe }}";
+        var cohort_id = "{{ cohort_id|safe }}";
+        var user_is_social = {% if is_social %}true{% else %}false{% endif %};
+        var collection_tooltips = {{ collection_tooltips|safe }};
     </script>
     <script type="text/javascript" src="{% static 'js/libs/d3.v5.min.js' %}"></script>
     {{ block.super }}
