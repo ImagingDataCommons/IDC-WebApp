@@ -23,8 +23,6 @@
 {% block header %}
     <link type="text/css" rel="stylesheet" href="{% static 'css/search.css' %}">
     <link type="text/css" rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}">
-    <!-- <script src="https://d3js.org/d3.v5.min.js"></script> -->
-    <!-- <script type="text/javascript" src="{% static 'js/libs/d3.v5.min.js' %}"></script> -->
 {% endblock %}
 
 
@@ -37,6 +35,24 @@
 {% block page_header %}
     <div class="pf-heading">
         <div class="container-fluid">
+            <div class="banner-section row">
+                <div class="alert alert-dismissible show" role="alert">
+                    <div class="row ">
+                        <div class="col-xs-1"></div>
+                        <div class="col-xs-10">
+                            <strong>Get started today!</strong>
+                            <strong> Contact us about setting up your own Google Cloud Platform Project with <a
+                                    href="https://learn.canceridc.dev/introduction/requesting-gcp-cloud-credits"
+                                    target="_blank">free cloud credits</a></strong>
+                        </div>
+                        <div class="col-xs-1">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 {# THIS NEEDS TO BE MOVED OR REFORMATTED TO PROPERLY FLOW WITH THE REST OF THE PAGE HEADER #}
 {#            <ol class="breadcrumb">#}
 {#                <li id="previous" style="display:none"><a href="#" onclick="javascript:selectHistoricFilter(-1)">Previous Filter</a></li>#}
@@ -44,15 +60,16 @@
 {#            </ol>#}
 
             <h3 class="pull-left" role="heading" aria-level="1">Explore Image Data</h3>
-        {% if DEV_TIER %}
-            <button id="save-cohort-btn" class="btn btn-special pull-right" data-toggle="modal" data-target="#save-cohort-modal" title="{% if request.user.is_authenticated %}Please select at least one filter.{% else %}Please log in to save this cohort.{% endif %}" disabled="disabled">
-                {% if request.user.is_authenticated %}Save As New Cohort{% else %}Log in to Save{% endif %}
+            {% if request.user.is_authenticated %}
+            <button id="save-cohort-btn" class="btn btn-special pull-right" data-toggle="modal"
+                data-target="#save-cohort-modal"
+                title="Select at least one filter." disabled="disabled"> Save As New Cohort
             </button>
-        {% else %}
-            <button id="disabled-chort-save-btn" class="btn btn-special pull-right" data-toggle="modal" title="Cohort saving is currently disabled." disabled="disabled">
-                {% if request.user.is_authenticated %}Save As New Cohort{% else %}Log in to Save{% endif %}
+            {% else %}
+            <button id="save-cohort-btn" class="btn btn-special pull-right" title="Select at least one filter."
+                disabled="disabled" data-uri="{% url 'account_login' %}"> Log in to Save
             </button>
-        {% endif %}
+            {% endif %}
         </div>
     </div>
 {% endblock %}
@@ -68,17 +85,23 @@
 
 {% include "idc/explore_data_core.html" %}
 
+{% endblock %}
+
+{% block modal_includes %}
+
 {% include "cohorts/save-cohort-modal.html" %}
 
 {% endblock %}
 
 {% block js_file %}
+    <script>
+        var filters_for_load = {{ filters_for_load|safe }};
+        var collection_tooltips = {{ collection_tooltips|safe }};
+        var is_cohort = false;
+        var showWarning = true;
+        var user_is_auth = {% if request.user.is_authenticated %} true {% else %} false {% endif %};
+    </script>
     <script type="text/javascript" src="{% static 'js/libs/d3.v5.min.js' %}"></script>
     {{ block.super }}
     <script type="text/javascript" src="{% static 'js/explore.js' %}"></script>
-
-    <script>
-        var collection_tooltips = {{ collection_tooltips|safe }};
-        var is_cohort = false;
-    </script>
 {% endblock %}
