@@ -2,7 +2,7 @@
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
     paths: {
-        jquery: 'libs/jquery-1.11.1.min',
+        jquery: 'libs/jquery-3.5.1',
         bootstrap: 'libs/bootstrap.min',
         jqueryui: 'libs/jquery-ui.min',
         jquerydt: 'libs/jquery.dataTables.min',
@@ -18,89 +18,113 @@ require.config({
 });
 
 
-require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
-    function($, _, jqueryui, bootstrap, jquerydt ) {
+require([
+    'jquery',
+    'underscore',
+    'jquerydt',
+    'jqueryui',
+    'bootstrap',
+    'base'
+], function($, _, jqueryui, bootstrap, jquerydt ) {
 
-        window.filterObj = {};
-        window.projIdSel = [];
-        window.studyIdSel = [];
-        //window.tcgaColls = ["tcga_blca", "tcga_brca", "tcga_cesc", "tcga_coad", "tcga_esca", "tcga_gbm", "tcga_hnsc", "tcga_kich", "tcga_kirc", "tcga_kirp", "tcga_lgg", "tcga_lihc", "tcga_luad", "tcga_lusc", "tcga_ov", "tcga_prad", "tcga_read", "tcga_sarc", "tcga_stad", "tcga_thca", "tcga_ucec"];
-        window.projSets = new Object();
-        window.projSets['tcga']=["tcga_blca", "tcga_brca", "tcga_cesc", "tcga_coad", "tcga_esca", "tcga_gbm", "tcga_hnsc", "tcga_kich", "tcga_kirc", "tcga_kirp", "tcga_lgg", "tcga_lihc", "tcga_luad", "tcga_lusc", "tcga_ov", "tcga_prad", "tcga_read", "tcga_sarc", "tcga_stad", "tcga_thca", "tcga_ucec"];
-        window.projSets['rider']=["rider_lung_ct", "rider_phantom_pet_ct","rider_breast_mri", "rider_neuro_mri","rider_phantom_mri", "rider_lung_pet_ct"];
-        window.projSets['qin'] = ["qin_headneck","qin_lung_ct","qin_pet_phantom","qin_breast_dce_mri"];
+    $('.manifest-size-warning').hide();
 
-        var plotLayout = {
-            title: '',
-            autosize: true,
-            margin: {
-                l: 30,
-                r: 30,
-                b: 60,
-                t: 30,
-                pad: 0
+    window.filterObj = {};
+    window.projIdSel = [];
+    window.studyIdSel = [];
+    //window.tcgaColls = ["tcga_blca", "tcga_brca", "tcga_cesc", "tcga_coad", "tcga_esca", "tcga_gbm", "tcga_hnsc", "tcga_kich", "tcga_kirc", "tcga_kirp", "tcga_lgg", "tcga_lihc", "tcga_luad", "tcga_lusc", "tcga_ov", "tcga_prad", "tcga_read", "tcga_sarc", "tcga_stad", "tcga_thca", "tcga_ucec"];
+    window.projSets = new Object();
+    window.projSets['tcga']=["tcga_blca", "tcga_brca", "tcga_cesc", "tcga_coad", "tcga_esca", "tcga_gbm", "tcga_hnsc", "tcga_kich", "tcga_kirc", "tcga_kirp", "tcga_lgg", "tcga_lihc", "tcga_luad", "tcga_lusc", "tcga_ov", "tcga_prad", "tcga_read", "tcga_sarc", "tcga_stad", "tcga_thca", "tcga_ucec"];
+    window.projSets['rider']=["rider_lung_ct", "rider_phantom_pet_ct","rider_breast_mri", "rider_neuro_mri","rider_phantom_mri", "rider_lung_pet_ct"];
+    window.projSets['qin'] = ["qin_headneck","qin_lung_ct","qin_pet_phantom","qin_breast_dce_mri"];
+
+    var plotLayout = {
+        title: '',
+        autosize: true,
+        margin: {
+            l: 30,
+            r: 30,
+            b: 60,
+            t: 30,
+            pad: 0
+        },
+        xaxis: {type: 'category', dtick: 1}
+    };
+
+    var pieLayout = {
+        title: '',
+        autosize: true,
+        margin: {
+            l: 30,
+            r: 30,
+            b: 60,
+            t: 30,
+            pad: 0
+        },
+        showlegend: false,
+        legend: {
+            x: 2,
+            y: 0,
+            traceorder: 'normal',
+            font: {
+                family: 'sans-serif',
+                size: 4,
+                color: '#000'
             },
-            xaxis: {type: 'category', dtick: 1}
-        };
-
-        var pieLayout = {
-            title: '',
-            autosize: true,
-            margin: {
-                l: 30,
-                r: 30,
-                b: 60,
-                t: 30,
-                pad: 0
-            },
-            showlegend: false,
-            legend: {
-                x: 2,
-                y: 0,
-                traceorder: 'normal',
-                font: {
-                    family: 'sans-serif',
-                    size: 4,
-                    color: '#000'
-                },
-                bgcolor: '#E2E2E2',
-                bordercolor: '#FFFFFF',
-                borderwidth: 2
-            }
-        };
-
-        window.hidePanel=function(){
-            $('#lh_panel').hide();
-             $('#show_lh').show();
-             $('#show_lh').removeClass('hidden');
-            $('#rh_panel').removeClass('col-lg-9');
-            $('#rh_panel').removeClass('col-md-9');
-            $('#rh_panel').addClass('col-lg-12');
-            $('#rh_panel').addClass('col-md-12');
+            bgcolor: '#E2E2E2',
+            bordercolor: '#FFFFFF',
+            borderwidth: 2
         }
+    };
 
-         window.showPanel=function(){
-            $('#lh_panel').show();
-            $('#show_lh').hide();
-            $('#rh_panel').removeClass('col-lg-12');
-            $('#rh_panel').removeClass('col-md-12');
-            $('#rh_panel').addClass('col-lg-9');
-            $('#rh_panel').addClass('col-md-9');
-        }
+    window.hidePanel=function(){
+        $('#lh_panel').hide();
+         $('#show_lh').show();
+         $('#show_lh').removeClass('hidden');
+        $('#rh_panel').removeClass('col-lg-9');
+        $('#rh_panel').removeClass('col-md-9');
+        $('#rh_panel').addClass('col-lg-12');
+        $('#rh_panel').addClass('col-md-12');
+    };
 
+    window.showPanel=function(){
+        $('#lh_panel').show();
+        $('#show_lh').hide();
+        $('#rh_panel').removeClass('col-lg-12');
+        $('#rh_panel').removeClass('col-md-12');
+        $('#rh_panel').addClass('col-lg-9');
+        $('#rh_panel').addClass('col-md-9');
+    };
 
         window.setSlider = function (slideDiv, reset, strt, end, isInt, updateNow) {
+
+
+             parStr=$('#'+slideDiv).data("attr-par");
+             if (parStr.startsWith('tcga_clinical') && !(reset)){
+                checkTcga();
+            }
             //var slideDiv = divName + "_slide";
+            var max = $('#' + slideDiv).slider("option", "max");
+
             var divName = slideDiv.replace("_slide","");
 
             if (reset) {
-                strt = $('#' + slideDiv).slider("option", "min");
-                end = $('#' + slideDiv).slider("option", "max");
+                strt = $('#' + slideDiv).parent().attr('data-min');
+                end = $('#' + slideDiv).parent().attr('data-max');
+                if ( ($('#' + slideDiv).parent().find('.noneBut').length===0 ) ||  ( !($('#' + slideDiv).parent().find('.noneBut').find(':input')[0].checked)) ){
+                    $('#' + slideDiv).parent().removeClass('isActive');
+                }
             }
+            else{
+                $('#' + slideDiv).parent().addClass('isActive');
+            }
+            $('#' + slideDiv).parent().attr('data-curminrng',strt);
+            $('#' + slideDiv).parent().attr('data-curmaxrng',end);
 
              vals = [strt, end];
-            $('#' + slideDiv).find('.ui-slider-handle').each( function(index){
-                $(this).find('.slide_tooltip').text( vals[index].toString() );
+
+            $('#' + slideDiv).find(".slide_tooltip").each(function(index){
+                $(this).text(vals[index].toString());
             });
 
             $('#' + slideDiv).slider("values", "0", strt);
@@ -119,11 +143,14 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 nm.push(filterCats[ind].id);
             }
             nm.push(divName);
-            filtAtt = nm.join('.')+ '_btw';
+            filtAtt = nm.join('.')+ '_rng';
             if (reset) {
                 if (  (window.filterObj.hasOwnProperty(filtAtt)) && (window.filterObj[filtAtt].hasOwnProperty('rng')) ) {
                     delete window.filterObj[filtAtt]['rng'];
-                    if (!( 'none' in window.filterObj[filtAtt])){
+                    if ( 'none' in window.filterObj[filtAtt]){
+                        window.filterObj[filtAtt]['type']='none';
+                    }
+                    else{
                         delete window.filterObj[filtAtt];
                     }
                 }
@@ -131,8 +158,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 var attVal = [];
                 if (isInt) {
                     attVal = [parseInt(strt), parseInt(end)];
-                    // edge effect
-                    attVal = [parseInt(strt), parseInt(end) - 1];
+
                 } else {
                     attVal = [parseFloat(strt), parseFloat(end)];
                 }
@@ -141,8 +167,17 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     window.filterObj[filtAtt] = new Object();
                 }
                 window.filterObj[filtAtt]['rng'] = attVal;
+                if (end<max) {
+                    window.filterObj[filtAtt]['type'] = 'ebtw';
+                }
+                else{
+                    window.filterObj[filtAtt]['type'] = 'ebtwe';
+                }
             }
+
+
             if (updateNow) {
+                //updatePlotBinsForSliders(slideDiv);
                 mkFiltText();
                 updateFacetsData(true);
             }
@@ -170,7 +205,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                          }
                      }
                 }
-                else if (curKey.endsWith('_btw')) {
+                else if (curKey.endsWith('_rng')) {
                     var realKey=curKey.substring(0, curKey.length-4).split('.').pop();
                     var disp = $('#'+realKey+'_heading').children()[0].innerText;
                     if (curKey.startsWith('tcga_clinical')){
@@ -180,7 +215,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
                     var fStr='';
                     if ('rng' in filterObj[curKey]){
-                        fStr += filterObj[curKey]['rng'][0].toString()+'-'+(filterObj[curKey]['rng'][1] + 1).toString();
+                        fStr += filterObj[curKey]['rng'][0].toString()+'-'+(filterObj[curKey]['rng'][1] ).toString();
                     }
                     if (('rng' in filterObj[curKey]) && ('none' in filterObj[curKey])){
                         fStr+=', ';
@@ -268,7 +303,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                      }
                 }
                 else{
-                     if (curKey.endsWith('_btw')) {
+                     if (curKey.endsWith('_rng')) {
                         var realKey=curKey.substring(0, curKey.length-4).split('.').pop();
                         var disp = $('#'+realKey+'_heading').children()[0].innerText;
                         var fStr='';
@@ -390,12 +425,12 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             if (showMore) {
                 $('.' + id).parent().find('.more-graphs').hide();
                 $('.' + id).parent().find('.less-graphs').show();
-                $('.' + id).find('.span-related-overflow').show();
+                $('.' + id).find('.chart-overflow').removeClass('hide-chart');
             }
             else {
                 $('.' + id).parent().find('.more-graphs').show();
                 $('.' + id).parent().find('.less-graphs').hide();
-                $('.' + id).find('.span-related-overflow').hide();
+                $('.' + id).find('.chart-overflow').addClass('hide-chart')
             }
 
         }
@@ -412,15 +447,17 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             $('.'+graphClass).animate({height: height}, 800);
         };
 
-        window.addNone = function(elem, parStr)
+        window.addNone = function(elem, parStr, updateNow)
         {
-            var id = parStr+$(elem).parent()[0].id+"_btw";
+            var id = parStr+$(elem).parent().parent()[0].id+"_rng";
 
             if (elem.checked){
                 if (!(id in window.filterObj)) {
-                    window.filterObj[id] = new Object();
+                    window.filterObj[id] = new Array();
+                    window.filterObj[id]['type']='none';
                 }
                 window.filterObj[id]['none'] = true;
+                $(elem).parent().parent().addClass('isActive');
             }
 
             else{
@@ -428,6 +465,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     delete window.filterObj[id]['none'];
                     if (!('rng' in window.filterObj[id])){
                         delete window.filterObj[id];
+                        $(elem).parent().parent().removeClass('isActive');
                     }
                 }
             }
@@ -436,9 +474,12 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 checkTcga();
             }
             var slideNm = $(elem).parent()[0].id+"_slide";
-            updatePlotBinsForSliders(slideNm);
+            //updatePlotBinsForSliders(slideNm);
             mkFiltText();
-            updateFacetsData(true);
+
+            if (updateNow) {
+                updateFacetsData(true);
+            }
         }
 
         var updatePlotBinsForSliders =  function(slideName){
@@ -448,11 +489,11 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             var val = $('#' + inpName)[0].value;
             var valArr = val.split('-');
             var strtInd = parseInt(valArr[0]);
-            var endInd = parseInt(valArr[1]);
+            var endInd = parseInt(valArr[1])-1;
 
             var wNone = false;
             if ( ($('#'+slideName).parent().children("input:checkbox").length>0) ){
-                wNone = $('#'+slideName).parent().children("input:checkbox")[0].checked;
+                wNone = $('#'+slideName).parent().children("input:checkbox").prop('checked');
             }
             var i=0;
 
@@ -467,19 +508,19 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                          }
 
                      }
-                     if ( ((valArr[0]==='*') || (endInd<= valArr[0])) && ((valArr[1]==='*') || (strtInd>= valArr[1])) ){
-                         $(this).parent().children('.case-count').addClass('plotit');
+                     /* if ( ((valArr[0]==='*') || (endInd>= valArr[0])) && ((valArr[1]==='*') || (strtInd< valArr[1])) ){
+                         $(this).parent().children('.plot_count').addClass('plotit');
                      }
                      else{
-                         $(this).parent().children('.case-count').removeClass('plotit');
-                     }
+                         $(this).parent().children('.plot_count').removeClass('plotit');
+                     } */
                  }
                  else if (val.includes('None')){
                      if (wNone){
-                         $(this).parent().children('.case-count').addClass('plotit');
+                         $(this).parent().children('.plot_count').addClass('plotit');
                      }
                      else{
-                         $(this).parent().children('.case-count').removeClass('plotit');
+                         $(this).parent().children('.plot_count').removeClass('plotit');
                      }
                  }
 
@@ -488,15 +529,78 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
         }
 
-        var mkSlider = function (divName, min, max, step, isInt, wNone, parStr) {
-             var tooltip = $('<div class="slide_tooltip" />').text('stuff').css({
-               position: 'absolute',
-               top: -25,
-               left: 0,
-                }).hide();
+        var setFromSlider = function(divName, filtName, min, max){
             var slideName = divName + '_slide';
             var inpName = divName + '_input';
-            var strtInp = min + '-' + max;
+            $('#' + slideName).addClass('used');
+                    var val = $('#' + inpName)[0].value;
+                    var valArr = val.split('-');
+                    var attVal = [];
+                    if (isInt) {
+                        attVal = [parseInt(valArr[0]), parseInt(valArr[1]) ];
+                    } else {
+                        attVal = [parseFloat(valArr[0]), parseFloat(valArr[1])];
+                    }
+
+                    if (!( filtName in window.filterObj )) {
+                        window.filterObj[filtName] = new Object();
+                    }
+                    window.filterObj[filtName]['rng'] = attVal;
+                    if (valArr[1]<max){
+                        window.filterObj[filtName]['type']='_lte'
+                    }
+                    else{
+                        window.filterObj[filtName]['type']='_bte'
+                    }
+
+                    if (filtName.startsWith('tcga_clinical')) {
+                        checkTcga();
+                    }
+                    mkFiltText();
+                    updateFacetsData(true);
+
+        }
+
+        var mkSlider = function (divName, min, max, step, isInt, wNone, parStr, attr_id, attr_name, lower, upper, isActive,checked) {
+            $('#'+divName).addClass('hasSlider');
+            if (isActive){
+                $('#'+divName).addClass('isActive');
+            }
+
+            var tooltipL = $('<div class="slide_tooltip tooltipL slide_tooltipT" />').text('stuff').css({
+               position: 'absolute',
+               top: -25,
+               left: -5,
+                });
+
+             var tooltipR = $('<div class="slide_tooltip slide_tooltipB tooltipR" />').text('stuff').css({
+               position: 'absolute',
+               top: 20,
+               right: -5,
+                });
+
+
+              var labelMin = $('<div class="labelMin"/>').text(min).css({
+                  position: 'absolute',
+                  top:-7,
+                  left: -22,
+                });
+
+
+            var labelMax = $('<div class="labelMax" />').text(max);
+
+            labelMax.css({
+                position: 'absolute',
+                top: -7,
+                right: -14-8*max.toString().length,
+                });
+
+
+
+            var slideName = divName + '_slide';
+
+            var inpName = divName + '_input';
+            var strtInp = lower + '-' + upper;
             var nm=new Array();
             var filterCats= $('#'+divName).parentsUntil('.tab-pane','.list-group-item__body');
             for (var i=0;i<filterCats.length;i++){
@@ -504,39 +608,57 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 nm.push(filterCats[ind].id);
             }
             nm.push(divName);
-            var filtName = nm.join('.') + '_btw';
-            $('#' + divName).append('<div id="' + slideName + '"></div>  <input id="' + inpName + '" type="text" value="' + strtInp + '" style="display:none"> <button style="display:inline-block;" onclick=\'setSlider("' + slideName + '",true,0,0,' + String(isInt) + ', true)\'>Reset</button>');
+            var filtName = nm.join('.') + '_rng';
+            //var filtName = nm;
 
-            /*
-             if (wNone){
-                $('#' + divName).append( '<input type="checkbox" onchange="addNone(this, \''+parStr+'\')"> None' );
+            $('#' + divName).append('<div id="' + slideName + '"  data-attr-par="'+parStr+'"></div>');
+            if ($('#'+divName).find('#'+inpName).length===0){
+                $('#' + divName).append('<input id="' + inpName + '" type="text" value="' + strtInp + '" style="display:none">');
             }
-             */
+            if ($('#'+divName).find('.reset').length===0){
+                $('#' + divName).append(  '<button class="reset" style="display:block;margin-top:18px" onclick=\'setSlider("' + slideName + '",true,0,0,' + String(isInt) + ', true,"'+parStr+'")\'>Clear Slider</button>');
+            }
+
+             $('#'+slideName).append(labelMin);
+
+             if (wNone){
+                $('#' + divName).append( '<span class="noneBut"><input type="checkbox"   onchange="addNone(this, \''+parStr+'\', true)"> None </span>');
+                $('#' + divName).find('.noneBut').find(':input')[0].checked = checked
+
+             }
+
 
             $('#' + slideName).slider({
-                values: [min, max],
+                values: [lower, upper],
                 step: step,
                 min: min,
                 max: max,
                 range: true,
                 disabled: is_cohort,
                 slide: function (event, ui) {
-                     $('#' + inpName).val(ui.values[0] + "-" + ui.values[1]);
-                    $(this).parent().find('.ui-slider-handle').each( function(index){
-                        $(this).find('.slide_tooltip').text( ui.values[index].toString() );
+                      $('#' + inpName).val(ui.values[0] + "-" + ui.values[1]);
+
+                     $(this).find('.slide_tooltip').each( function(index){
+                        $(this).text( ui.values[index].toString() );
+
                     });
+
                 },
 
                 stop: function (event, ui) {
-                    //   updateSliderSelection(inpDiv, displaySet, header, attributeName, isInt);
+                    //setFromSlider(divName, filtName, min, max);
+                    $('#' + slideName).addClass('used');
+                    var val = $('#' + inpName)[0].value;
+                    var valArr = val.split('-');
 
+                    window.setSlider(slideName, false, valArr[0], valArr[1], isInt, true);
+                    /*
+                    $('#' + slideName).addClass('used');
                     var val = $('#' + inpName)[0].value;
                     var valArr = val.split('-');
                     var attVal = [];
                     if (isInt) {
-                        //attVal = [parseInt(valArr[0]), parseInt(valArr[1])];
-                        // edge effect
-                        attVal = [parseInt(valArr[0]), parseInt(valArr[1]) - 1];
+                        attVal = [parseInt(valArr[0]), parseInt(valArr[1]) ];
                     } else {
                         attVal = [parseFloat(valArr[0]), parseFloat(valArr[1])];
                     }
@@ -549,37 +671,48 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     if (filtName.startsWith('tcga_clinical')) {
                         checkTcga();
                     }
-                    updatePlotBinsForSliders(slideName);
                     mkFiltText();
                     updateFacetsData(true);
-
+                    */
                 }
-            }).find('.ui-slider-handle').append(tooltip).hover(
+            }).find('.ui-slider-range').append(tooltipL).append(tooltipR);
+
+
+             $('#' + slideName).hover(
                     function(){
-                       $(this).parent().find('.slide_tooltip').show();
+                        //$(this).removeClass("ui-state-active");
+                       $(this).parent().find('.slide_tooltip');
                     }
                   ,
                     function(){
-                       $(this).parent().find('.slide_tooltip').hide();
+                       $(this).parent().find('.slide_tooltip');
                     }
                 );
 
 
-            $('#' + slideName).find(".ui-slider-handle").each(function(index){
+             $('#' + slideName).find(".slide_tooltip").each(function(index){
                         if (index ==0) {
-                            $(this).find('.slide_tooltip').text(min.toString());
+                            $(this).text(lower.toString());
                         }
                         else{
-                            $(this).find('.slide_tooltip').text(max.toString());
+                            $(this).text(upper.toString());
                         }
                    });
 
+             $('#'+slideName).attr('min',min);
+            $('#'+slideName).attr('max',max);
+
+
+            $('#' + slideName).data("filter-attr-id",attr_id);
+            $('#' + slideName).data("filter-display-attr",attr_name);
+
+            $('#'+slideName).append(labelMax);
 
 
             $('#'+ divName+'_list').addClass('hide');
             $('#'+ divName).find('.more-checks').addClass('hide');
             $('#'+ divName).find('.less-checks').addClass('hide');
-             $('#'+ divName).find('.hide-zeros').addClass('hide');
+            $('#'+ divName).find('.hide-zeros').addClass('hide');
         };
 
         var editProjectsTableAfterFilter = function (tableId, collFilt, collectionsData) {
@@ -607,8 +740,14 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 } else {
                     var projIndex = window.selItems.selProjects.indexOf(projId);
                     if (projIndex !==-1) window.selItems.selProjects.splice(projIndex,1);
-                    if (window.selItems.selStudies.hasOwnProperty(projId)) {
-                        delete window.selItems.selStudies[projId];
+                    if (window.selItems.selCases.hasOwnProperty(projId)) {
+                           selCases= window.selItems.selCases[projId];
+                           for (j=0;j<selCases.length;j++){
+                               var selCase = selCases[j];
+                               delete window.selItems.selStudies[selCase];
+                           }
+
+                        delete window.selItems.selCases[projId];
                     }
                     curRow.classList.add('hide');
                     curRow.classList.remove("selected_grey");
@@ -645,7 +784,12 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             tableElem.innerHTML = newInnerHTML;
         };
 
-        var resetSeriesAndStudiesTables = function (studyId, seriesId) {
+        var resetCasesAndStudiesAndSeriesTables = function (caseId, studyId, seriesId) {
+
+            tableElem = document.getElementById(caseId);
+            //var newInnerHTML = '<tr><th>Project Name</th><th>Patient Id</th><th>Study Id</th><th>Study Description</th></tr>';
+            tableElem.innerHTML = '';
+            window.resetTableControls ($('#'+caseId), false, 0);
 
             tableElem = document.getElementById(studyId);
             //var newInnerHTML = '<tr><th>Project Name</th><th>Patient Id</th><th>Study Id</th><th>Study Description</th></tr>';
@@ -671,40 +815,93 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 if (projPos > -1) {
                     window.selItems.selProjects.splice(projPos, 1);
                 }
-                if (projectId in window.selItems.selStudies) {
-                    delete window.selItems.selStudies[projectId];
+
+                if (projectId in window.selItems.selCases) {
+                    var selCases = window.selItems.selCases[projectId];
+                    for (var i=0;i<selCases.length;i++){
+                        var selCase = selCases[i];
+                        if (selCase in window.selItems.selStudies){
+                            delete window.selItems.selStudies[selCase];
+                        }
+                    }
+                    delete window.selItems.selCases[projectId];
                 }
-                removeStudiesAndSeries(projectId, "studies_table", "series_table")
+                removeCasesAndStudiesAndSeries(projectId, "cases_table","studies_table", "series_table");
 
             } else {
                 if (!(window.event.shiftKey)) {
                     $(projRow).parent().find('tr').removeClass("selected_grey");
                     window.selItems.selProjects = [];
+                    window.selItems.selCases ={};
                     window.selItems.selStudies = {};
-                    window.clearAllStudiesAndSeries("studies_table", "series_table");
+
+                    window.clearAllCasesAndStudiesAndSeries("cases_table","studies_table", "series_table");
 
                 }
                 $(projRow).addClass("selected_grey");
                 window.selItems.selProjects.push(projectId);
-                addStudyOrSeries([projectId], [], "studies_table", false);
+                addCases([projectId],"cases_table", false);
             }
         }
 
-        window.toggleStudy = function (studyRow, studyId, projectId) {
+        window.toggleCase = function (caseRow, caseId) {
+
+           var projectId = $(caseRow).find(".project-name").text();
+            if (caseRow.classList.contains("selected_grey")) {
+                $(caseRow).removeClass("selected_grey");
+
+                if (projectId in window.selItems.selCases) {
+                    var casePos = window.selItems.selCases[projectId].indexOf(caseId);
+                    if (casePos > -1) {
+                        window.selItems.selCases[projectId].splice(casePos, 1);
+                    }
+                    if (window.selItems.selCases[projectId].length===0){
+                        delete window.selItems.selCases[projectId];
+                    }
+                }
+                if (caseId in window.selItems.selStudies) {
+                    delete window.selItems.selStudies[caseId];
+                }
+
+
+                removeStudiesAndSeries(caseId,"case","studies_table", "series_table");
+
+            } else {
+                if (!(window.event.shiftKey)) {
+                    $(caseRow).parent().find('tr').removeClass("selected_grey");
+                    window.selItems.selCases = {};
+                    window.selItems.selStudies = {};
+                    window.clearAllStudiesAndSeries("studies_table", "series_table");
+
+                }
+                $(caseRow).addClass("selected_grey");
+                if (!(window.selItems.selCases.hasOwnProperty(projectId))){
+                    window.selItems.selCases[projectId] = new Array();
+                }
+                window.selItems.selCases[projectId].push(caseId);
+                //addCase([caseId],"cases_table", false);
+                addStudyOrSeries([projectId], [caseId],[], 'studies_table', false);
+            }
+        }
+
+
+        window.toggleStudy = function (studyRow, studyId, caseId, projectId) {
 
             if (studyRow.classList.contains("selected_grey")) {
                 $(studyRow).removeClass("selected_grey");
                 removeSeries(studyRow.id, "series_table");
-                if (window.selItems.selStudies.hasOwnProperty(projectId)) {
 
-                    studyPos = window.selItems.selStudies[projectId].indexOf(studyId);
+                if (window.selItems.selStudies.hasOwnProperty(caseId)) {
+
+                    studyPos = window.selItems.selStudies[caseId].indexOf(studyId);
                     if (studyPos > -1) {
-                        window.selItems.selStudies[projectId].splice(studyPos, 1);
-                        if (window.selItems.selStudies[projectId].length == 0) {
-                            delete window.selItems.selStudies[projectId];
+                        window.selItems.selStudies[caseId].splice(studyPos, 1);
+                        if (window.selItems.selStudies[caseId].length == 0) {
+                            delete window.selItems.selStudies[caseId];
                         }
                     }
                 }
+
             } else {
                 if (!(window.event.shiftKey)) {
                     $(studyRow).parent().find('tr').removeClass("selected_grey");
@@ -712,13 +909,13 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     window.clearAllSeries("series_table");
                 }
 
-                if (!(window.selItems.selStudies.hasOwnProperty(projectId))) {
-                    window.selItems.selStudies[projectId] = new Array();
+                if (!(window.selItems.selStudies.hasOwnProperty(caseId))) {
+                    window.selItems.selStudies[caseId] = new Array();
                 }
-                window.selItems.selStudies[projectId].push(studyId);
+                window.selItems.selStudies[caseId].push(studyId);
 
                 $(studyRow).addClass("selected_grey");
-                addStudyOrSeries([projectId], [studyId], "series_table", false);
+                addStudyOrSeries([projectId], [caseId],[studyId], "series_table", false);
             }
         };
 
@@ -733,14 +930,18 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             window.clearAllSeries(seriesTableId);
         };
 
-        window.removeStudiesAndSeries = function (projectId, studyTableId, seriesTableId) {
-            var pclass = "project_" + projectId;
-            var scrollPos = document.getElementById(studyTableId).scrollTop;
-            var studiesTable = document.getElementById(studyTableId);
-            //var remainingTrs = $('#' + studyTableId).find('tr').not('.project_' + projectId)
+        window.clearAllCasesAndStudiesAndSeries = function (caseTableId,studyTableId, seriesTableId) {
+            $('#' + caseTableId).find('tr').remove();
+            resetTableControls($('#' + caseTableId), true, 0);
+            window.clearAllStudiesAndSeries(studyTableId,seriesTableId);
+        };
 
-            var scrollPos = document.getElementById(studyTableId).scrollTop;
-            var remainingTrs = $('#' + studyTableId).find('tr').not('.project_' + projectId);
+
+
+        removeRowsFromTable = function(tableId,selId,selType){
+            var table = document.getElementById(tableId);
+            var scrollPos = table.scrollTop;
+            var remainingTrs = $('#' + tableId).find('tr').not('.'+selType+'_' + selId);
             var newScrollInd = Array.from(remainingTrs.map(function () {
                 return ((this.offsetTop <= scrollPos) ? 0 : 1)
             })).indexOf(1);
@@ -753,13 +954,34 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 }
             }
 
-            $('#' + studyTableId).find('.project_' + projectId).remove();
-            if (window.selItems.selStudies.hasOwnProperty(projectId)) {
-                delete window.selItems.selStudies[projectId];
-            }
-            resetTableControls($('#' + studyTableId), true, newScrollInd);
+            $('#' + tableId).find('.'+selType+'_' + selId).remove();
 
-            removeSeries(pclass, seriesTableId);
+        }
+
+        window.removeCasesAndStudiesAndSeries = function (projectId, caseTableId,studyTableId, seriesTableId) {
+             removeRowsFromTable(caseTableId, projectId, 'project');
+             if (window.selItems.selCases.hasOwnProperty(projectId)){
+                 var selCases = window.selItems.selCases[projectId]
+                 for (var i=0;i<selCases.length;i++){
+                     selCase = selCases[i];
+                     if (window.selItems.selStudies.hasOwnProperty(selCase)){
+                         delete window.selItems.selStudies[selCase];
+                     }
+                 }
+             }
+
+             removeStudiesAndSeries(projectId,'project', studyTableId, seriesTableId);
+
+        }
+
+        window.removeStudiesAndSeries = function (selId, selType, studyTableId, seriesTableId) {
+            //var pclass = "project_" + projectId;
+            removeRowsFromTable(studyTableId, selId, selType)
+            if ((selType==="case") && (window.selItems.selStudies.hasOwnProperty(selId))){
+                delete window.selItems.selStudies[selId];
+            }
+
+            removeRowsFromTable(seriesTableId,selId,selType);
         }
 
         window.removeSeries = function (selClass, seriesTableId) {
@@ -781,8 +1003,127 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             resetTableControls($('#' + seriesTableId), true, newScrollInd)
         }
 
+        window.addCases = function(projectIdArr, casetableId, refresh){
+            changeAjax(true);
+            var curSelCasesDic = new Object();
+            var newSelCases = new Object();
 
-        window.addStudyOrSeries = function (projectIdArr, studyIdArr, tableId, refresh) {
+            if (refresh) {
+                for (projectId in window.selItems.selCases) {
+                    curSelCasesDic[projectId] = new Object();
+                    for (var i = 0; i < window.selItems.selCases[projectId].length; i++) {
+                        var curCase = window.selItems.selCases[projectId][i];
+                        curSelCasesDic[projectId][curCase] = 1;
+                    }
+                }
+            }
+
+
+
+            curFilterObj = JSON.parse(JSON.stringify(parseFilterObj()));
+            curFilterObj.collection_id = projectIdArr;
+
+            var filterStr = JSON.stringify(curFilterObj);
+            var fields = ["collection_id", "PatientID","StudyInstanceUID","SeriesInstanceUID"];
+            var collapse_on = 'PatientID'
+            var order_docs = ["collection_id", "PatientID"];
+            var fieldStr = JSON.stringify(fields);
+            var orderDocStr = JSON.stringify(order_docs);
+            var uniques = JSON.stringify(["PatientID","StudyInstanceUID","SeriesInstanceUID"]);
+            let url = '/explore/?counts_only=False&is_json=True&with_clinical=True&collapse_on=' + collapse_on + '&filters=' + filterStr + '&fields=' + fieldStr + '&order_docs=' + orderDocStr+'&uniques='+uniques;
+            url = encodeURI(url);
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                type: 'get',
+                contentType: 'application/x-www-form-urlencoded',
+                success: function (data) {
+
+                    studyDic = new Object();
+                    if (data.hasOwnProperty('uniques') && data['uniques'].hasOwnProperty('unique_StudyInstanceUID') && data['uniques']['unique_StudyInstanceUID']['buckets']){
+                        for (i=0;i<data['uniques']['unique_StudyInstanceUID']['buckets'].length;i++){
+                            curSet= data['uniques']['unique_StudyInstanceUID']['buckets'][i];
+                            if (curSet.hasOwnProperty('val') && curSet.hasOwnProperty('unique_count')){
+                                studyDic[curSet['val']]=curSet['unique_count']
+                            }
+                        }
+
+                    }
+                    seriesDic = new Object();
+                    if (data.hasOwnProperty('uniques') && data['uniques'].hasOwnProperty('unique_SeriesInstanceUID') && data['uniques']['unique_SeriesInstanceUID']['buckets']){
+                        for (i=0;i<data['uniques']['unique_SeriesInstanceUID']['buckets'].length;i++){
+                            curSet= data['uniques']['unique_SeriesInstanceUID']['buckets'][i];
+                            if (curSet.hasOwnProperty('val') && curSet.hasOwnProperty('unique_count')){
+                                seriesDic[curSet['val']]=curSet['unique_count']
+                            }
+                        }
+
+                    }
+
+                    for (i = 0; i < data['origin_set']['docs'].length; i++) {
+                        var curData = data['origin_set']['docs'][i];
+                        var projectId = curData.collection_id;
+                        var patientId = curData.PatientID;
+                        var numStudy=0;
+                        if (studyDic.hasOwnProperty(patientId)){
+                            numStudy=studyDic[patientId];
+                        }
+                        var numSeries=0;
+                        if (seriesDic.hasOwnProperty(patientId)){
+                            numSeries=seriesDic[patientId];
+                        }
+
+
+                        var pclass = 'project_' + projectId;
+                        var newHtml = '';
+                        var rowId = 'case_' + patientId.replace(/\./g, '-');
+
+                        newHtml = '<tr id="' + rowId + '" class="' + pclass + ' text_head" onclick="(toggleCase(this,\'' + patientId + '\',\'' + projectId + '\'))">' +
+                                   '<td class="col1 project-name">' + projectId + '</td>' +
+                                    '<td class="col1 case-id">' + patientId +'</td>' +
+                                    '<td class="col1">' + numStudy.toString() + '</td>' +
+                                    '<td class="col1 ">' + numSeries.toString() + '</td>' +
+                                    '</tr>';
+
+
+
+                        $('#' + casetableId).append(newHtml);
+
+                        if (refresh && (curSelCasesDic.hasOwnProperty(projectId)) && (curSelCasesDic[projectId].hasOwnProperty(patientId)) ){
+                            $('#' + casetableId).find('#'+rowId).addClass("selected_grey");
+                            if ( !(newSelCases.hasOwnProperty(projectId))){
+                                newSelCases[projectId] = new Array();
+                            }
+                           newSelCases[projectId].push(patientId);
+                        }
+
+                    }
+
+                    changeAjax(false);
+                    resetTableControls($('#' + casetableId), false, 0);
+
+                    if (refresh){
+                        window.selItems.selCases = newSelCases;
+                        var caseArr = new Array();
+                        for (projId in window.selItems.selCases) {
+                        caseArr.push.apply(caseArr, window.selItems.selCases[projId]);
+                        }
+                        if (caseArr.length > 0) {
+                              addStudyOrSeries(window.selItems.selProjects, caseArr,[], "studies_table", true);
+                        }
+                    }
+
+
+                },
+                error: function () {
+                    changeAjax(false);
+                    console.log("problem getting data");
+                }
+            });
+
+        }
+
+        window.addStudyOrSeries = function (projectIdArr, caseIdArr, studyIdArr, tableId, refresh) {
 
             changeAjax(true);
             var curSelStudiesDic = new Object();
@@ -792,15 +1133,20 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             if (studyIdArr.length > 0) {
                 //curFilterObj.StudyInstanceUID = studyIdArr;
                 isSeries = true;
-            } else if (refresh) {
-                for (projId in window.selItems.selStudies) {
-                    curSelStudiesDic[projId] = new Object();
-                    for (var i = 0; i < window.selItems.selStudies[projId].length; i++) {
-                        var curStudy = window.selItems.selStudies[projId][i];
-                        curSelStudiesDic[projId][curStudy] = 1;
+            }
+
+
+            else if (refresh) {
+                for (caseId in window.selItems.selStudies) {
+                    curSelStudiesDic[caseId] = new Object();
+                    for (var i = 0; i < window.selItems.selStudies[caseId].length; i++) {
+                        var curStudy = window.selItems.selStudies[caseId][i];
+                        curSelStudiesDic[caseId][curStudy] = 1;
                     }
                 }
             }
+
+
 
            var curFilterObj = new Object();
            if (isSeries){
@@ -812,7 +1158,9 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                curFilterObj = JSON.parse(JSON.stringify(parseFilterObj()));
            }
             curFilterObj.collection_id = projectIdArr;
+            curFilterObj.PatientID = caseIdArr;
 
+            //curFilterObj={"Diameter_btw":[51,'*']}
 
             var filterStr = JSON.stringify(curFilterObj);
             var fields = ["collection_id", "PatientID", "StudyInstanceUID", "StudyDescription", "StudyDate"];
@@ -826,15 +1174,36 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
             var fieldStr = JSON.stringify(fields);
             var orderDocStr = JSON.stringify(order_docs);
-            let url = '/explore/?counts_only=False&is_json=True&with_clinical=True&collapse_on=' + collapse_on + '&filters=' + filterStr + '&fields=' + fieldStr + '&order_docs=' + orderDocStr;
-            url = encodeURI(url);
 
+
+
+            let url = '/explore/?counts_only=False&is_json=True&with_clinical=True&collapse_on=' + collapse_on + '&filters=' + filterStr + '&fields=' + fieldStr + '&order_docs=' + orderDocStr;
+            if (!isSeries){
+                var uniques = JSON.stringify(["StudyInstanceUID","SeriesInstanceUID"]);
+                url+='&uniques='+uniques;
+            }
+
+            url = encodeURI(url);
             $.ajax({
                 url: url,
                 dataType: 'json',
                 type: 'get',
                 contentType: 'application/x-www-form-urlencoded',
                 success: function (data) {
+
+                    if (!isSeries) {
+                        seriesDic = new Object();
+                        if (data.hasOwnProperty('uniques') && data['uniques'].hasOwnProperty('unique_SeriesInstanceUID') && data['uniques']['unique_SeriesInstanceUID']['buckets']) {
+                            for (i = 0; i < data['uniques']['unique_SeriesInstanceUID']['buckets'].length; i++) {
+                                curSet = data['uniques']['unique_SeriesInstanceUID']['buckets'][i];
+                                if (curSet.hasOwnProperty('val') && curSet.hasOwnProperty('unique_count')) {
+                                    seriesDic[curSet['val']] = curSet['unique_count']
+                                }
+                            }
+
+                        }
+                    }
+
                     //nstart = new Date().getTime();
                     for (i = 0; i < data['origin_set']['docs'].length; i++) {
                         var curData = data['origin_set']['docs'][i];
@@ -843,9 +1212,10 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                         var studyId = curData.StudyInstanceUID;
                         var ppStudyId = pretty_print_id(studyId);
                         var fetchUrl = DICOM_STORE_PATH + studyId;
-                        var hrefTxt = ppStudyId + '</a><span class="tooltiptext_ex">' + studyId + '</span>';
+                        var hrefTxt = ppStudyId + '</a>';
                         //var hrefTxt =  ppStudyId + '<span class="tooltiptext_ex">' + studyId + '</span>';
                         var pclass = 'project_' + projectId;
+                        var cclass = 'case_' + patientId;
                         var newHtml = '';
                         if (isSeries) {
                             var seriesId = curData.SeriesInstanceUID;
@@ -858,48 +1228,70 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                             var studyClass = 'study_' + studyId.replace(/\./g, '-');
                             var fetchUrlSeries = fetchUrl + '?SeriesInstanceUID=' + seriesId;
                             var hrefSeriesTxt = ppSeriesId + '<span class="tooltiptext_ex">' + seriesId + '</span>';
-                            var seriesTxt = ppSeriesId + '<span class="tooltiptext_ex">' + seriesId + '</span>';
+                            var seriesTxt =     ppSeriesId + '<span class="tooltiptext_ex">' + seriesId + '</span>';
 
-                            newHtml = '<tr id="' + rowId + '" class="' + pclass + ' ' + studyClass + ' text_head"><td class="col1 tooltip_ex">' + hrefTxt + '</td><td>' + seriesNumber + '</td><td class="col1">' + modality + '</td><td class="col1">' + bodyPartExamined + '</td><td>' + seriesDescription + '</td>';
-                            if ((modality ==='SEG') || (modality ==='SR')){
-                            newHtml += '<td class="ohif greyout tooltip_ex"><span class="tooltiptext_ex">Viewer is only available for series with an imaging modality</span><a   href="/" onclick="return false;"><img src="' + STATIC_FILES_URL + 'img/ohif_sm.png"></a></td></tr>';
+                            newHtml = '<tr id="' + rowId + '" class="' + pclass + ' ' + cclass + ' ' + studyClass + ' text_head">' +
+                                '<td class="col1 study-id study-id-col" data-study-id="'+studyId+'">' + hrefTxt + '</td>' +
+                                '<td class="series-number">' + seriesNumber + '</td>' +
+                                '<td class="col1 modality">' + modality + '</td>' +
+                                '<td class="col1 body-part-examined">' + bodyPartExamined + '</td>' +
+                                '<td class="series-description">' + seriesDescription + '</td>';
+                            if ((modality ==='SEG') || (modality ==='RTSTRUCT') || (modality==='RTPLAN' ) || (modality==='RWV' ) ){
+                                newHtml += '<td class="ohif open-viewer"><a href="/" onclick="return false;"><i class="fa fa-eye-slash no-viewer-tooltip"></i></td></tr>';
+
                             }
                             else {
-                            newHtml += '<td class="ohif"><a   href="' + fetchUrlSeries + '" target="_blank"><img src="' + STATIC_FILES_URL + 'img/ohif_sm.png"></a></td></tr>';
+                                newHtml += '<td class="ohif open-viewer"><a href="' + fetchUrlSeries + '" target="_blank"><i class="fa fa-eye"></i></td></tr>';
                             }
                         }
-                          else{
+
+                        else{
                             var studyDescription = curData.StudyDescription;
                             //var studyDate = curData.StudyDate;
                             var rowId = 'study_' + studyId.replace(/\./g, '-');
 
-                            if (refresh && (projectId in curSelStudiesDic) && (studyId in curSelStudiesDic[projId])) {
-                                if (!(projectId in newSelStudies)) {
-                                    newSelStudies[projectId] = new Array();
-                                }
-                                newSelStudies[projectId].push(studyId);
+                            var numSeries=0;
+                            if (seriesDic.hasOwnProperty(studyId)){
+                                numSeries=seriesDic[studyId];
+                           }
 
-                                newHtml = '<tr id="' + rowId + '" class="' + pclass + ' text_head selected_grey" onclick="(toggleStudy(this,\'' + studyId + '\',\'' + projectId + '\'))"><td class="col1">' + projectId + '</td><td class="col1">' + patientId + '</td><td class="col2 tooltip_ex">' + hrefTxt + '</td><td class="col1">' + studyDescription + '</td><td class="ohif"><a  href="' + fetchUrl + '" target="_blank"><img src="'+STATIC_FILES_URL+'img/ohif_sm.png"></a></td></tr>'
+                            newHtml = '<tr id="' + rowId + '" class="' + pclass + ' ' + cclass +' text_head" onclick="(toggleStudy(this,\'' + studyId + '\',\'' + patientId + '\',\''+projectId + '\'))">' +
+                                //'<td class="col1 project-name">' + projectId + '</td>' +
+                                 '<td class="col1 case-id">' + patientId + '</td>'+
+                                '<td class="col2 study-id study-id-col" data-study-id="'+studyId+'">' + hrefTxt + '</td>' +
+                                '<td class="col1 study-description">' + studyDescription + '</td>' +
+                                '<td class="col1 ">' + numSeries.toString() + '</td>'+
+                                '<td class="ohif open-viewer"><a  href="' + fetchUrl + '" target="_blank"><i class="fa fa-eye"></i></a></td></tr>'
 
-                            } else {
-                                newHtml = '<tr id="' + rowId + '" class="' + pclass + ' text_head" onclick="(toggleStudy(this,\'' + studyId + '\',\'' + projectId + '\'))"><td class="col1">' + projectId + '</td><td class="col1">' + patientId + '</td><td class="col2 tooltip_ex">' + hrefTxt + '</td><td class="col1">' + studyDescription + '</td><td class="ohif"><a  href="' + fetchUrl + '" target="_blank"><img src="'+STATIC_FILES_URL+'img/ohif_sm.png"></a></td></tr>'
-                            }
                         }
-                        //var rowId='study_'+projectId+'_'+patientIndex[patientId].toString()+"_"+studyIndex[studyId].toString();
 
-
-                        //document.getElementById(tableId).innerHTML += newHtml;
                         $('#' + tableId).append(newHtml);
+                        if ( !isSeries && refresh && (patientId in curSelStudiesDic) && (studyId in curSelStudiesDic[patientId])) {
+                            $('#' + tableId).find('#'+ rowId).addClass("selected_grey");
+                            if (!(patientId in newSelStudies)) {
+                                newSelStudies[patientId] = new Array();
+                            }
+                            newSelStudies[patientId].push(studyId);
+                        }
+
 
                     }
+
                     //newScrollInd = findScrollInd(tableId);
                     resetTableControls($('#' + tableId), false, 0);
 
                     /* nend = new Date().getTime();
                     diff = nend - nstart;
                     alert(diff); */
-                    if (refresh && !isSeries) {
+                     if (refresh && !isSeries) {
                         window.selItems.selStudies = newSelStudies;
+                        var studyArr = new Array();
+                        for (caseId in window.selItems.selStudies) {
+                             studyArr.push.apply(studyArr, window.selItems.selStudies[caseId]);
+                        }
+                        if (studyArr.length > 0) {
+                              addStudyOrSeries(projectIdArr, caseIdArr,studyArr, "series_table", true);
+                        }
                     }
                     changeAjax(false);
                 },
@@ -1213,7 +1605,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                         reformDic[listId][item]['count'] = progDic[item]['val'];
                     }
 
-                    else if (item === 'tcga'){
+                    else if (item.toLowerCase() === 'tcga'){
                         reformDic[listId][item]=new Object();
                         reformDic[listId][item]['count'] = progDic[item]['val'];
                         reformDic[item] =  new Object();
@@ -1245,7 +1637,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                       */
                 }
             }
-            updateFilterSelections('program_set', reformDic);
+            updateFilterSelections('program_set', {'unfilt':reformDic});
         }
         var updateCollectionTotals_old = function (listId, progDic) {
             //dic.val dic.projects
@@ -1277,37 +1669,38 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             filtObj = new Object();
             for (ckey in window.filterObj){
                 if (ckey ==='Program'){
-
                     for (ind=0;ind<window.filterObj[ckey].length;ind++){
                         program = window.filterObj[ckey][ind];
                         if (program in window.projSets){
                             if (!('Program.'+program in window.filterObj)){
                                collObj= collObj.concat(window.projSets[program]);
                             }
-                        }
-                        else {
+                        } else {
                             collObj.push(program);
                         }
                     }
-                }
-                else if (ckey.startsWith('Program.')){
+                } else if (ckey.startsWith('Program.')){
                      for (ind=0;ind<window.filterObj[ckey].length;ind++){
                          collObj.push(window.filterObj[ckey][ind]);
                      }
-                }
-                else{
+                } else {
                     nmA = ckey.split('.');
                     nm=nmA[nmA.length-1];
-                    if (nm.endsWith('_btw')){
-                        if ('rng' in window.filterObj[ckey]){
+                    if (nm.endsWith('_rng')){
+                        if (window.filterObj[ckey].type==='none'){
+                            nm=nm.replace('_rng','');
+                        } else {
+                            nm = nm.replace('_rng', '_' + window.filterObj[ckey].type);
+                        }
+                        if (  ('rng' in window.filterObj[ckey]) && ('none' in window.filterObj[ckey]) ){
+                            filtObj[nm] = [window.filterObj[ckey]['rng'],'None']
+                        } else if ('rng' in window.filterObj[ckey]){
                             filtObj[nm] = window.filterObj[ckey]['rng']
+                        } else if ('none' in window.filterObj[ckey]){
+                            noneKey=nm.replace('_rng','');
+                            filtObj[noneKey]=['None'];
                         }
-                        if ('none' in window.filterObj[ckey]){
-                            noneKey=nm.replace('_btw','');
-                            filtObj[noneKey]='None';
-                        }
-                    }
-                    else {
+                    } else {
                         filtObj[nm] = window.filterObj[ckey];
                     }
                 }
@@ -1324,8 +1717,8 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             var url = '/explore/?counts_only=True&is_json=true&is_dicofdic=True&data_source_type=' + ($("#data_source_type option:selected").val() || 'S');
             var parsedFiltObj=parseFilterObj();
             if (Object.keys(parsedFiltObj).length > 0) {
-
-                url += '&filters=' + JSON.stringify(parsedFiltObj);
+                 url += '&filters=' + JSON.stringify(parsedFiltObj);
+                 //url += '&filters='+JSON.stringify({"age_at_diagnosis":['None' ]});
             }
 
             url = encodeURI(url);
@@ -1338,40 +1731,116 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 type: 'get',
                 contentType: 'application/x-www-form-urlencoded',
                 success: function (data) {
+                    var isFiltered = Boolean($('#search_def p').length>0);
+                    if (is_cohort) {
+                        if (data.file_parts_count > data.display_file_parts_count) {
+                            $('#file-export-option').prop('title', 'Your cohort exceeds the maximum for download.');
+                            $('#file-export-option input').prop('disabled', 'disabled');
+                            $('#file-export-option input').prop('checked', false);
+                            $('#file-manifest').hide();
+                            if(!user_is_social) {
+                                $('#need-social-account').show();
+                            } else {
+                                $('#file-manifest-max-exceeded').show();
+                                $('#bq-export-option input').prop('checked', true).trigger("click");
+                            }
+                        } else {
+                            $('#file-manifest-max-exceeded').hide();
+                            $('#file-manifest').show();
+
+                            var select_box_div = $('#file-part-select-box');
+                            var select_box = select_box_div.find('select');
+                            if (data.file_parts_count > 1) {
+                                select_box_div.show();
+                                for (let i = 0; i < data.display_file_parts_count; ++i) {
+                                    select_box.append($('<option/>', {
+                                        value: i,
+                                        text : "File Part " + (i + 1)
+                                    }));
+                                }
+                            } else {
+                                select_box_div.hide();
+                            }
+                        }
+                    } else {
+                        if (isFiltered && data.total > 0){
+                            $('#save-cohort-btn').prop('disabled','');
+                            if(user_is_auth) {
+                                $('#save-cohort-btn').prop('title','');
+                            }
+                        } else {
+                            $('#save-cohort-btn').prop('disabled','disabled');
+                            if(user_is_auth) {
+                                $('#save-cohort-btn').prop('title',data.total > 0 ? 'Please select at least one filter.' : 'There are no cases in this cohort.');
+                            } else {
+                                $('#save-cohort-btn').prop('title','Log in to save.');
+                            }
+                        }
+                    }
                     //updateCollectionTotals(data.total, data.origin_set.attributes.collection_id);
                     updateCollectionTotals('Program', data.programs);
                     //updateFilterSelections('search_orig_set', data.origin_set.All.attributes);
 
-                    updateFilterSelections('search_orig_set', data.origin_set.All.attributes);
+                    dicofdic= {'unfilt': data.origin_set.All.attributes, 'filt':''}
+                    if (isFiltered){
+                        dicofdic['filt']=data.filtered_counts.origin_set.All.attributes;
+                    } else {
+                        dicofdic['filt']=data.origin_set.All.attributes;
+                    }
+
+                    updateFilterSelections('search_orig_set', dicofdic);
                     createPlots('search_orig_set');
 
                     var derivedAttrs = Array.from($('#search_derived_set').children('.list-group').children('.list-group-item').children('.list-group-item__body').map( function() {return this.id;}  ));
 
-                    if (data.hasOwnProperty('derived_set')) {
+                     if (data.hasOwnProperty('derived_set')) {
                         $('#search_derived_set').removeClass('disabled');
                         for (facetSet in data.derived_set){
                             if ('attributes' in data.derived_set[facetSet]){
-                                updateFilterSelections(data.derived_set[facetSet].name, data.derived_set[facetSet].attributes);
+
+                                dicofdic = {'unfilt': data.derived_set[facetSet].attributes, 'filt': ''}
+                                if (isFiltered && data.filtered_counts.hasOwnProperty('derived_set')
+                                    && data.filtered_counts.derived_set.hasOwnProperty(facetSet)
+                                    && data.filtered_counts.derived_set[facetSet].hasOwnProperty('attributes')
+                                ) {
+                                    dicofdic['filt'] = data.filtered_counts.derived_set[facetSet].attributes;
+                                }
+                                else if (isFiltered)
+                                    {
+                                    dicofdic['filt'] = {};
+                                }
+                                else{
+                                    dicofdic['filt'] = data.derived_set[facetSet].attributes;
+                                }
+                                updateFilterSelections(data.derived_set[facetSet].name, dicofdic);
                                 var derivedAttrIndex = derivedAttrs.indexOf(data.derived_set[facetSet].name);
-                                if (derivedAttrIndex>-1){
+
+                                if (derivedAttrIndex>-1) {
                                     derivedAttrs.splice(derivedAttrIndex,1);
                                 }
                             }
                         }
-                    }
-                    else{
+                    } else{
                         $('#search_derived_set').addClass('disabled');
                     }
-
 
                     for (var i=0; i< derivedAttrs.length;i++) {
                         updateFilterSelections(derivedAttrs[i], {});
                     }
+
                     createPlots('search_derived_set');
 
                     if (data.hasOwnProperty('related_set')) {
                         $('#search_related_set').removeClass('disabled');
-                        updateFilterSelections('search_related_set', data.related_set.All.attributes);
+                        dicofdic = {'unfilt':data.related_set.All.attributes, 'filt':''  }
+                        if (isFiltered){
+                            dicofdic['filt'] = data.filtered_counts.related_set.All.attributes;
+                        }
+                        else{
+                            dicofdic['filt'] = data.related_set.All.attributes;
+                        }
+
+                        updateFilterSelections('search_related_set', dicofdic);
                         //createPlots('tcga_clinical');
                     }
                     else{
@@ -1380,6 +1849,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     }
 
                     createPlots('search_related_set');
+
                     var collFilt = new Array();
                     if ('collection_id' in parsedFiltObj){
                         collFilt=parsedFiltObj['collection_id'];
@@ -1400,17 +1870,25 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     }
 
                     editProjectsTableAfterFilter('projects_table', collFilt,data.origin_set.All.attributes.collection_id);
-                    resetSeriesAndStudiesTables('series_table', 'studies_table');
-                    var studyArr = new Array();
-                    for (projId in window.selItems.selStudies) {
-                        studyArr.push.apply(studyArr, window.selItems.selStudies[projId]);
+                    resetCasesAndStudiesAndSeriesTables('cases_table','studies_table','series_table' );
+
+                    if (window.selItems.selProjects.length > 0) {
+                        addCases(window.selItems.selProjects,  "cases_table", true);
                     }
+
+                     if ($('#hide-zeros')[0].checked) {
+                         addSliders('quantitative', false, true,'');
+                         addSliders('tcga_clinical',false, true,'tcga_clinical.');
+                     }
+
+
+                    /*
                     if (window.selItems.selProjects.length > 0) {
                         addStudyOrSeries(window.selItems.selProjects, [], "studies_table", true);
                     }
                     if (studyArr.length > 0) {
                         addStudyOrSeries(window.selItems.selProjects, studyArr, "series_table", true);
-                    }
+                    } */
 
                     if (newFilt) {
                         histObj = new Object();
@@ -1453,18 +1931,39 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             var listId = plotId.replace('_chart','_list');
             var filterId = plotId.replace('_chart','');
 
-            var isSlider = $('#'+filterId).find('#'+filterId+'_slide').length>0 ? true : false;
+            var isSlider = $('#'+filterId).hasClass('hasSlider') ? true : false;
             if (isSlider) {
+                var maxx = Math.ceil(parseInt(maxx=$('#' + filterId).attr('data-max')));
+                var minx= Math.floor(parseInt($('#' + filterId).attr('data-min')));
 
-                maxx =$('#'+filterId).data('attr-max').toString();
+                var parStr = $('#'+filterId).find('#'+filterId+'_slide').data('attr-par');
 
-                var selArr = label.split(' To ');
-                var strt = parseInt((selArr[0] === '*') ? '0' : selArr[0]);
-                var end = parseInt((selArr[1] === '*') ? maxx : selArr[1]);
-                setSlider(filterId+"_slide", false, strt, end, true,true);
+
+                if(label == 'None') {
+
+                     //var inpElem = $('#'+filterId).find('.noneBut')[0];
+                    /*
+                    if ($('#'+filterId).find('.noneBut').length>0) {
+                       var inpElem = $('#'+filterId).find('.noneBut')[0];
+                       inpElem.checked=true;
+                       window.addNone(inpElem,parStr,false);
+                     }
+                    setSlider(filterId+"_slide", true, 0, maxx, true,true);
+                    */
 
                 }
-            else{
+                else {
+                    if (! (typeof(inpElem)==="undefined")){
+                        inpElem.checked=false;
+                        var parStr = $(inpElem).data("attr-par");
+                        window.addNone(inpElem,parStr,false);
+                    }
+                    var selArr = label.split(' To ');
+                    var strt = parseInt((selArr[0] === '*') ? '0' : selArr[0]);
+                    var end = parseInt((selArr[1] === '*') ? maxx : selArr[1]);
+                    setSlider(filterId+"_slide", false, strt, end, true,true);
+                }
+            } else {
                 var inputList = $('#' + listId).find(':input');
                 for (var i = 0; i < inputList.length; i++) {
                     var curLabel = $(inputList[i]).parent().children()[1].innerHTML;
@@ -1490,6 +1989,14 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             var margin = 50;
             var radius = Math.min(width, height) / 2 - margin;
             var radiusB = 1.2*radius;
+            var mx =0;
+            var mn =0;
+
+            var filterId=plotId.replace("_chart","");
+            if ( $('#'+filterId).attr('max') ) {
+                //var mn = $('#' + slideId).data('min');
+                var mx = $('#' + filterId).attr('max');
+            }
 
             // append the svg object to the div called 'my_dataviz'
             var svg = d3.select("#"+plotId)
@@ -1535,23 +2042,38 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
              var pieg=svg.append("g")
              .attr("transform", "translate(" + width / 2 + "," + (height / 2 + shifty) + ")");
             var data = new Object;
-             rng= new Array();
-             spcing = 1.0/parseFloat(plotData.dataCnt.length);
+             var nonZeroLabels= new Array();
+             //spcing = 1.0/parseFloat(plotData.dataCnt.length);
              var tot=0;
 
-             for (i=0;i<plotData.dataCnt.length;i++) {
+              for (i=0;i<plotData.dataCnt.length;i++) {
                var pkey = plotData.dataLabel[i];
                var cnt = plotData.dataCnt[i];
                data[pkey]=cnt;
                tot+=cnt;
-               rng.push(parseFloat(i)*parseFloat(spcing));
+               if (cnt>0){
+                   nonZeroLabels.push(pkey);
+               }
+               //rng.push(parseFloat(i)*parseFloat(spcing));
              }
              $('#'+plotId).data('total',tot.toString());
 
            // set the color scale
            var color = d3.scaleOrdinal()
-           .domain(plotData.dataLabel)
+           .domain(nonZeroLabels)
            .range(d3.schemeCategory10);
+
+           // don't color last pie slice the same as first
+           var colorPie = function(lbl){
+             var col="";
+               if ( (nonZeroLabels.length>1) & (lbl === nonZeroLabels[nonZeroLabels.length-1]) && (color(nonZeroLabels[0])===color(lbl))  ){
+                        col=color(nonZeroLabels[5]);
+               }
+               else{
+                   col=color(lbl);
+               }
+               return col;
+           }
 
            // Compute the position of each group on the pie:
           var pie = d3.pie()
@@ -1569,7 +2091,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
           .outerRadius(radius)
           )
           .attr('fill', function(d){ return(
-            color(d.data.key)  )
+            colorPie(d.data.key)  )
            })
           .attr("stroke", "black")
           .style("stroke-width", "0px")
@@ -1585,7 +2107,9 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                txtbx.selectAll('*').attr("x",xpos);
                txtbx.selectAll('*').attr("y",ypos+30);
                tspans=txtbx.node().childNodes;
-               tspans[0].textContent = d.data.key;
+
+
+               tspans[0].textContent = d.data.key.replace('* To',mn.toString()+' To').replace('To *', 'To '+mx.toString());
                tspans[1].textContent = d.data.value;
                tspans[2].textContent = frac.toString()+"%";
                txtbx.attr("opacity",1);
@@ -1615,6 +2139,13 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
         txtbx.append("tspan").attr("x","0px").attr("y","0px").attr("dy",20);
         txtbx.append("tspan").attr("x","0px").attr("y","0px").attr("dy",40);
         txtbx.attr("opacity",0);
+
+        if (tot===0){
+            txtbx.attr('text-anchor','middle');
+            tspans=txtbx.node().childNodes;
+            tspans[0].textContent = "No Data Available";
+            txtbx.attr("opacity",1);
+        }
 
         }
 
@@ -1673,15 +2204,11 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 return height - yScale(d.cnt);
             });
 
-        }
-
-
-
-
+        };
 
         var findFilterCats = function (id, wCheckBox) {
             filterCats = new Array();
-            listElems = $('#' + id).find('.list-group-item__body');
+            listElems = $('#' + id).find('.list-group-item__body, .collection-list, .list-group-sub-item__body');
             if (wCheckBox){
                 listElems = listElems.children('.search-checkbox-list').parent()
             }
@@ -1749,19 +2276,51 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
         }
 
         var updateFilters = function (filterCat, dic, dataFetched) {
-            var allListItems=$('#'+filterCat).children('ul').children('li');
-            var allFilters=allListItems.children().children('input:checkbox');
-            var checkedFilters=allListItems.children().children('input:checked');
             var showZeros = true;
-            if ( ($('#'+filterCat).closest('.search-configuration').find('#hide-zeros').length>0)  && ($('#'+filterCat).closest('.search-configuration').find('#hide-zeros')[0].checked)){
+            var isSearchConf = ($('#'+filterCat).closest('.search-configuration').find('#hide-zeros').length>0);
+
+            if ( isSearchConf  && ($('#'+filterCat).closest('.search-configuration').find('#hide-zeros').prop('checked'))){
                 showZeros = false;
             }
 
-
+            /*
 
             if ( ($('#' + filterCat).children('.hide-zeros').length>0) &&  ($('#' + filterCat).children('.hide-zeros').hasClass("notDisp")) ){
                 showZeros = false;
             }
+
+             */
+
+            if (  $('#'+filterCat).hasClass('isQuant') && dataFetched){
+                if (dic.hasOwnProperty('unfilt') && dic['filt'].hasOwnProperty('min_max') ){
+                    if (dic['unfilt']['min_max'].hasOwnProperty('min')) {
+                        $('#' + filterCat).attr('data-curmin', dic['unfilt']['min_max']['min']);
+                    }
+                    else{
+                        $('#'+filterCat).attr('data-curmin','NA');
+                    }
+                    if (dic['unfilt']['min_max'].hasOwnProperty('max')) {
+                        $('#' + filterCat).attr('data-curmax', dic['unfilt']['min_max']['max']);
+                    }
+                    else{
+                        $('#'+filterCat).attr('data-curmax','NA');
+                    }
+                }
+
+                else{
+                    $('#'+filterCat).attr('data-curmin','NA');
+                    $('#'+filterCat).attr('data-curmax','NA');
+                }
+
+
+             }
+
+
+
+            var allListItems=$('#'+filterCat).children('ul').children('li');
+            var allFilters=allListItems.children().children('input:checkbox');
+            var checkedFilters=allListItems.children().children('input:checked');
+
             var showExtras = false;
             if ( ($('#' + filterCat).children('.more-checks').length>0) && $('#' + filterCat).children('.more-checks').hasClass("notDisp")) {
                 showExtras = true;
@@ -1773,33 +2332,49 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             for (var i = 0; i < allFilters.length; i++) {
                 var elem = allFilters.get(i);
                 var val = $(elem)[0].value;
-                var checked = $(elem)[0].checked;
+                var checked = $(elem).prop('checked');
 
                 var spans = $(elem).parent().find('span');
                 var lbl = spans.get(0).innerHTML;
-                var oldCnt = parseInt(spans.get(1).innerHTML);
-                var cnt=''
-                if (dataFetched && dic.hasOwnProperty(val) ){
-                    cnt = String(dic[val].count)
+
+                var oldCntUf = parseInt(spans.filter('.case_count')[0].innerHTML);
+                var cntUf=0
+                if (dataFetched && dic.hasOwnProperty('unfilt') && dic['unfilt'].hasOwnProperty(val)) {
+                    cntUf = dic['unfilt'][val].count
                 }
                 else if (dataFetched){
-                    cnt = String('0');
+                    cntUf = 0;
                 }
                 else{
-                    cnt = oldCnt;
+                    cntUf = oldCntUf;
                 }
 
-                spans.get(1).innerHTML = cnt;
+                spans.filter('.case_count')[0].innerHTML = cntUf.toString();
+
+                if (spans.filter('.plot_count').length>0) {
+                    var oldCntF = parseInt(spans.filter('.plot_count')[0].innerHTML);
+                    var cntF = 0
+                    if (dataFetched && dic.hasOwnProperty('filt') && dic['filt'].hasOwnProperty(val)) {
+                        cntF = dic['filt'][val].count
+                    } else if (dataFetched) {
+                        cntF = 0;
+                    } else {
+                        cntF = oldCntF;
+                    }
+
+                    spans.filter('.plot_count')[0].innerHTML = cntF.toString();
+                }
 
 
-                if ( (cnt>0) || checked)  {
+
+                if ( (cntUf>0) || checked)  {
                     $(elem).parent().parent().removeClass('zeroed');
                 }
                 else {
                     $(elem).parent().parent().addClass('zeroed');
                 }
 
-                if ( (cnt>0) || checked || showZeros) {
+                if ( (cntUf>0) || checked || showZeros) {
                       numAttrAvail++;
                 }
 
@@ -1810,22 +2385,38 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     $(elem).parent().parent().removeClass('extra-values');
                 }
 
-                if ( ( (cnt>0) || checked || showZeros ) && (showExtras || (numAttrAvail<6)) ) {
+                if ( ( (cntUf>0) || checked || showZeros ) && (showExtras || (numAttrAvail<6)) ) {
                       $(elem).parent().parent().show();
                 }
                 else {
                     $(elem).parent().parent().hide();
                 }
 
-
-                if (checked || allUnchecked) {
-                    $(spans.get(1)).addClass('plotit');
-                } else {
-                    $(spans.get(1)).removeClass('plotit');
+               /* if (!hasSlider) {
+                    if (checked || allUnchecked) {
+                        $(spans.filter('.plot_count')).addClass('plotit');
+                    } else {
+                        $(spans.filter('.plot_count')).removeClass('plotit');
+                    }
                 }
+
+                */
             }
 
-
+            if (numAttrAvail==0 && (allFilters.length>0)){
+                $('#' + filterCat+'_heading').find('.fa').attr('style','display:none');
+                $('#' + filterCat+'_heading').find('a').attr('aria-disabled','true');
+               $('#' + filterCat+'_heading').addClass('greyout');
+                //$('#' + filterCat).hide();a
+                if ($('#' + filterCat+'_heading').children('a').attr('aria-expanded') === 'true'){
+                    $('#' + filterCat+'_heading').children('a').click();
+                }
+            }
+            else if ((numAttrAvail>0) && (allFilters.length>0) && ($('#' + filterCat+'_heading').hasClass('greyout'))){
+                $('#' + filterCat+'_heading').removeClass('greyout');
+                $('#' + filterCat+'_heading').find('a').removeAttr('aria-disabled');
+                $('#' + filterCat+'_heading').find('.fa').attr("style","font-family :'FontAwesome' !important");
+            }
             if ( numAttrAvail < 6)  {
                     $('#' + filterCat).children('.more-checks').hide();
                     $('#' + filterCat).children('.less-checks').hide();
@@ -1837,7 +2428,19 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             }
 
             else {
-                 $('#' + filterCat).children('.more-checks').show();
+                var numMore;
+                var allListItems
+                if (showZeros){
+                    numMore = Math.max(allListItems.length-5,0);
+                }
+                else{
+                    numMore = Math.max(allListItems.filter('.zeroed').length-5,0);
+                }
+                $('#' + filterCat).children('.more-checks').show();
+                if ($('#' + filterCat).children('.more-checks').children('.show-more').length>0){
+                    $('#' + filterCat).children('.more-checks').children('.show-more')[0].innerText="show "+numMore.toString()+" more";
+                }
+
                 $('#' + filterCat).children('.less-checks').hide();
             }
 
@@ -1845,25 +2448,34 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
         }
 
-        window.hideAtt = function(){
-            var filtSet = ["search_orig_set","segmentation","quantitative","qualitative","search_related_set"];
+        window.hideAtt = function(hideElem){
+
+            var filtSet = ["search_orig_set","segmentation","quantitative","qualitative","tcga_clinical"];
             for (var i=0;i<filtSet.length;i++) {
                 filterCats = findFilterCats(filtSet[i], false);
                 for (var j = 0; j < filterCats.length; j++) {
                         updateFilters(filterCats[j],{},false);
                 }
             }
+            addSliders('quantitative', false, hideElem.checked,'');
+            addSliders('tcga_clinical',false, hideElem.checked,'tcga_clinical.');
         }
 
         var updateFilterSelections = function (id, dicofdic) {
             filterCats = findFilterCats(id,false);
             for (i = 0; i < filterCats.length; i++) {
                 cat = filterCats[i]
-                if (dicofdic.hasOwnProperty(cat)) {
-                    updateFilters(filterCats[i], dicofdic[cat], true);
-                } else {
-                    updateFilters(filterCats[i], '', true);
+                filtDic={'unfilt':'', 'filt':''}
+
+                if ( (dicofdic.hasOwnProperty('unfilt')) &&  (dicofdic['unfilt'].hasOwnProperty(cat)))
+                {
+                    filtDic['unfilt']=dicofdic['unfilt'][cat]
                 }
+                if ( (dicofdic.hasOwnProperty('filt')) && (dicofdic['filt'].hasOwnProperty(cat))  )
+                {
+                    filtDic['filt']=dicofdic['filt'][cat]
+                }
+                updateFilters(filterCats[i], filtDic, true);
             }
         };
 
@@ -1871,17 +2483,17 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
              if ( !('Program' in window.filterObj) ){
                     window.filterObj['Program'] = new Array();
                 }
-                if (window.filterObj['Program'].indexOf('tcga')<0) {
-                    window.filterObj['Program'].push('tcga');
-                    window.filterObj['Program.tcga'] = ['tcga_blca','tcga_brca','tcga_cesc','tcga_coad','tcga_esca','tcga_gbm','tcga_hnsc','tcga_kich','tcga_kirc','tcga_kirp','tcga_lgg','tcga_lihc','tcga_luad','tcga_lusc','tcga_ov','tcga_prad','tcga_read','tcga_sarc','tcga_stad','tcga_thca','tcga_ucec'];
-                    $('#tcga_heading').parent().find('input:checkbox').prop('checked',true);
-                    $('#tcga_heading').parent().find('input:checkbox').prop('indeterminate',false);
+                if (window.filterObj['Program'].indexOf('TCGA')<0) {
+                    window.filterObj['Program'].push('TCGA');
+                    window.filterObj['Program.TCGA'] = ['tcga_blca','tcga_brca','tcga_cesc','tcga_coad','tcga_esca','tcga_gbm','tcga_hnsc','tcga_kich','tcga_kirc','tcga_kirp','tcga_lgg','tcga_lihc','tcga_luad','tcga_lusc','tcga_ov','tcga_prad','tcga_read','tcga_sarc','tcga_stad','tcga_thca','tcga_ucec'];
+                    $('#TCGA_heading').parent().find('input:checkbox').prop('checked',true);
+                    $('#TCGA_heading').parent().find('input:checkbox').prop('indeterminate',false);
                 }
 
         };
 
         var resetTcgaFilters = function(){
-            if ( ('Program' in window.filterObj) && (window.filterObj['Program'].indexOf('tcga')<0 )){
+            if ( ('Program' in window.filterObj) && (window.filterObj['Program'].indexOf('TCGA')<0 )){
                 $('#tcga_clinical').find('input:checkbox').prop('checked',false);
                 setSlider('age_at_diagnosis_slide',true,0,0,true, false);
                 var attKey =  Object.keys(window.filterObj);
@@ -1895,9 +2507,9 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
 
         var checkFilters = function(filterElem) {
-            var checked = $(filterElem)[0].checked;
-            var neighbours =$(filterElem).parentsUntil('.list-group-item__body','ul').children().children().children('input:checkbox');
-            var neighboursCk = $(filterElem).parentsUntil('.list-group-item__body','ul').children().children().children(':checked');
+            var checked = $(filterElem).prop('checked');
+            var neighbours =$(filterElem).parentsUntil('.list-group-item__body, .list-group-sub-item__body','ul').children().children().children('input:checkbox');
+            var neighboursCk = $(filterElem).parentsUntil('.list-group-item__body, .list-group-sub-item__body','ul').children().children().children(':checked');
             var allChecked= false;
             var noneChecked = false;
             if (neighboursCk.length===0){
@@ -1924,9 +2536,8 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                      filtnm=checkBox.value;
                      hasCheckBox = true;
                      numCheckBoxes++;
-                }
-                else {
-                    filtnm=$(filterCat).children('.list-group-item__body, .collection-list')[0].id;
+                } else {
+                    filtnm=$(filterCat).children('.list-group-sub-item__body, .list-group-item__body, .collection-list')[0].id;
                     if  ($(filterCat).children('.list-group-item__heading').children('input:checkbox').length>0) {
                        hasCheckBox = true;
                        numCheckBoxes++;
@@ -1934,16 +2545,14 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                    checkBox = $(filterCat).children('.list-group-item__heading').children('input:checkbox')[0];
                 }
 
-
                 if ( hasCheckBox && (ind ===1) && !(allChecked) && !(noneChecked)){
                     checkBox.indeterminate = true;
                     checkBox.checked = false;
-                }
-                else if (hasCheckBox){
+                } else if (hasCheckBox){
                     checkBox.indeterminate = false;
                 }
 
-                if ( (checked) && (filtnm ==='tcga_clinical')){
+                if ( (checked) && (filtnm ==='tcga_clinical') && !is_cohort){
                     checkTcga();
                 }
 
@@ -1951,7 +2560,6 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     if (!(checkBox.indeterminate)) {
                         checkBox.checked = true;
                     }
-
                     if (!(filterObj.hasOwnProperty(curCat))){
                         filterObj[curCat] = new Array();
                     }
@@ -1961,11 +2569,9 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     if ((ind ===0) && (curCat.startsWith('Program'))){
                        resetTcgaFilters();
                     }
-
                     /* if ( allChecked && (i === (filterCats.length-1)) && (numCheckBoxes>1)) {
                         delete filterObj[curCat];
                     }*/
-
                 }
 
                 if (!checked && ( (ind===0) || ( (ind===1) && hasCheckBox && noneChecked)) ){
@@ -2004,8 +2610,8 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                     curCat+="."
                 }
                 curCat+=filtnm;
-
             }
+
             var childBoxes=$(filterElem).parent().siblings().find('input:checkbox');
             if (checked && (childBoxes.length>0)) {
                 filterObj[curCat] = new Array();
@@ -2023,7 +2629,6 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
         var handleFilterSelectionUpdate = function(filterElem, mkFilt, doUpdate) {
             checkFilters(filterElem);
-
             if (mkFilt) {
                 mkFiltText();
             }
@@ -2031,8 +2636,6 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 updateFacetsData(true);
             }
         };
-
-////////
 
         var tableSortBindings = function (filterId) {
             $('#' + filterId).find('.fa-caret-up, .fa-caret-down').on('click', function () {
@@ -2046,10 +2649,8 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
                 var curInd = $(this).parent().parent().index();
                 var tbl = $(this).parentsUntil('div').filter('table');
                 sortTable(tbl, curInd, asc);
-                //alert('here');
-
             });
-        }
+        };
 
         var sortTable = function (tbl, curInd, asc) {
             var thd = $(tbl).find('thead').find('th')[curInd];
@@ -2066,146 +2667,126 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
                 if (item1 ===item2){
                     if ( isSeries && (curInd===0)){
-
                         var seriesNuma = parseInt( $(a).children()[1].innerText  );
                         var seriesNumb = parseInt( $(b).children()[1].innerText  );
-
                         if (seriesNuma === seriesNumb){
                             return 0;
-                        }
-                        else if (((seriesNuma > seriesNumb) )){
+                        } else if (((seriesNuma > seriesNumb) )){
                             return 1;
-                        }
-                        else {
+                        } else {
                             return -1;
                         }
-                    }
-                   else{
+                    } else {
                        return 0;
                     }
-                }
-
-                else if (((item1 > item2) && asc) || ((item2 > item1) && !asc)) {
+                } else if (((item1 > item2) && asc) || ((item2 > item1) && !asc)) {
                     return 1;
-                }
-                else {
+                } else {
                     return -1
                 }
             });
             $(tbl).find('tbody').append(rowSet);
-        }
-
+        };
 
         var filterItemBindings = function (filterId) {
-        $('#' + filterId).find('input:checkbox').on('click', function () {
-            handleFilterSelectionUpdate(this, true, true);
-        });
+            $('#' + filterId).find('input:checkbox').on('click', function () {
+                handleFilterSelectionUpdate(this, true, true);
+            });
 
-        /*
-        $('#' + filterId).find('.hide-zeros-a').on('click', function () {
-            $(this).parent().parent().children('.show-zeros').show();
-            $(this).parent().parent().children('.show-zeros').removeClass('notDisp');
-            $(this).parent().parent().children('.hide-zeros').addClass('notDisp');
-            $(this).parent().hide();
-            var filterCat =$(this).parent().parent()[0].id;
-            updateFilters(filterCat, {}, false);
-        });
-
-
-        $('#' + filterId).find('.show-zeros-a').on('click', function () {
-            $(this).parent().parent().children('.hide-zeros').show();
-            $(this).parent().parent().children('.hide-zeros').removeClass('notDisp');
-            $(this).parent().parent().children('.show-zeros').addClass('notDisp');
-            $(this).parent().hide();
-            var filterCat =$(this).parent().parent()[0].id;
-            updateFilters(filterCat, {}, false);
-
-        });
-
-         */
+            /*
+            $('#' + filterId).find('.hide-zeros-a').on('click', function () {
+                $(this).parent().parent().children('.show-zeros').show();
+                $(this).parent().parent().children('.show-zeros').removeClass('notDisp');
+                $(this).parent().parent().children('.hide-zeros').addClass('notDisp');
+                $(this).parent().hide();
+                var filterCat =$(this).parent().parent()[0].id;
+                updateFilters(filterCat, {}, false);
+            });
 
 
-        $('#' + filterId).find('.show-more').on('click', function () {
+            $('#' + filterId).find('.show-zeros-a').on('click', function () {
+                $(this).parent().parent().children('.hide-zeros').show();
+                $(this).parent().parent().children('.hide-zeros').removeClass('notDisp');
+                $(this).parent().parent().children('.show-zeros').addClass('notDisp');
+                $(this).parent().hide();
+                var filterCat =$(this).parent().parent()[0].id;
+                updateFilters(filterCat, {}, false);
 
-            $(this).parent().parent().find('.less-checks').show();
-            $(this).parent().parent().find('.less-checks').removeClass('notDisp');
-            $(this).parent().parent().find('.more-checks').addClass('notDisp');
-            $(this).parent().hide();
-            var extras = $(this).parent().parent().children('.search-checkbox-list').children('.extra-values')
+            });
 
-            if ( ($('#'+filterId).closest('.search-configuration').find('#hide-zeros').length>0)  && ($('#'+filterCat).closest('.search-configuration').find('#hide-zeros')[0].checked)){
-                extras=extras.not('.zeroed');
-            }
+             */
+
+            $('#' + filterId).find('.show-more').on('click', function () {
+
+                $(this).parent().parent().find('.less-checks').show();
+                $(this).parent().parent().find('.less-checks').removeClass('notDisp');
+                $(this).parent().parent().find('.more-checks').addClass('notDisp');
+                $(this).parent().hide();
+                var extras = $(this).parent().parent().children('.search-checkbox-list').children('.extra-values')
+
+                if ( ($('#'+filterId).closest('.search-configuration').find('#hide-zeros').length>0)  && ($('#'+filterId).closest('.search-configuration').find('#hide-zeros').prop('checked'))){
+                    extras=extras.not('.zeroed');
+                }
                 extras.show();
+            });
 
-        });
+            $('#' + filterId).find('.show-less').on('click', function () {
+                $(this).parent().parent().find('.more-checks').show();
+                $(this).parent().parent().find('.more-checks').removeClass('notDisp');
+                $(this).parent().parent().find('.less-checks').addClass('notDisp');
+                $(this).parent().hide();
+                $(this).parent().parent().children('.search-checkbox-list').children('.extra-values').hide();
+            });
 
+            $('#' + filterId).find('.check-all').on('click', function () {
+                //$('#' + filterId).find('.checkbox').find('input').prop('checked', true);
+                var filterElems = $(this).parentsUntil('.list-group-item').filter('.list-group-item__body, .list-group-sub-item__body').children('ul').children();
+                for (var ind =0;ind<filterElems.length;ind++)
+                {
+                    var ckElem = new Object();
+                    if ($(filterElems[ind]).children().filter('.list-group-item__heading').length>0){
+                        ckElem = $(filterElems[ind]).children().filter('.list-group-item__heading').children().filter('input:checkbox')[0];
+                    }
+                    else{
+                       ckElem=$(filterElems[ind]).children().filter('label').children().filter('input:checkbox')[0];
+                    }
 
-        $('#' + filterId).find('.show-less').on('click', function () {
-
-            $(this).parent().parent().find('.more-checks').show();
-            $(this).parent().parent().find('.more-checks').removeClass('notDisp');
-            $(this).parent().parent().find('.less-checks').addClass('notDisp');
-            $(this).parent().hide();
-            $(this).parent().parent().children('.search-checkbox-list').children('.extra-values').hide();
-
-
-        });
-
-
-        $('#' + filterId).find('.check-all').on('click', function () {
-            //$('#' + filterId).find('.checkbox').find('input').prop('checked', true);
-            var filterElems = $(this).parentsUntil('.list-group-item').filter('.list-group-item__body').children('ul').children();
-            for (var ind =0;ind<filterElems.length;ind++)
-            {
-                var ckElem = new Object();
-                if ($(filterElems[ind]).children().filter('.list-group-item__heading').length>0){
-                    ckElem = $(filterElems[ind]).children().filter('.list-group-item__heading').children().filter('input:checkbox')[0];
+                    ckElem.checked= true;
+                  //$(filterElem).prop('checked') = true;
+                  if (ind<filterElems.length-1) {
+                      handleFilterSelectionUpdate(ckElem, false, false);
+                  }
+                  else{
+                      handleFilterSelectionUpdate(ckElem, true, true);
+                  }
                 }
-                else{
-                   ckElem=$(filterElems[ind]).children().filter('label').children().filter('input:checkbox')[0];
+            });
+
+            $('#' + filterId).find('.uncheck-all').on('click', function () {
+                 //$('#' + filterId).find('.checkbox').find('input').prop('checked', true);
+                var filterElems = $(this).parentsUntil('.list-group-item').filter('.list-group-item__body,.list-group-sub-item__body').children('ul').children();
+                for (var ind =0;ind<filterElems.length;ind++)
+                {
+                    var ckElem = new Object();
+                    if ($(filterElems[ind]).children().filter('.list-group-item__heading').length>0){
+                        ckElem = $(filterElems[ind]).children().filter('.list-group-item__heading').children().filter('input:checkbox')[0];
+                    }
+                    else{
+                       ckElem=$(filterElems[ind]).children().filter('label').children().filter('input:checkbox')[0];
+                    }
+
+                  ckElem.checked = false;
+                    if (ind<filterElems.length-1) {
+                      handleFilterSelectionUpdate(ckElem, false, false);
+                  }
+                  else{
+                      handleFilterSelectionUpdate(ckElem, true, true);
+                  }
+
                 }
 
-                ckElem.checked= true;
-              //$(filterElem)[0].checked = true;
-              if (ind<filterElems.length-1) {
-                  handleFilterSelectionUpdate(ckElem, false, false);
-              }
-              else{
-                  handleFilterSelectionUpdate(ckElem, true, true);
-              }
-            }
-        });
-
-
-
-        $('#' + filterId).find('.uncheck-all').on('click', function () {
-             //$('#' + filterId).find('.checkbox').find('input').prop('checked', true);
-            var filterElems = $(this).parentsUntil('.list-group-item').filter('.list-group-item__body').children('ul').children();
-            for (var ind =0;ind<filterElems.length;ind++)
-            {
-                var ckElem = new Object();
-                if ($(filterElems[ind]).children().filter('.list-group-item__heading').length>0){
-                    ckElem = $(filterElems[ind]).children().filter('.list-group-item__heading').children().filter('input:checkbox')[0];
-                }
-                else{
-                   ckElem=$(filterElems[ind]).children().filter('label').children().filter('input:checkbox')[0];
-                }
-
-              ckElem.checked = false;
-                if (ind<filterElems.length-1) {
-                  handleFilterSelectionUpdate(ckElem, false, false);
-              }
-              else{
-                  handleFilterSelectionUpdate(ckElem, true, true);
-              }
-
-            }
-
-        });
-
-
-    }
+            });
+        };
 
         var clearFilter = function (filterElem) {
             if (filterElem.classList.contains('all')){
@@ -2218,43 +2799,275 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
 
             }
 
-        }
+        };
 
      var addFilterBindings = function(id){
          var filterCats = findFilterCats(id,false);
          for (var i=0;i<filterCats.length;i++){
              filterItemBindings(filterCats[i]);
         }
-     }
+     };
 
-     var addSliders = function(id){
-            $('#'+id).find('.list-group-item__body').each(function(){
-                $(this).find('.more-checks').addClass('hide');
-                $(this).find('.less-checks').addClass('hide');
-                //var min = Math.ceil($(this).data('attr-min') * 1000)/1000;
-                //var min = Math.floor($(this).data('attr-min'));
-                var min = 0;
-                var max = Math.floor($(this).data('attr-max'));
-                if (this.id.startsWith('Glycolysis') ){
-                    min = 0;
-                    max = 300;
+    var addSliders = function(id,initialized,hideZeros, parStr){
+        $('#'+id).find('.list-group-item__body.isQuant').each(function() {
+            $(this).find('.more-checks').addClass('hide');
+            $(this).find('.less-checks').addClass('hide');
+            //var min = Math.ceil($(this).data('min') * 1000)/1000;
+            //var min = Math.floor($(this).data('min'));
+
+            var min = Math.floor(parseInt($(this).attr('data-min')));
+            var max = Math.ceil(parseInt($(this).attr('data-max')));
+            var lower = parseInt($(this).attr('data-curminrng'));
+            var upper = parseInt($(this).attr('data-curmaxrng'));
+            var addSlider = true;
+            var isActive = $(this).hasClass('isActive');
+            var wNone = $(this).hasClass('wNone');
+            var checked = ($(this).find('.noneBut').length>0) ? $(this).find('.noneBut').find(':input')[0].checked : false;
+
+            if (!initialized) {
+                var slideDivId = $(this).prop('id') + '_slide';
+                curmin = $(this).attr('data-curmin');
+                curmax = $(this).attr('data-curmax');
+
+                $(this).find('#' + slideDivId).remove();
+                $(this).find('.reset').remove();
+
+                $(this).find('.noneBut').remove();
+                var inpName = $(this).prop('id') + '_input';
+                $(this).find('#'+inpName).remove();
+
+                if (hideZeros) {
+                    if ( ( (curmin === 'NA') || (curmax === 'NA')) && !isActive ){
+                        addSlider = false;
+                        $(this).removeClass('hasSlider');
+                        //$(this).removeClass('isActive');
+                    } else if (isActive){
+                        if (curmin === 'NA') {
+                                min = lower;
+                        } else {
+                            min = Math.min(lower, Math.floor(curmin));
+                        }
+                        if (curmax === 'NA'){
+                                max = upper;
+                        } else {
+                            max = Math.max(upper, Math.ceil(curmax));
+                        }
+                    } else {
+                            min = Math.floor(curmin);
+                            max = Math.ceil(curmax);
+                            lower=min;
+                            upper=max;
+                            //$(this).attr('data-curminrng', lower);
+                            //$(this).attr('data-curmaxrng', upper);
+                    }
+                } else if (!isActive){
+                    lower=min;
+                    upper=max;
+                    //$(this).attr('data-curminrng', lower);
+                    //$(this).attr('data-curmaxrng', upper);
                 }
-                else if (this.id.startsWith('Percent') ){
-                    min = 0;
-                    max = 100;
-                }
-                //var max = Math.ceil($(this).data('attr-max') * 1000)/1000;
-                mkSlider($(this).prop('id'),min, max,1,true,false,'');
-            });
+            }
+
+            if (addSlider) {
+                $(this).addClass('hasSlider');
+                mkSlider($(this).prop('id'), min, max, 1, true, wNone, parStr, $(this).data('filter-attr-id'), $(this).data('filter-display-attr'), lower, upper, isActive,checked);
+            } else{
+                $(this).removeClass('hasSlider');
+                //$(this).removeClass('isActive');
+            }
+        });
      };
 
 
-     $(document).ready(function () {
 
+     var load_filters = function(filters) {
+         var sliders = [];
+        _.each(filters, function(group){
+            _.each(group['filters'], function(filter){
+                let selector = 'div.list-group-item__body[data-filter-attr-id="'+filter['id']+'"], '+'div.list-group-sub-item__body[data-filter-attr-id="'+filter['id']+'"]';
+                $(selector).parents('.collection-list').collapse('show');
+                $(selector).collapse('show');
+                $(selector).find('.show-more').triggerHandler('click');
+                $(selector).parents('.tab-pane.search-set').length > 0 && $('a[href="#'+$(selector).parents('.tab-pane.search-set')[0].id + '"]').tab('show');
+                if($(selector).children('.ui-slider').length > 0) {
+                    sliders.push({
+                        'id':$('div.list-group-item__body[data-filter-attr-id="'+filter['id']+'"]').children('.ui-slider')[0].id,
+                        'left_val': filter['values'][0].indexOf(".") >= 0 ? parseFloat(filter['values'][0]) : parseInt(filter['values'][0]),
+                        'right_val': filter['values'][1].indexOf(".") >= 0 ? parseFloat(filter['values'][1]) : parseInt(filter['values'][1]),
+                    })
+                } else {
+                    _.each(filter['values'], function(val){
+                        $('input[data-filter-attr-id="'+filter['id']+'"][value="'+val+'"]').prop("checked",true);
+                        checkFilters($('input[data-filter-attr-id="'+filter['id']+'"][value="'+val+'"]'));
+                    });
+                }
+            });
+        });
+        if(sliders.length > 0) {
+            load_sliders(sliders, false);
+        }
+        mkFiltText();
+        return updateFacetsData(true).promise();
+     };
+
+     var load_sliders = function(sliders, do_update) {
+        _.each(sliders, function(slider) {
+            var slider_id = slider['id'];
+            setSlider(slider_id, false, slider['left_val'], slider['right_val'], true, false);
+            updatePlotBinsForSliders(slider_id);
+        });
+
+        if (do_update) {
+            mkFiltText();
+            updateFacetsData(true).promise();
+        }
+     };
+
+    var ANONYMOUS_FILTERS = {};
+    var ANONYMOUS_SLIDERS = {};
+
+    var save_anonymous_selection_data = function() {
+        var groups = [];
+
+        // Get all checked filters
+        var filters = [];
+
+        // For collection list
+        $('.collection-list').each(function() {
+            var $group = $(this);
+            var checkboxes = $group.find("input:checked");
+            if (checkboxes.length > 0) {
+                var values = [];
+                var my_id = "";
+                checkboxes.each(function() {
+                    var $checkbox = $(this);
+                    var my_value = $checkbox[0].value;
+                    my_id = $checkbox.data('filter-attr-id');
+                    values.push(my_value);
+                });
+                filters.push({
+                    'id': my_id,
+                    'values': values,
+                });
+            }
+        });
+
+        // For other list item groups
+        $('.list-group-item__body').each(function() {
+            var $group = $(this);
+            var my_id = $group.data('filter-attr-id');
+            if (my_id != null)
+            {
+                var checkboxes = $group.find("input:checked");
+                if (checkboxes.length > 0)
+                {
+                    var values = [];
+                    checkboxes.each(function() {
+                        var $checkbox = $(this);
+                        var my_value = $checkbox[0].value;
+                        values.push(my_value);
+                    });
+                    filters.push({
+                        'id': my_id,
+                        'values': values,
+                    });
+                }
+            }
+        });
+
+        groups.push({'filters': filters});
+        var filterStr = JSON.stringify(groups);
+        sessionStorage.setItem('anonymous_filters', filterStr);
+
+        // Get all sliders with not default value
+        var sliders = [];
+        $('.ui-slider').each(function() {
+            var $this = $(this);
+            var slider_id = $this[0].id;
+            var left_val = $this.slider("values", 0);
+            var right_val = $this.slider("values", 1);
+            var min = $this.slider("option", "min");
+            var max = $this.slider("option", "max");
+            if (left_val !== min || right_val !== max) {
+                sliders.push({
+                   'id': slider_id,
+                    'left_val': left_val,
+                    'right_val': right_val,
+                });
+            }
+        });
+        var sliderStr = JSON.stringify(sliders);
+        sessionStorage.setItem('anonymous_sliders', sliderStr);
+    };
+
+    var load_anonymous_selection_data = function() {
+        // Load anonymous filters from session storage and clear it, so it is not always there
+        var filter_str = sessionStorage.getItem('anonymous_filters');
+        ANONYMOUS_FILTERS = JSON.parse(filter_str);
+        sessionStorage.removeItem('anonymous_filters');
+
+        var slider_str = sessionStorage.getItem('anonymous_sliders');
+        ANONYMOUS_SLIDERS = JSON.parse(slider_str);
+        sessionStorage.removeItem('anonymous_sliders');
+    };
+
+    $('#save-cohort-btn').on('click', function() {
+        if(!user_is_auth) {
+            save_anonymous_selection_data();
+            location.href=$(this).data('uri');
+        }
+    });
+
+     var cohort_loaded = false;
+     function load_preset_filters() {
+         if (is_cohort && !cohort_loaded) {
+             var loadPending = load_filters(cohort_filters);
+             loadPending.done(function () {
+                 console.debug("Load pending complete.");
+                 cohort_loaded = true;
+                 $('input[type="checkbox"]').prop("disabled", "disabled");
+
+                 // Do not disable checkboxes for export manifest dialog
+                 $('.field-checkbox').removeAttr('disabled');
+                 $('.column-checkbox').removeAttr('disabled');
+                 $('#include-header-checkbox').removeAttr('disabled');
+
+                 $('div.ui-slider').siblings('button').prop('disabled', 'disabled');
+                 $('input#hide-zeros').prop("disabled", "");
+                 $('input#hide-zeros').prop("checked", true);
+                 $('input#hide-zeros').triggerHandler('change');
+             });
+         } else if (Object.keys(filters_for_load).length > 0) {
+             var loadPending = load_filters(filters_for_load);
+             loadPending.done(function () {
+                 //console.debug("External filter load done.");
+             });
+         } else {
+             // check for localStorage key of saved filters from a login
+             load_anonymous_selection_data();
+             var has_sliders = (ANONYMOUS_SLIDERS !== null && ANONYMOUS_SLIDERS.length > 0);
+             var has_filters = (ANONYMOUS_FILTERS !== null && ANONYMOUS_FILTERS[0]['filters'].length > 0);
+             if (has_sliders) {
+                 let loadPending = load_sliders(ANONYMOUS_SLIDERS, !has_filters);
+                 loadPending.done(function () {
+                     //console.debug("Sliders loaded from anonymous login.");
+                 });
+             }
+             if (has_filters) {
+                 let loadPending = load_filters(ANONYMOUS_FILTERS);
+                 loadPending.done(function () {
+                     console.debug("Filters loaded from anonymous login.");
+                 });
+             }
+         }
+     }
+
+     $(document).ready(function () {
            // $('#proj_table').DataTable();
            // window.filterObj.collection_id = window.tcgaColls;
             window.selItems = new Object();
             window.selItems.selStudies = new Object();
+            window.selItems.selCases = new Object();
             window.selItems.selProjects = new Array();
             window.histIndex  = 0;
             window.histMaxLength = 6;
@@ -2264,9 +3077,7 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             //histObj.filterObj.collection_id = window.tcgaColls;
             window.filtHistory = new Array();
             window.filtHistory.push(histObj);
-            createPlots('search_orig_set');
-            createPlots('search_derived_set');
-            createPlots('tcga_clinical');
+
            /* addFilterBindings('search_orig_set');
             addFilterBindings('search_related_set');*/
 
@@ -2274,19 +3085,35 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
             filterItemBindings('search_orig_set');
             filterItemBindings('search_derived_set');
             filterItemBindings('search_related_set');
+
             tableSortBindings('projects_table_head');
-            tableSortBindings('studies_table_head');
+            tableSortBindings('cases_table_head');
             tableSortBindings('series_table_head');
+            max= Math.ceil(parseInt($('#age_at_diagnosis').data('data-max')));
+            min= Math.floor(parseInt($('#age_at_diagnosis').data('data-min')));
 
-            mkSlider('age_at_diagnosis',0,parseInt($('#age_at_diagnosis').data('attr-max')),1,true,true, 'tcga_clinical.');
+            $('#age_at_diagnosis').addClass('isQuant');
+            $('#age_at_diagnosis').addClass('wNone');
 
-            addSliders('quantitative');
+            //mkSlider('age_at_diagnosis', min, max,1,true,true, 'tcga_clinical.', $('#age_at_diagnosis').data('filter-attr-id'), $('#age_at_diagnosis').data('filter-display-attr'),min,max,false);
+
+
+            $('#quantitative').find('.list-group-item__body').each(function() {
+                $(this).addClass('isQuant');
+            });
+            addSliders('tcga_clinical',true, false,'tcga_clinical.');
+            addSliders('quantitative',true, false,'');
+
+            createPlots('search_orig_set');
+            createPlots('search_derived_set');
+            createPlots('tcga_clinical');
 
             var numCol = $('#projects_table').children('tr').length
             $('#projects_panel').find('.total-file-count')[0].innerHTML = numCol.toString();
              $('#projects_panel').find('.goto-page-number')[0].max=3;
 
             window.resetTableControls ($('#projects_table'), false, 0);
+            window.resetTableControls ($('#cases_table'), false, 0);
             window.resetTableControls ($('#studies_table'), false, 0);
             window.resetTableControls ($('#series_table'), false, 0);
 
@@ -2304,30 +3131,8 @@ require(['jquery', 'underscore', 'jquerydt','jqueryui', 'bootstrap','base'],
              });
 
             //$("#number_ajax").bind("change", function(){ alert($()this.val)} );
+
+            load_preset_filters();
         }
     );
-
-     let cohort_loaded = false;
-     let load_done = null;
-     $(window).on('load', function(){
-        let uncollapse = [];
-        if(is_cohort && !cohort_loaded) {
-            _.each(cohort_filters, function(group){
-                _.each(group['filters'], function(filter){
-                    $('div.list-group-item__body[data-attr-id="'+filter['id']+'"]').collapse('show');
-                    _.each(filter['values'], function(val){
-                        $('input[data-filter-attr-id="'+filter['id']+'"][value="'+val+'"]').prop("checked",true);
-                        checkFilters($('input[data-filter-attr-id="'+filter['id']+'"][value="'+val+'"]'));
-                    });
-                });
-            });
-            cohort_loaded = true;
-            mkFiltText();
-            updateFacetsData(true);
-
-            $('input[type="checkbox"]').prop("disabled","disabled");
-            $('input#hide-zeros').prop("disabled","");
-        }
-    });
 });
-

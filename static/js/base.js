@@ -19,7 +19,7 @@
 require.config({
     baseUrl: STATIC_FILES_URL+'js/',
     paths: {
-        jquery: 'libs/jquery-1.11.1.min',
+        jquery: 'libs/jquery-3.5.1',
         bootstrap: 'libs/bootstrap.min',
         jqueryui: 'libs/jquery-ui.min',
         session_security: 'session_security/script',
@@ -141,14 +141,6 @@ require([
         type: 'numeric'
     });
 
-    $('#cohort-table').tablesorter({
-        headers: {
-            0: {sorter:false},
-            7: {sorter: 'fullDate'}
-        },
-        sortList: [[7,1]]
-    });
-
     $(document).ready(function(){
         if(sessionStorage.getItem("reloadMsg")) {
             var msg = JSON.parse(sessionStorage.getItem("reloadMsg"));
@@ -194,6 +186,14 @@ require([
         $('#gov_warning').modal('show');
     }
 
+    $('.external-link').on('click', function(){
+        let url = $(this).attr('url');
+        $('#go-to-external-link').attr('href', url);
+    });
+
+    $('#go-to-external-link').on('click', function() {
+        $('#external-web-warning').modal('hide');
+    });
 });
 
 // Return an object for consts/methods used by most views
@@ -201,10 +201,16 @@ define(['jquery', 'utils'], function($, utils) {
 
     // Resets forms in modals on hide. Suppressed warning when leaving page with dirty forms
     $('.modal').on('hide.bs.modal', function () {
-        if($(this).find('form').get().length) {
-            $(this).find('form').get(0).reset();
+        if(!$(this).prop("saving")) {
+            if($(this).find('form').get().length) {
+                $(this).find('form').get(0).reset();
+            }
         }
     });
+
+    $.getCookie = utils.getCookie;
+    $.setCookie = utils.setCookie;
+    $.removeCookie = utils.removeCookie;
 
     return {
         blacklist: /<script>|<\/script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|<iframe>|<\/iframe>/ig,
@@ -215,6 +221,12 @@ define(['jquery', 'utils'], function($, utils) {
         // at document load time
         setReloadMsg: function(type,text) {
             sessionStorage.setItem("reloadMsg",JSON.stringify({type: type, text: text}));
+        },
+        setCookie: function(name,val,expires_in,path) {
+            utils.setCookie(name,val,expires_in,path);
+        },
+        removeCookie: function(name, path) {
+            utils.removeCookie(name, path);
         },
         blockResubmit: utils.blockResubmit
     };

@@ -8,25 +8,28 @@
                     <div class="modal-js-messages" id="save-cohort-modal-js-messages">
                         <div id="unallowed-chars-alert" class="alert alert-warning alert-dismissable" style="display: none;">
                             <button type="button" class="close" data-hide="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                            Your cohort's name contains invalid characters (<span class="unallowed-chars"></span>). Please choose another name.
+                            Your cohort's name or description contains invalid characters (<span class="unallowed-chars"></span>). Please remove them before saving.
                         </div>
-                        <div id="at-least-one-filter-alert-modal" class="alert alert-warning alert-dismissable" style="display: none;">
+                        <div id="name-too-long-alert-modal" class="alert alert-warning alert-dismissable" style="display: none;">
                             <button type="button" class="close" data-hide="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                            You must choose at least one filter to include samples in your cohort.
+                            Your cohort's name must be no more than 255 characters long.
                         </div>
                     </div>
                 </div>
                 <form id="save-cohort-form" method="POST" action="{% url 'save_cohort' %}">
                     <div class="modal-body">
                         <div class="form-group">
-                            <label for="save-cohort-name">Name:</label>
+                            <label for="save-cohort-name">Name</label>
                             <input class="form-control" type="text" id="save-cohort-name" name="name" required />
-                            <label for="save-cohort-desc">Description:</label>
+                            <label for="save-cohort-desc">Description</label>
                             <input class="form-control" type="text" id="save-cohort-desc" name="desc" />
                         </div>
                         <div class="form-group">
-                            <h5>Selected Filters</h5>
+                            <h5 class="sel-filters-heading">Selected Filters</h5>
                             <div class="form-control-static">
+                            <div id="selected-filters-prog-set" class="selected-filters">
+                                <h5>Search Scope</h5>
+                            </div>
                             <div id="selected-filters-orig-set" class="selected-filters">
                                 <h5>Original</h5>
                             </div>

@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 2017, Institute for Systems Biology
+ * Copyright 2020, Institute for Systems Biology
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 require.config({
     baseUrl: STATIC_FILES_URL+'js/',
     paths: {
-        jquery: 'libs/jquery-1.11.1.min',
+        jquery: 'libs/jquery-3.5.1',
         bootstrap: 'libs/bootstrap.min',
         jqueryui: 'libs/jquery-ui.min',
         underscore: 'libs/underscore-min',
@@ -47,16 +47,45 @@ define(['jquery'], function($) {
     var downloadTimer;
     var attempts = 30;
 
-    function getCookie(name) {
-        var parts = document.cookie.split(name + "=");
-        if (parts.length == 2) {
-            return parts.pop().split(";").shift();
+    // Adapted from https://docs.djangoproject.com/en/1.9/ref/csrf/
+    function _getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = $.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
         }
+        return cookieValue;
+    };
+
+    function _removeCookie(name, path) {
+        path = path || "/";
+        var now = new Date();
+        var time = now.getTime();
+        var expireTime = time-(300*1000);
+        now.setTime(expireTime);
+        document.cookie=encodeURIComponent(name)+"=; expires="+new Date(0).toUTCString()+"; path="+path+";";
+    };
+
+    function _setCookie(name,val,path,expires_in) {
+        var now = new Date();
+        var time = now.getTime();
+        expires_in = expires_in || (300*1000);
+        path = path || '/';
+        var expireTime = time+expires_in;
+        now.setTime(expireTime);
+        document.cookie=encodeURIComponent(name)+"="+val+"; expires="+now.toUTCString()+"; path="+path+";";
     };
 
     // Set the cookie to expire Forever Ago so it dies immediately
     // Optional path parameter for path-specific cookies
-    function expireCookie(name,path) {
+    function _expireCookie(name,path) {
         path = path || "/";
         document.cookie = encodeURIComponent(name) + "=deleted; Path="+path+"; expires=" + new Date(0).toUTCString();
     };
@@ -65,7 +94,7 @@ define(['jquery'], function($) {
     // Callback can be used on a given page to unblock any DOM-based impediments
     function unblockSubmit(callback,cookieName) {
         window.clearInterval(downloadTimer);
-        expireCookie(cookieName);
+        _expireCookie(cookieName);
         attempts = 30;
         callback();
     };
@@ -74,7 +103,7 @@ define(['jquery'], function($) {
         // Simple method for displaying an alert-<type> message at a given selector or DOM element location.
         //
         // type: One of the accepted alert types (danger, error, info, warning)
-        // text: Content of the alert, added via jQuery.text() (and so escaped)
+        // text: Content of the message
         // withEmpty: Truthy boolean for indicating if the element represented by rootSelector should first be emptied
         // rootSelector: text selector or DOM element which will be the parent of the alert; defaults to #js-messages
         //  (the DIV present on all pages which shows document-level JS messages)
@@ -106,12 +135,15 @@ define(['jquery'], function($) {
         // in its response
         blockResubmit: function(callback,downloadToken,expectedCookie) {
             downloadTimer = window.setInterval( function() {
-                var token = getCookie(expectedCookie);
+                var token = _getCookie(expectedCookie);
                 if((token == downloadToken) || (attempts == 0)) {
                     unblockSubmit(callback,expectedCookie);
                 }
                 attempts--;
             }, 1000 );
-        }
+        },
+        setCookie: _setCookie,
+        getCookie: _getCookie,
+        removeCookie: _removeCookie
     };
 });

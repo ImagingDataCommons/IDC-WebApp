@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load custom_tags %}
 {% load staticfiles %}
+{% load socialaccount %}
 {% load tz %}
 {% comment %}
 
@@ -76,7 +77,7 @@
                 </div>
                 <div class="panel-body">
                     <p>
-                        Apply for "cloud credits" and your own Google Cloud project by submitting a request <a href="https://groups.google.com/a/isb-cgc.org/forum/#!newtopic/request-gcp" target="_blank">here</a>.
+                        Apply for "cloud credits" and your own Google Cloud project by submitting a request <a href="https://learn.canceridc.dev/introduction/requesting-gcp-cloud-credits" target="_blank">here</a>.
                     </p>
                     <p>Go to the <a href="http://console.cloud.google.com" target="_blank">Google Cloud Console</a>.</p>
                 </div>
@@ -90,9 +91,17 @@
                     </h5>
                 </div>
                 <div class="panel-body">
-                    {% if local_account %}
+                    {% if unconnected_local_account %}
                     <p>
                         <a href="{% url 'account_change_password' %}" target="_blank">Change Your Password</a>
+                    </p>
+                    <p>
+                        <a href="{% provider_login_url "google" process="connect" %}">Connect a Google Account</a>
+                    </p>
+                    {% endif %}
+                    {% if social_account %}
+                    <p>
+                        <a href="{% url "connections" %}">Manage Google Account Connections</a>
                     </p>
                     {% endif %}
                     <p>

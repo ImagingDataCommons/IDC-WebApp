@@ -42,7 +42,7 @@ django.setup()
 
 from idc_collections.models import Program, Collection, Attribute, Attribute_Ranges, \
     Attribute_Display_Values, DataSource, DataSourceJoin, DataVersion, DataSetType, \
-    Attribute_Set_Type, Attribute_Display_Category
+    Attribute_Set_Type, Attribute_Display_Category, ImagingDataCommonsVersion
 
 from django.contrib.auth.models import User
 idc_superuser = User.objects.get(username="idc")
@@ -58,7 +58,22 @@ ranges_needed = {
     'year_of_diagnosis': 'year',
     'days_to_birth': 'by_negative_3k',
     'year_of_initial_pathologic_diagnosis': 'year',
-    'age_at_diagnosis': None
+    'age_at_diagnosis': None,
+    'SUVbw': 'SUVbw',
+    'Volume': 'Volume',
+    'Diameter': 'Diameter',
+    'Surface_area_of_mesh': 'Surface_area_of_mesh',
+    'Total_Lesion_Glycolysis': 'Total_Lesion_Glycolysis',
+    'Standardized_Added_Metabolic_Activity': 'Standardized_Added_Metabolic_Activity',
+    'Percent_Within_First_Quarter_of_Intensity_Range': 'Percent_Within_First_Quarter_of_Intensity_Range',
+    'Percent_Within_Third_Quarter_of_Intensity_Range': 'Percent_Within_Third_Quarter_of_Intensity_Range',
+    'Percent_Within_Fourth_Quarter_of_Intensity_Range': 'Percent_Within_Fourth_Quarter_of_Intensity_Range',
+    'Percent_Within_Second_Quarter_of_Intensity_Range': 'Percent_Within_Second_Quarter_of_Intensity_Range',
+    'Standardized_Added_Metabolic_Activity_Background': 'Standardized_Added_Metabolic_Activity_Background',
+    'Glycolysis_Within_First_Quarter_of_Intensity_Range': 'Glycolysis_Within_First_Quarter_of_Intensity_Range',
+    'Glycolysis_Within_Third_Quarter_of_Intensity_Range': 'Glycolysis_Within_Third_Quarter_of_Intensity_Range',
+    'Glycolysis_Within_Fourth_Quarter_of_Intensity_Range': 'Glycolysis_Within_Fourth_Quarter_of_Intensity_Range',
+    'Glycolysis_Within_Second_Quarter_of_Intensity_Range': 'Glycolysis_Within_Second_Quarter_of_Intensity_Range'
 }
 
 ranges = {
@@ -69,8 +84,41 @@ ranges = {
     'by_500': [{'first': "500", "last": "6000", "gap": "500", "include_lower": False, "unbounded": True,
                              "include_upper": True, 'type': 'I'}],
     'year': [{'first': "1976", "last": "2015", "gap": "5", "include_lower": True, "unbounded": False,
-                             "include_upper": False, 'type': 'I'}]
+                             "include_upper": False, 'type': 'I'}],
+    'SUVbw': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '3', 'last': '12', 'gap': '1'}],
+    'Volume': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '10', 'last': '28000', 'gap': '2800'}],
+    'Diameter': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '6', 'last': '55', 'gap': '6'}],
+    'Surface_area_of_mesh': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '150', 'last': '4500', 'gap': '435'}],
+    'Total_Lesion_Glycolysis': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '78', 'last': '698', 'gap': '78'}],
+    'Standardized_Added_Metabolic_Activity': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '56', 'last': '502', 'gap': '56'}],
+    'Percent_Within_First_Quarter_of_Intensity_Range': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '10', 'last': '90', 'gap': '10'}],
+    'Percent_Within_Third_Quarter_of_Intensity_Range': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '10', 'last': '90', 'gap': '10'}],
+    'Percent_Within_Fourth_Quarter_of_Intensity_Range': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '10', 'last': '90', 'gap': '10'}],
+    'Percent_Within_Second_Quarter_of_Intensity_Range': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '10', 'last': '90', 'gap': '10'}],
+    'Standardized_Added_Metabolic_Activity_Background': [{'type': 'F', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '0.5', 'last': '5', 'gap': '0.5'}],
+    'Glycolysis_Within_First_Quarter_of_Intensity_Range': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '28', 'last': '251', 'gap': '28'}],
+    'Glycolysis_Within_Third_Quarter_of_Intensity_Range': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '25', 'last': '225', 'gap': '25'}],
+    'Glycolysis_Within_Fourth_Quarter_of_Intensity_Range': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '19', 'last': '170', 'gap': '19'}],
+    'Glycolysis_Within_Second_Quarter_of_Intensity_Range': [{'type': 'I', 'include_lower': '1', 'include_upper': '0', 'unbounded': '1', 'first': '25', 'last': '227', 'gap': '25'}]
 }
+
+BQ_PROJ_DATASET = 'idc-dev-etl.idc_tcia_views_mvp_wave0'
+
+BQ_TABLES = {
+    'dicom': '{}.{}'.format(BQ_PROJ_DATASET,'dicom_all'),
+    'segs': '{}.{}'.format(BQ_PROJ_DATASET,'segmentations'),
+    'qual': '{}.{}'.format(BQ_PROJ_DATASET,'qualitative_measurements'),
+    'quan': '{}.{}'.format(BQ_PROJ_DATASET,'quantitative_measurements'),
+    'clin': 'isb-cgc.TCGA_bioclin_v0.clinical_v1',
+    'bios': 'isb-cgc.TCGA_bioclin_v0.Biospecimen'
+}
+
+SOLR_INDEX = {
+    'dicom_derived': 'dicom_derived_all',
+    'clin': 'tcga_clin',
+    'bios': 'tcga_bios'
+}
+
 
 def new_attribute(name, displ_name, type, display_default, cross_collex=False, units=None):
     return {
@@ -86,7 +134,6 @@ def new_attribute(name, displ_name, type, display_default, cross_collex=False, u
                 'categories': []
             }
 
-
 def add_data_sets(sets_set):
     for dss in sets_set:
         try:
@@ -98,28 +145,31 @@ def add_data_sets(sets_set):
             logger.error("[ERROR] Data Version {} may not have been added!".format(dss['name']))
             logger.exception(e)
 
-
 def add_data_versions(dv_set):
-    for dv in dv_set:
-        try:
+    idc_dev, created = ImagingDataCommonsVersion.objects.update_or_create(name="Imaging Data Commons Data Release", version_number="1.0")
+    ver_to_idc = []
+    try:
+        for dv in dv_set:
             obj, created = DataVersion.objects.update_or_create(name=dv['name'], version=dv['ver'])
 
             progs = Program.objects.filter(name__in=dv['progs'])
             ver_to_prog = []
-
             for prog in progs:
                 ver_to_prog.append(DataVersion.programs.through(dataversion_id=obj.id, program_id=prog.id))
 
-            DataVersion.programs.through.objects.bulk_create(ver_to_prog)
+            ver_to_idc.append(DataVersion.idc_versions.through(dataversion_id=obj.id, imagingdatacommonsversion_id=idc_dev.id))
 
-            print("Data Version created:")
-            print(obj)
-        except Exception as e:
-            logger.error("[ERROR] Data Version {} may not have been added!".format(dv['name']))
-            logger.exception(e)
+        DataVersion.programs.through.objects.bulk_create(ver_to_prog)
+        DataVersion.idc_versions.through.objects.bulk_create(ver_to_idc)
 
+        logger.info("[STATUS] Data Versions loaded:")
+        logger.info("{}".format(DataVersion.objects.all()))
+    except Exception as e:
+        logger.error("[ERROR] Data Versions may not have been added!")
+        logger.exception(e)
 
 def add_programs(program_set):
+    results = {}
     for prog in program_set:
         try:
             obj, created = Program.objects.update_or_create(
@@ -128,9 +178,13 @@ def add_programs(program_set):
 
             print("Program created:")
             print(obj)
+
+            results[obj.short_name] = obj
+
         except Exception as e:
             logger.error("[ERROR] Program {} may not have been added!".format(prog['short_name']))
             logger.exception(e)
+    return results
 
 def add_data_source(source_set, versions, programs, data_sets, source_type):
     for source in source_set:
@@ -197,7 +251,6 @@ def add_collections(collection_set):
     collex_list = []
     try:
         for collex in collection_set:
-
             collex_list.append(
                 Collection(
                     **collex['data'],
@@ -209,15 +262,6 @@ def add_collections(collection_set):
 
         for collex in collection_set:
             obj = Collection.objects.get(collection_id=collex['data']['collection_id'])
-
-            if len(collex.get('progs',[])):
-                progs = Program.objects.filter(
-                    short_name__in=collex['progs'], owner=collex['owner'] if 'owner' in collex else idc_superuser,
-                    active=True)
-                collex_to_prog = []
-                for prog in progs:
-                    collex_to_prog.append(Collection.program.through(collection_id=obj.id, program_id=prog.id))
-                Collection.program.through.objects.bulk_create(collex_to_prog)
 
             if len(collex.get('data_versions',[])):
                 collex_to_dv = []
@@ -282,7 +326,7 @@ def add_attributes(attr_set):
 def main():
 
     try:
-        add_programs([{
+        programs = add_programs([{
             "full_name": "The Cancer Genome Atlas",
             "short_name": "TCGA",
             "public": True
@@ -312,31 +356,32 @@ def main():
             {"name": "GDC Data Release 9", "ver": "r9", "progs":["TCGA"]},
             {"name": "TCIA Image Data", "ver": "1","progs":["TCGA", "ISPY", "QIN", "LIDC"]},
             {"name": "TCIA Derived Data", "ver": "1", "progs":["LIDC"]},
-            {"name": "IDC Version 1", "ver": "1", "progs":["TCGA", "ISPY", "QIN", "LIDC"]},
         ])
 
-        add_data_source(['dicom_derived_all'], ["TCIA Image Data", "TCIA Derived Data"],["TCGA", "ISPY", "QIN", "LIDC"], ["IDC Source Data", "Derived Data"], DataSource.SOLR)
-        add_data_source(['tcga_clin', 'tcga_bios'], ["GDC Data Release 9"],["TCGA"], ["Clinical, Biospecimen, and Mutation Data"], DataSource.SOLR)
+        add_data_source([SOLR_INDEX['dicom_derived']], ["TCIA Image Data", "TCIA Derived Data"],["TCGA", "ISPY", "QIN", "LIDC"], ["IDC Source Data", "Derived Data"], DataSource.SOLR)
+        add_data_source([SOLR_INDEX['clin'], SOLR_INDEX['bios']], ["GDC Data Release 9"],["TCGA"], ["Clinical, Biospecimen, and Mutation Data"], DataSource.SOLR)
 
-        add_data_source(["idc-dev.metadata.dicom_mvp"], ["TCIA Image Data"],["TCGA", "ISPY", "QIN", "LIDC"], ["IDC Source Data"], DataSource.BIGQUERY)
-        add_data_source(['isb-cgc.TCGA_bioclin_v0.Biospecimen', 'isb-cgc.TCGA_bioclin_v0.Clinical'], ["GDC Data Release 9"],["TCGA"], ["Clinical, Biospecimen, and Mutation Data"], DataSource.BIGQUERY)
-        add_data_source(["idc-dev.metadata.segmentations"], ["TCIA Derived Data"],["LIDC"], ["Derived Data"], DataSource.BIGQUERY)
-        add_data_source(["idc-dev.metadata.qualitative_measurements"], ["TCIA Derived Data"],["LIDC"], ["Derived Data"], DataSource.BIGQUERY)
-        add_data_source(["idc-dev.metadata.quantitative_measurements"], ["TCIA Derived Data"],["LIDC"], ["Derived Data"], DataSource.BIGQUERY)
+        add_data_source([BQ_TABLES['dicom']], ["TCIA Image Data"],["TCGA", "ISPY", "QIN", "LIDC"], ["IDC Source Data"], DataSource.BIGQUERY)
+        add_data_source([BQ_TABLES['bios'], BQ_TABLES['clin']], ["GDC Data Release 9"],["TCGA"], ["Clinical, Biospecimen, and Mutation Data"], DataSource.BIGQUERY)
+        add_data_source([BQ_TABLES['segs']], ["TCIA Derived Data"],["LIDC"], ["Derived Data"], DataSource.BIGQUERY)
+        add_data_source([BQ_TABLES['qual']], ["TCIA Derived Data"],["LIDC"], ["Derived Data"], DataSource.BIGQUERY)
+        add_data_source([BQ_TABLES['quan']], ["TCIA Derived Data"],["LIDC"], ["Derived Data"], DataSource.BIGQUERY)
 
-        add_source_joins(["tcga_clin", "tcga_bios"], "case_barcode")
+        add_source_joins([SOLR_INDEX['clin'], SOLR_INDEX['bios']], "case_barcode")
         add_source_joins(
-            ["dicom_derived_all"],
+            [SOLR_INDEX['dicom_derived']],
             "PatientID",
-            ["tcga_clin", "tcga_bios"], "case_barcode"
+            [SOLR_INDEX['clin'], SOLR_INDEX['bios']], "case_barcode"
         )
 
-        add_source_joins(["idc-dev.metadata.dicom_mvp", "idc-dev.metadata.segmentations", "idc-dev.metadata.qualitative_measurements", "idc-dev.metadata.quantitative_measurements"], "SOPInstanceUID")
-        add_source_joins(["isb-cgc.TCGA_bioclin_v0.Clinical", "isb-cgc.TCGA_bioclin_v0.Biospecimen"], "case_barcode")
+        add_source_joins([BQ_TABLES['dicom'], BQ_TABLES['segs'],
+                          BQ_TABLES['qual'], BQ_TABLES['quan']], "SOPInstanceUID")
+        add_source_joins([BQ_TABLES['clin'], BQ_TABLES['bios']], "case_barcode")
         add_source_joins(
-            ["idc-dev.metadata.dicom_mvp", "idc-dev.metadata.segmentations", "idc-dev.metadata.qualitative_measurements", "idc-dev.metadata.quantitative_measurements"],
+            [BQ_TABLES['dicom'], BQ_TABLES['segs'],
+             BQ_TABLES['qual'], BQ_TABLES['quan']],
             "PatientID",
-            ["isb-cgc.TCGA_bioclin_v0.Clinical", "isb-cgc.TCGA_bioclin_v0.Biospecimen"], "case_barcode"
+            [BQ_TABLES['clin'], BQ_TABLES['bios']], "case_barcode"
         )
 
         all_attrs = {}
@@ -367,14 +412,14 @@ def main():
             }
             if 'lidc' in line[0]:
                 collex['data_versions'].append({"ver": "1", "name": "TCIA Derived Data"})
-                collex['progs'] = ["LIDC"]
+                collex['data']["program"] = programs["LIDC"]
             if 'tcga' in line[0]:
                 collex['data_versions'].append({"ver": "r9", "name": "GDC Data Release 9"})
-                collex['progs'] = ["TCGA"]
+                collex['data']["program"] = programs["TCGA"]
             if 'ispy' in line[0]:
-                collex['progs'] = ["ISPY"]
+                collex['data']["program"] = programs["ISPY"]
             if 'qin' in line[0]:
-                collex['progs'] = ["QIN"]
+                collex['data']["program"] = programs["QIN"]
 
             collection_set.append(collex)
 
@@ -439,12 +484,12 @@ def main():
             attr['set_types'].append({'set': DataSetType.ANCILLARY_DATA, 'child_record_search': None})
 
             if attr['name'] in clin_table_attr:
-                attr['solr_collex'].append('tcga_clin')
-                attr['bq_tables'].append('isb-cgc.TCGA_bioclin_v0.Clinical')
+                attr['solr_collex'].append(SOLR_INDEX['clin'])
+                attr['bq_tables'].append(BQ_TABLES['clin'])
 
             if attr['name'] in bios_table_attr:
-                attr['solr_collex'].append('tcga_bios')
-                attr['bq_tables'].append('isb-cgc.TCGA_bioclin_v0.Biospecimen')
+                attr['solr_collex'].append(SOLR_INDEX['bios'])
+                attr['bq_tables'].append(BQ_TABLES['bios'])
 
             if attr['name'] in display_vals:
                 if 'preformatted_values' in display_vals[attr['name']]:
@@ -490,8 +535,9 @@ def main():
 
             attr = all_attrs[line_split[0]]
 
-            attr['solr_collex'].append('dicom_derived_all')
-            attr['bq_tables'].append('idc-dev.metadata.dicom_mvp')
+            if attr['name'] != 'gcs_url':
+                attr['solr_collex'].append(SOLR_INDEX['dicom_derived'])
+            attr['bq_tables'].append(BQ_TABLES['dicom'])
 
             attr['set_types'].append({'set': DataSetType.IMAGE_DATA, 'child_record_search': 'StudyInstanceUID'})
 
@@ -526,8 +572,8 @@ def main():
             if attr['type'] == Attribute.CONTINUOUS_NUMERIC:
                 attr['range'] = []
 
-            attr['solr_collex'].append('dicom_derived_all')
-            attr['bq_tables'].append('idc-dev.metadata.segmentations')
+            attr['solr_collex'].append(SOLR_INDEX['dicom_derived'])
+            attr['bq_tables'].append(BQ_TABLES['segs'])
 
             attr['set_types'].append({'set': DataSetType.DERIVED_DATA, 'child_record_search': 'StudyInstanceUID'})
 
@@ -560,11 +606,14 @@ def main():
 
             attr = all_attrs[line_split[0]]
 
-            if attr['type'] == Attribute.CONTINUOUS_NUMERIC:
-                attr['range'] = []
+            if attr['type'] == Attribute.CONTINUOUS_NUMERIC and 'range' not in attr:
+                if attr['name'] in ranges_needed:
+                    attr['range'] = ranges.get(ranges_needed.get(attr['name'], ''), [])
+                else:
+                    attr['range'] = []
 
-            attr['solr_collex'].append('dicom_derived_all')
-            attr['bq_tables'].append('idc-dev.metadata.quantitative_measurements')
+            attr['solr_collex'].append(SOLR_INDEX['dicom_derived'])
+            attr['bq_tables'].append(BQ_TABLES['quan'])
 
             attr['set_types'].append({'set': DataSetType.DERIVED_DATA, 'child_record_search': 'StudyInstanceUID'})
 
@@ -599,8 +648,8 @@ def main():
             if attr['type'] == Attribute.CONTINUOUS_NUMERIC:
                 attr['range'] = []
 
-            attr['solr_collex'].append('dicom_derived_all')
-            attr['bq_tables'].append('idc-dev.metadata.qualitative_measurements')
+            attr['solr_collex'].append(SOLR_INDEX['dicom_derived'])
+            attr['bq_tables'].append(BQ_TABLES['qual'])
 
             attr['categories'].append({'name': 'qualitative', 'display_name': 'Qualitative Analysis'})
 

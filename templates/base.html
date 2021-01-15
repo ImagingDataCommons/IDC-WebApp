@@ -24,7 +24,7 @@
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title>{% block title %}IDC{% endblock %}</title>
-    <meta name="description" content="{% block description %}Imaging Data Commons{% endblock %}">
+    <meta name="description" content="{% block description %}NCI Imaging Data Commons{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     {% block extra_css_libs %}{% endblock %}
@@ -35,17 +35,17 @@
 
     {% block header %}{% endblock %}
 
-{#    {% if SITE_GOOGLE_ANALYTICS %}#}
-{#        <!-- Global site tag (gtag.js) - Google Analytics -->#}
-{#        <script async src="https://www.googletagmanager.com/gtag/js?id={{ SITE_GOOGLE_ANALYTICS_TRACKING_ID }}"></script>#}
-{#        <script>#}
-{#          window.dataLayer = window.dataLayer || [];#}
-{#          function gtag(){dataLayer.push(arguments);}#}
-{#          gtag('js', new Date());#}
-{##}
-{#          gtag('config', '{{ SITE_GOOGLE_ANALYTICS_TRACKING_ID }}');#}
-{#        </script>#}
-{#    {%  endif %}#}
+    {% if SITE_GOOGLE_ANALYTICS %}
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ SITE_GOOGLE_ANALYTICS_TRACKING_ID }}"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', '{{ SITE_GOOGLE_ANALYTICS_TRACKING_ID }}');
+        </script>
+    {%  endif %}
     <script>
         var STATIC_FILES_URL = '{{ STATIC_FILES_URL }}';
         var BASE_URL = '{{ BASE_URL }}' || "";
@@ -85,15 +85,15 @@
         <div class="row">
             {% block content %}{% endblock %}
         </div>
-        <!-- The landing page has a special layout, so it has its own footer include -->
-        {% if request.path != '/' %}
+        <!-- The landing page and collections page has a special layout, so it has its own footer include -->
+        {% if request.path != '/' and request.path != '/collections/' %}
             {% include 'share/site_footer.html'  %}
         {% endif %}
     </div>
 </main>
 
 <!-- Warning Modal -->
-<div class="modal fade" id="gov_warning" tabindex="-1" role="dialog" aria-labelledby="gov_warning-header" aria-hidden="true">
+<div class="modal fade" id="gov_warning" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="gov_warning-header" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -111,7 +111,27 @@
                 possible evidence of criminal activity, NIH may provide that evidence to law enforcement officials</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary">OK</button>
+                <button type="button" class="btn btn-primary btn-warn">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- External Web Warning Modal -->
+<div class="modal fade" id="external-web-warning" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="external-web-warning-header" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Leaving NCI website</h4>
+            </div>
+            <div class="modal-body">
+                <p>This link will take you to an external web site. Linking to a non-federal website does not indicate an endorsement by NCI of the sponsors
+                    or of the information and products presented on the website. You will be subject to the external website’s privacy policy when you leave
+                    NCI’s website.</p>
+            </div>
+            <div class="modal-footer">
+                <a type="button" class="btn btn-primary btn-warn" data-dismiss="modal">Cancel</a>
+                <a type="button" href="" class="btn btn-primary btn-warn" id="go-to-external-link" target="_blank">OK</a>
             </div>
         </div>
     </div>
@@ -163,9 +183,17 @@
         var expireAfter = {{ request|expire_after|unlocalize }};
         var confirmFormDiscard = "{% trans 'You have unsaved changes in a form of this page.' %}";
         var returnToUrl = '{% url 'landing_page' %}';
+
+        var showWarning = false;
     </script>
     {% endlocalize %}
 {% endif %}
+
+<!-- Additional includes brought in by specific child templates -->
+{% block modal_includes %}
+
+{% endblock %}
+
 {% block js_file %}
     <script src="{% static 'js/libs/require.js' %}"></script>
 {% endblock %}

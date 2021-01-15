@@ -19,7 +19,7 @@
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
     paths: {
-        jquery: 'libs/jquery-1.11.1.min',
+        jquery: 'libs/jquery-3.5.1',
         jqueryui: 'libs/jquery-ui.min',
         underscore: 'libs/underscore-min',
         base: 'base',
@@ -53,7 +53,7 @@ require([
       Eye: 'rgb(233, 110, 31)',
       'Head and Neck': 'rgb(240, 142, 26)',
       Kidney: 'rgb(38, 193, 86)',
-      Liver: 'rgb(67, 221, 207)',
+      Liver: 'rgb(233,121,136)',
       Lung: 'rgb(158, 9, 219)',
       'Lymph Nodes': 'rgb(222, 61, 211)',
       'Nervous System': 'rgb(27, 114, 246)',
@@ -68,6 +68,7 @@ require([
       Thymus: 'rgb(61, 223, 204)',
       Thyroid: 'rgb(224, 75, 123)',
       Uterus: 'rgb(245, 97, 154)',
+      Chest: 'rgb(0, 233, 255)',
     };
 
     let data = case_counts.sort(function(a,b){
@@ -82,7 +83,38 @@ require([
         return 1;
     });
 
-    let clickHandler = null;
+    let clickHandler = function(id)
+    {
+        var groups = [];
+        var filters = [];
+        var values = [];
+
+        if (id.site === "Head and Neck" || id.site === "Head-and-Neck")
+        {
+            values.push("Head-Neck");
+        }
+        else if (id.site == "Colorectal")
+        {
+            values.push("Colon");
+        }
+        else
+        {
+            values.push(id.site)
+        }
+
+        filters.push(
+        {
+            'id': '128',
+            'values': values,
+        });
+        groups.push({'filters': filters});
+        var filterStr = JSON.stringify(groups);
+
+        let url = '/explore/?filters_for_load=' + filterStr;
+        url = encodeURI(url);
+
+        window.location.href = url;
+    };
 
     let mouseOutHandler = null;
 
