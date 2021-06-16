@@ -20,6 +20,7 @@ import json
 import logging
 import sys
 import datetime
+import re
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -31,13 +32,15 @@ from django.contrib import messages
 
 from google_helpers.stackdriver import StackDriverLogger
 from cohorts.models import Cohort, Cohort_Perms
-from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion
-from idc_collections.collex_metadata_utils import build_explorer_context
+from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, DataSetType
+from idc_collections.collex_metadata_utils import build_explorer_context, get_collex_metadata
 from .models import AppInfo
 from allauth.socialaccount.models import SocialAccount
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.signals import user_login_failed
 from django.dispatch import receiver
+
+from django.utils.html import escape
 
 debug = settings.DEBUG
 logger = logging.getLogger('main_logger')
@@ -49,7 +52,7 @@ WEBAPP_LOGIN_LOG_NAME = settings.WEBAPP_LOGIN_LOG_NAME
 # The site's homepage
 @never_cache
 def landing_page(request):
-    collex = Collection.objects.filter(active=True, subject_count__gt=6, collection_type=Collection.ORIGINAL_COLLEX).values()
+    collex = Collection.objects.filter(active=True, subject_count__gt=6, collection_type=Collection.ORIGINAL_COLLEX, species='Human').values()
     #app_info = AppInfo.objects.get(active=True)
     idc_info = ImagingDataCommonsVersion.objects.get(active=True)
 
@@ -57,13 +60,25 @@ def landing_page(request):
 
     changes = {
         'Renal': 'Kidney',
+        'Head': 'Head and Neck',
         'Head-Neck': 'Head and Neck',
+        'Head-and-Neck': 'Head and Neck',
         'Colon': 'Colorectal',
         'Rectum': 'Colorectal'
     }
 
+    skip = [
+        'Extremities',
+        'Abdomen, Mediastinum',
+        'Abdomen',
+        'Ear',
+        'Pelvis, Prostate, Anus'
+    ]
+
     for collection in collex:
         loc = collection['location']
+        if re.search(r'[Pp]hantom',loc) or re.search('[Vv]arious',loc) or loc in skip:
+            continue
         if collection['location'] in changes:
             loc = changes[collection['location']]
         if loc not in sapien_counts:
@@ -132,6 +147,9 @@ def test_methods(request):
         logger.exception(e)
 
     return render(request, 'idc/explore.html', {'request': request, 'context': context})
+
+
+
 
 
 # User details page
@@ -222,6 +240,114 @@ def help_page(request):
 def quota_page(request):
     return render(request, 'idc/quota.html', {'request': request, 'quota': settings.IMG_QUOTA})
 
+def populate_tables(request):
+    tableRes = []
+    try:
+        req = request.GET if request.GET else request.POST
+        path_arr = [nstr for nstr in request.path.split('/') if nstr]
+        table_type = path_arr[len(path_arr)-1]
+        fields = None
+        collapse_on = None
+        filters = json.loads(req.get('filters', '{}'))
+        offset = int(req.get('offset', '0'))
+        limit = int(req.get('limit', '500'))
+        sort = req.get('sort', 'PatientID')
+        sortdir = req.get('sortdir','asc')
+        #table_data = get_table_data(filters, table_type)
+        sources = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(active=True,source_type=DataSource.SOLR,aggregate_level="StudyInstanceUID")
+
+        sortByIndex = True
+        idsReq=[]
+        custom_facets=''
+        custom_facets_order=''
+        if table_type == 'cases':
+            custom_facets = {"per_id": {"type": "terms", "field": "PatientID", "limit": 500,
+                                "facet": {"unique_study": "unique(StudyInstanceUID)", "unique_series": "unique(SeriesInstanceUID)"}}
+                            }
+            tableIndex = 'PatientID'
+            fields = ['collection_id','PatientID']
+            facetfields=['unique_study','unique_series']
+
+            if sort == 'collection_id':
+                sortByIndex = True
+                sort_field = 'collection_id '+sortdir+', PatientID asc'
+
+            elif sort == 'PatientID':
+
+                sort_field = 'PatientID ' + sortdir
+
+            elif sort == 'StudyInstanceUID':
+                sortByIndex=False
+                custom_facets_order = {"per_id": {"type": "terms", "field": "PatientID", "sort":"unique_study", "offset":offset, "limit": limit,"facet": {"unique_study": "unique(StudyInstanceUID)", "unique_series": "unique(SeriesInstanceUID)"}}}
+                patientIdsReq = get_collex_metadata(filters, fields, record_limit=limit, sources=sources, offset=offset,
+                                                    records_only=False,
+                                                    collapse_on=tableIndex, counts_only=True, filtered_needed=False, custom_facets=custom_facets, raw_format=True)
+
+        order = {}
+        curInd = 0
+
+        idsFilt=[]
+
+        if sortByIndex:
+            idsReq = get_collex_metadata(filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=True,
+                                collapse_on=tableIndex, counts_only=False,filtered_needed=False,sort=sort_field)
+            for rec in idsReq['docs']:
+                id = rec[tableIndex]
+                idsFilt.append(id)
+                order[id] = curInd
+                newRow={}
+                for field in fields:
+                    newRow[field]=rec[field]
+                tableRes.append(newRow)
+                curInd = curInd + 1
+            filters[tableIndex]=idsFilt
+            cntRecs = get_collex_metadata(filters, fields, record_limit=limit, sources=sources,
+                                            collapse_on=tableIndex, counts_only=True,records_only=False,
+                                            filtered_needed=False, custom_facets=custom_facets,raw_format=True)
+
+            for rec in cntRecs['facets']['per_id']['buckets']:
+                id = rec['val']
+                tableRow=tableRes[order[id]]
+                for facet in facetfields:
+                    tableRow[facet]=rec[facet]
+
+
+        else:
+            idsReq = get_collex_metadata(filters, fields, record_limit=limit, sources=sources, offset=offset,
+                                        records_only=False,collapse_on=tableIndex, counts_only=True, filtered_needed=False,
+                                         custom_facets=custom_facets_order, raw_format=True)
+            for rec in idsReq['facets']['per_id']['buckets']:
+                id= rec['val']
+                idsFilt.append(id)
+                order[id] = curInd
+                newRow={tableIndex: id}
+                for facet in facetfields:
+                    newRow[facet]=rec[facet]
+                tableRes.append(newRow)
+                curInd = curInd + 1
+            filters[tableIndex] = idsFilt
+            fieldRecs = get_collex_metadata(filters, fields, record_limit=limit, sources=sources,
+                                         records_only=True,collapse_on=tableIndex, counts_only=False, filtered_needed=False)
+            for rec in fieldRecs['docs']:
+                id = rec[tableIndex]
+                tableRow = tableRes[order[id]]
+                for field in fields:
+                    if not field == tableIndex:
+                        tableRow[field] = rec[field]
+
+        '''result = get_collex_metadata(filters, fields, record_limit=limit, sources=sources, facets=["collection_id"],
+        #                                 collapse_on=collapse_on, counts_only=cntOnly,records_only=recOnly,
+        #                                 filtered_needed=False, custom_facets=custom_facets,raw_format=cntOnly)'''
+
+        i=1
+    except Exception as e:
+        logger.error("[ERROR] While attempting to populate the table:")
+        logger.exception(e)
+        messages.error(request,"Encountered an error when attempting to populate the page - please contact the administrator.")
+
+
+    i=1
+    return JsonResponse({"res":tableRes})
 
 # Data exploration and cohort creation page
 def explore_data_page(request):
@@ -229,6 +355,7 @@ def explore_data_page(request):
     attr_sets = {}
     context = {'request': request}
     is_json = False
+    wcohort = False
 
     try:
         req = request.GET if request.GET else request.POST
@@ -245,9 +372,27 @@ def explore_data_page(request):
         collapse_on = req.get('collapse_on', 'SeriesInstanceUID')
         is_json = (req.get('is_json', "False").lower() == "true")
         uniques = json.loads(req.get('uniques', '[]'))
+        totals = json.loads(req.get('totals', '[]'))
+
         record_limit = int(req.get('record_limit', '2000'))
         offset = int(req.get('offset', '0'))
+        #sort_on = req.get('sort_on', collapse_on+' asc')
+        cohort_id = req.get('cohort_id','-1')
 
+        cohort_filters={}
+        if (int(cohort_id)>-1):
+            cohort = Cohort.objects.get(id=cohort_id, active=True)
+            cohort.perm = cohort.get_perm(request)
+            if cohort.perm:
+                wcohort = True
+                cohort_filters_dict = cohort.get_filters_as_dict()
+                cohort_filters_list = cohort_filters_dict[0]['filters']
+                for cohort in cohort_filters_list:
+                    cohort_filters[cohort['name']] = cohort['values']
+
+
+        if wcohort and is_json:
+            filters = cohort_filters
         context = build_explorer_context(is_dicofdic, source, versions, filters, fields, order_docs, counts_only,
                                          with_related, with_derived, collapse_on, is_json, uniques=uniques)
 
@@ -262,9 +407,12 @@ def explore_data_page(request):
         return JsonResponse(context)
     else:
         # These are filters to be loaded *after* a page render
-        context['filters_for_load'] = json.loads(req.get('filters_for_load', '{}'))
-        context['order'] = {'derived_set': ['dicom_derived_all:segmentation', 'dicom_derived_all:qualitative',
-                                            'dicom_derived_all:quantitative']}
+        if wcohort:
+            context['filters_for_load'] = cohort_filters_dict
+        else:
+            context['filters_for_load'] = json.loads(req.get('filters_for_load', '{}'))
+        '''context['order'] = {'derived_set': ['dicom_derived_study_v2:segmentation', 'dicom_derived_study_v2:qualitative',
+                                            'dicom_derived_study_v2:quantitative']}'''
 
         return render(request, 'idc/explore.html', context)
 

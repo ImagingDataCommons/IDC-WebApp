@@ -30,20 +30,24 @@
                 </div>
             </div>
 
-            <form id="export-manifest-form" method="get" action="{% url 'cohort_manifest' cohort_id %}">
+            <form id="export-manifest-form" method="GET" data-uri-base="{{ export_uri }}" action="{{ export_uri }}">
                 <div class="modal-body">
-                    <div class="form-group">
+                    <div class="form-group list-group">
                         <!-- Name -->
-                        <div>
+                        <div class="file-name">
                             <label for="export-manifest-name">Name</label>
-                            <input class="form-control" type="text" id="export-manifest-name" name="file_name" value="{{ cohort.name }}_{{ cohort.id }}_{% now "Ymd_Gis" %}" required />
+                            <input class="form-control" type="text" id="export-manifest-name" name="file_name" data-name-base="_{% now "Ymd_Gis" %}" value="" required />
                         </div>
-                        <br>
+                        <div class="table-name" style="display: none;">
+                            <p>BigQuery table names are automatically generated and will be provided once the manifest has exported.</p>
+                        </div>
 
                         <!-- Header Fields -->
-                        <div class="export-manifest-group__heading">
-                            <a role="button" data-toggle="collapse" href="#header-fields" aria-expanded="false" aria-controls="header-fields" class="collapsed">
-                                <i class="fa fa-caret-right"></i> Header Fields
+                        <div id="fields-container">
+                        <div id="Fields_heading" class="list-group-item__heading export-manifest-group__heading">
+                            <a role="button" data-toggle="collapse" href="#header-fields" aria-expanded="false"
+                               aria-controls="header-fields">
+                                <i class="fa fa-caret-right"></i> <i class="fa fa-caret-down"></i> Header Fields
                             </a>
                         </div>
                         <div id="header-fields" class="collapse">
@@ -72,12 +76,14 @@
                                 <span class="value">Total Records</span>
                             </label></li>
                         </div>
-                        <br>
+                        </div>
 
                         <!-- Columns -->
-                        <div class="export-manifest-group__heading">
-                            <a role="button" data-toggle="collapse" href="#columns" aria-expanded="false" aria-controls="header-fields" class="collapsed">
-                                <i class="fa fa-caret-right"></i> Columns
+                        <div id="columns-container">
+                        <div id="Columns_heading" class="list-group-item__heading export-manifest-group__heading">
+                            <a role="button" data-toggle="collapse" href="#columns" aria-expanded="false"
+                               aria-controls="columns">
+                                <i class="fa fa-caret-right"></i> <i class="fa fa-caret-down"></i> Columns
                             </a>
                         </div>
                         <div id="columns" class="collapse">
@@ -102,32 +108,28 @@
                             </label></li>
 
                             <li class="checkbox"><label>
-                                <input class="column-checkbox" type="checkbox" value="SOPInstanceUID" checked>
-                                <span class="value">SOP Instance UID</span>
-                            </label></li>
-
-                            <li class="checkbox"><label>
                                 <input class="column-checkbox" type="checkbox" value="source_DOI" checked>
                                 <span class="value">Source DOI</span>
                             </label></li>
 
                             <li class="checkbox"><label>
-                                <input class="column-checkbox" type="checkbox" value="crdc_instance_uuid" checked>
-                                <span class="value">CRDC Instance UUID</span>
+                                <input class="column-checkbox" type="checkbox" value="crdc_study_uuid" checked>
+                                <span class="value">CRDC Study UUID</span>
                             </label></li>
 
                             <li class="checkbox"><label>
-                                <input class="column-checkbox" type="checkbox" value="gcs_url" checked>
-                                <span class="value">GCS URL </span>
+                                <input class="column-checkbox" type="checkbox" value="crdc_series_uuid" checked>
+                                <span class="value">CRDC Series UUID</span>
                             </label></li>
                         </div>
-                        <br>
+                        </div>
 
                         <!-- Export Option -->
                         <div class="export-option">
-                            <span id="file-export-option" title="" class="value"><input type="radio" name="manifest-type" value="file-manifest" checked> Files</span>
+                            <span id="file-export-option" title="" class="value">
+                                <input class="file-manifest export-option" type="radio" name="manifest-type" value="file-manifest" checked> Files</span>
                             <span id="bq-export-option" style="margin-left:10px" class="value" {% if not is_social %}title="Export to BigQuery is only available with a Google Account."{% endif %}>
-                                <input type="radio" name="manifest-type" value="bq-manifest" {% if not is_social %}disabled{% endif %}> BigQuery</span>
+                                <input class="bq-manifest export-option" type="radio" name="manifest-type" value="bq-manifest" {% if not is_social %}disabled{% endif %}> BigQuery</span>
                         </div>
                         <br>
                         {% if is_social %}
@@ -149,13 +151,13 @@
                             <br>
 
                             {% csrf_token %}
-                            <a id="download-csv" class="btn btn-primary" title="Download this cohort's manifest in CSV format.">
+                            <a id="download-csv" class="btn btn-primary download-file" title="Download this cohort's manifest in CSV format.">
                                 Download CSV
                             </a>
-                            <a id="download-tsv" class="btn btn-primary " title="Download this cohort's manifest in TSV format.">
+                            <a id="download-tsv" class="btn btn-primary download-file" title="Download this cohort's manifest in TSV format.">
                                 Download TSV
                             </a>
-                            <a id="download-json" class="btn btn-primary " title="Download this cohort's manifest in JSON format.">
+                            <a id="download-json" class="btn btn-primary download-file" title="Download this cohort's manifest in JSON format.">
                                 Download JSON
                             </a>
                         </div>
@@ -167,7 +169,21 @@
                 <input type="hidden" name="columns">
                 <input type="hidden" name="header_fields">
                 <input type="hidden" name="include_header">
+                <input type="hidden" name="ids">
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Download In Progress Modal -->
+<div class="modal fade" id="manifest-in-progress" tabindex="-1" role="dialog" data-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"></div>
+            <div class="modal-body">
+                <p><i class="fa fa-cog fa-spin"></i> Preparing cohort manifest...</p>
+            </div>
+            <div class="modal-footer"></div>
         </div>
     </div>
 </div>
