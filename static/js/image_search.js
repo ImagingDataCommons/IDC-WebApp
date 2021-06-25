@@ -2872,7 +2872,7 @@ require([
         // For collection list
         $('.collection-list').each(function() {
             var $group = $(this);
-            var checkboxes = $group.find("input:checked").not(".hide-zeros");
+            var checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val");
             if (checkboxes.length > 0) {
                 var values = [];
                 var my_id = "";
@@ -2895,7 +2895,7 @@ require([
             var my_id = $group.data('filter-attr-id');
             if (my_id != null)
             {
-                var checkboxes = $group.find("input:checked");
+                var checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val");
                 if (checkboxes.length > 0)
                 {
                     var values = [];
