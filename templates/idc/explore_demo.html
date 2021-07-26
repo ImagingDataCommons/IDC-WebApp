@@ -22,6 +22,7 @@
 
 {% block header %}
     <link type="text/css" rel="stylesheet" href="{% static 'css/search.css' %}">
+    <link type="text/css" rel="stylesheet" href="{% static 'css/spinner.css' %}">
     <link type="text/css" rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}">
 {% endblock %}
 
@@ -77,10 +78,7 @@
 {% block content %}
 
 <script>
-   window.selItems = new Object();
-   window.selItems.selProjects = new Array();
-   window.selItems.selStudies = new Object();
-   window.collection = {{ collections|tojson|safe }};
+   var cohort_loaded  = false;
 </script>
 
 {% include "idc/explore_data_core_demo.html" %}

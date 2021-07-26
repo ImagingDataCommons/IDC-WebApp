@@ -44,12 +44,17 @@ require([
     'bootstrap',
     'tablesorter'
 ], function($,base) {
+
+
+
     var cohort_list_table = $('#cohort-table').DataTable({
         "dom": '<"dataTables_controls"ilpf>rt<"bottom"><"clear">',
         "order": [[ 2, "desc" ]],
         "columns": [
             { "orderable": false },
             { "orderable": false },
+            null,
+            null,
             null,
             null,
             null,
@@ -66,11 +71,21 @@ require([
             // This row is already open - close it
             row.child.hide();
             tr.removeClass('shown');
-            $(this).prop('title', 'Click to display cohort description.');
+            $(this).prop('title', 'Click to display additional cohort details.');
         } else {
-            $(this).prop('title', 'Click to hide cohort description.');
-            var desc = tr.attr('data-description');
-            (row.child() && row.child().length) ? row.child.show() : row.child($(`<tr><td></td><td colspan="6"><p>`+desc+`</p></td></tr>`)).show();
+            $(this).prop('title', 'Click to hide cohort details.');
+            var desc = tr.data('description');
+            var collex = tr.data('collex');
+            var name = tr.data('name');
+            var filters = tr.data('filters');
+            (row.child() && row.child().length) ? row.child.show() : row.child(
+                $(`<tr><td></td>`+
+                    `<td colspan="6"><p><b>Name </b><br/>`+name+`</p>`+
+                    `<p><b>Description </b><br/>`+desc+`</p>`+
+                    `<p><b>Collections </b><br/>`+collex+`</p></td>`+
+                    `<td colspan="2"><p><b>Filters</b><br />`+filters+`</p></td>`+
+                    `</tr>`)
+            ).show();
             tr.addClass('shown');
         }
     });
@@ -472,39 +487,6 @@ require([
         return false;
     });
 
-    $(".createWorkbookWithCohort").on("click", function(){
-        //get the selected cohort
-        var cohorts = [];
-        $('#saved-cohorts-list input[type="checkbox"], #public-cohorts-list input[type="checkbox"]').each(function() {
-            if ($(this).is(':checked') && $(this).val() != 'on') {
-                cohorts.push($(this).val());
-            }
-        });
-
-        if(cohorts.length > 0){
-            var csrftoken = $.getCookie('csrftoken');
-            $.ajax({
-                type: 'POST',
-                dataType :'json',
-                url : BASE_URL + '/workbooks/create_with_cohort_list',
-                data: JSON.stringify({cohorts : cohorts}),
-                beforeSend: function(xhr){xhr.setRequestHeader("X-CSRFToken", csrftoken);},
-                success: function (data) {
-                    if(!data.error) {
-                        window.location = BASE_URL + '/workbooks/' + data.workbook_id + '/worksheets/' + data.worksheet_id + '/';
-                    } else {
-                        base.setReloadMsg('error','Failed to create a workbook with cohort(s): '+ cohorts.join(", "));
-                    }
-                },
-                error: function () {
-                    base.setReloadMsg('error','Failed to create a workbook with cohort(s): '+ cohorts.join(", "));
-                }
-            }).always(function () {
-                $this.find('button[type="submit"]').removeClass('btn-disabled').removeAttr('disabled');
-            });
-        }
-    });
-
     $('.selected-cohorts, #selected-ids, #base-id, #subtract-ids').on('click', '.delete-x', delete_x_callback);
 
     // Initiate buttons states on load
@@ -517,4 +499,55 @@ require([
         $(this).find('button[type="submit"]').attr('disabled','disabled');
     });
 
+
+
+    window.compareVer = function(selbutton){
+        cohort_row = $(selbutton).closest('tr');
+        var id = $(cohort_row).find('.id-col').text().trim();
+        var case_col = $(cohort_row).find('.case-col').text().trim();
+        var study_col = $(cohort_row).find('.study-col').text().trim();
+        var series_col = $(cohort_row).find('.series-col').text().trim();
+        var totals = JSON.stringify(["PatientID","StudyInstanceUID","SeriesInstanceUID"]);
+
+       //# PatientId, StudyInstanceUID SeriesInstanceUID
+        let url = '/cohorts/'+id+'/stats/?update=true'
+        url = encodeURI(url);
+        var ntxt="";
+        $('#version_d').find('#ui-id-1')[0].innerHTML='Comparing Versions of Cohort '+id;
+        $('.spinner').show();
+        $.ajax({
+            url: url,
+            dataType: 'json',
+            type: 'get',
+            contentType: 'application/x-www-form-urlencoded',
+            success: function (data) {
+                $('#version_d').show();
+                var pageWidth = window.innerWidth;
+                var pageHeight = window.innerHeight;
+                var myElementWidth = document.getElementById('version_d').offsetWidth;
+                var myElementHeight = document.getElementById('version_d').offsetHeight;
+                document.getElementById('version_d').style.top = (pageHeight / 2) - (myElementHeight / 2) + "px";
+                document.getElementById('version_d').style.left = (pageWidth / 2) - (myElementWidth / 2) + "px";
+                $('#version_d').find('.case_o')[0].innerHTML=case_col;
+                $('#version_d').find('.case_c')[0].innerHTML=data['PatientID'].toString();
+
+                $('#version_d').find('.study_o')[0].innerHTML=study_col;
+                $('#version_d').find('.study_c')[0].innerHTML=data['StudyInstanceUID'].toString();
+
+                $('#version_d').find('.series_o')[0].innerHTML=series_col;
+                $('#version_d').find('.series_c')[0].innerHTML=data['SeriesInstanceUID'].toString();
+                document.getElementById("load_new").innerHTML="<button onclick=\"location.href = '/explore/?cohort_id="+id+"';\">Load New Version</button>"
+               $('.spinner').hide();
+            },
+            error: function () {
+                    $('.spinner').hide();
+                    console.log("problem getting data");
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        $('#version_d').hide();
+
+    });
 });
