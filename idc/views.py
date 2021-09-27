@@ -21,6 +21,7 @@ import logging
 import sys
 import datetime
 import re
+import copy
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -32,7 +33,7 @@ from django.contrib import messages
 
 from google_helpers.stackdriver import StackDriverLogger
 from cohorts.models import Cohort, Cohort_Perms
-from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, DataSetType
+from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, DataSetType, Attribute
 from idc_collections.collex_metadata_utils import build_explorer_context, get_collex_metadata
 from .models import AppInfo
 from allauth.socialaccount.models import SocialAccount
@@ -256,41 +257,50 @@ def populate_tables(request):
         filters = json.loads(req.get('filters', '{}'))
         offset = int(req.get('offset', '0'))
         limit = int(req.get('limit', '500'))
+        if limit > settings.MAX_SOLR_RECORD_REQUEST:
+            logger.error("[ERROR] Attempt to request more than MAX_SOLR_RECORD_REQUEST! ({})".format(limit))
+            limit = settings.MAX_SOLR_RECORD_REQUEST
         sort = req.get('sort', 'PatientID')
         sortdir = req.get('sortdir','asc')
+        checkIds = json.loads(req.get('checkids','[]'))
         #table_data = get_table_data(filters, table_type)
+        diffA=[]
+
         sources = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
-            active=True,source_type=DataSource.SOLR,aggregate_level="StudyInstanceUID"
+            active=True, source_type=DataSource.SOLR,
+            aggregate_level="SeriesInstanceUID"  if table_type=='series' else "StudyInstanceUID"
         )
 
-        sortByIndex = True
-        idsReq=[]
+        sortByField = True
+        #idsReq=[]
         custom_facets=''
         custom_facets_order=''
         if table_type == 'cases':
-            custom_facets = {"per_id": {"type": "terms", "field": "PatientID", "limit": 500,
-                                "facet": {"unique_study": "unique(StudyInstanceUID)", "unique_series": "unique(SeriesInstanceUID)"}}
+            custom_facets = {"per_id": {"type": "terms", "field": "PatientID", "limit": limit,
+                                "facet": {"unique_study": "unique(StudyInstanceUID)",
+                                          "unique_series": "unique(SeriesInstanceUID)"}}
                             }
             tableIndex = 'PatientID'
-            fields = ['collection_id','PatientID']
-            facetfields=['unique_study','unique_series']
+            fields = ['collection_id', 'PatientID']
+            facetfields=['unique_study', 'unique_series']
 
             if sort == 'collection_id':
-                sortByIndex = True
-                sort_field = 'collection_id '+sortdir+', PatientID asc'
+                sortByField = True
+                sort_arg = 'collection_id '+sortdir
 
             elif sort == 'PatientID':
-
-                sort_field = 'PatientID ' + sortdir
+                sort_arg = 'PatientID ' + sortdir
 
             elif sort == 'StudyInstanceUID':
-                sortByIndex=False
+                sortByField=False
+                sort_arg = 'unique_study ' + sortdir
                 custom_facets_order = {
+                    "tot": "unique(PatientID)",
                     "per_id": {
                         "type": "terms",
                         "field": "PatientID",
-                        "sort":"unique_study",
-                        "offset":offset,
+                        "sort": sort_arg,
+                        "offset": offset,
                         "limit": limit,
                         "facet": {
                             "unique_study": "unique(StudyInstanceUID)",
@@ -298,84 +308,141 @@ def populate_tables(request):
                         }
                     }
                 }
-                patientIdsReq = get_collex_metadata(
-                    filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=False,
-                    collapse_on=tableIndex, counts_only=True, filtered_needed=False, custom_facets=custom_facets,
-                    raw_format=True
-                )
+            elif sort == 'SeriesInstanceUID':
+                sortByField=False
+                sort_arg = 'unique_series '+sortdir
+                custom_facets_order = {
+                    "tot": "unique(PatientID)",
+                    "per_id": {
+                        "type": "terms", "field": "PatientID", "sort": sort_arg, "offset": offset, "limit": limit,
+                        "facet": {
+                            "unique_study": "unique(StudyInstanceUID)",
+                            "unique_series": "unique(SeriesInstanceUID)"
+                        }
+                    }
+                }
+
+        if table_type == 'studies':
+            custom_facets = {"per_id": {"type": "terms", "field": "StudyInstanceUID", "limit": limit,
+                                        "facet": {"unique_series": "unique(SeriesInstanceUID)"}}
+                             }
+            tableIndex = 'StudyInstanceUID'
+            fields = ['PatientID','StudyInstanceUID','StudyDescription','Modality']
+            facetfields = ['unique_series']
+            sort_arg = 'PatientID asc'
+
+            if sort in ['PatientID','StudyInstanceUID', 'StudyDescription',]:
+                sortByField = True
+                sort_arg = "{} {}".format(sort, sortdir)
+            elif sort == 'SeriesInstanceUID':
+                sortByField = False
+                sort_arg = 'unique_series '+sortdir
+
+                custom_facets_order = {"tot": "unique(SeriesInstanceUID)",
+                                       "per_id": {"type": "terms", "field": "StudyInstanceUID", "sort": sort_arg,"offset": offset, "limit": limit,
+                                                  "facet": {"unique_series": "unique(SeriesInstanceUID)"}}
+                                       }
+
+        if table_type == 'series':
+            custom_facets = {}
+            tableIndex = 'SeriesInstanceUID'
+            fields = ['SeriesInstanceUID','StudyInstanceUID','SeriesDescription','SeriesNumber','BodyPartExamined','Modality']
+            facetfields = []
+            sortByField = True
+
+            sort_arg = 'StudyInstanceUID asc, SeriesNumber asc' if not sort else "{} {}, SeriesNumber asc".format(
+                sort, sortdir
+            )
+
+            if sort == 'SeriesDescription':
+                custom_facets_order = {}
 
         order = {}
         curInd = 0
+        idsFilt = []
 
-        idsFilt=[]
+        # check that any selected ids are still valid after the filter is updated. ids that are not longer valid are
+        # then deselected on the front end
+        if len(checkIds)>0:
+            selFilters=copy.deepcopy(filters)
+            selFilters[tableIndex]=checkIds
+            newCheckIds = get_collex_metadata(selFilters, [tableIndex], record_limit=len(checkIds)+1,sources=sources, records_only=True,
+                                collapse_on=tableIndex, counts_only=False,filtered_needed=False,sort=tableIndex+' asc')
 
-        if sortByIndex:
-            idsReq = get_collex_metadata(
-                filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=True,
-                collapse_on=tableIndex, counts_only=False,filtered_needed=False,sort=sort_field
-            )
+            nset = set([x[tableIndex] for x in newCheckIds['docs']])
+            diffA = [x for x in checkIds if x not in nset]
+
+        if sortByField:
+            idsReq = get_collex_metadata(filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=True,
+                                collapse_on=tableIndex, counts_only=False,filtered_needed=False,sort=sort_arg)
+
+            cnt = idsReq['total']
             for rec in idsReq['docs']:
                 id = rec[tableIndex]
                 idsFilt.append(id)
                 order[id] = curInd
-                newRow={}
+                newRow = {}
                 for field in fields:
-                    newRow[field]=rec[field]
+                    if field in rec:
+                        newRow[field]=rec[field]
+                    else:
+                        newRow[field]=''
                 tableRes.append(newRow)
                 curInd = curInd + 1
             filters[tableIndex]=idsFilt
-            cntRecs = get_collex_metadata(
-                filters, fields, record_limit=limit, sources=sources, collapse_on=tableIndex, counts_only=True,
-                records_only=False, filtered_needed=False, custom_facets=custom_facets,raw_format=True
-            )
+            if not table_type == 'series':
+                cntRecs = get_collex_metadata(filters, fields, record_limit=limit, sources=sources,
+                                            collapse_on=tableIndex, counts_only=True,records_only=False,
+                                            filtered_needed=False, custom_facets=custom_facets,raw_format=True)
 
-            for rec in cntRecs['facets']['per_id']['buckets']:
-                id = rec['val']
-                tableRow=tableRes[order[id]]
-                for facet in facetfields:
-                    tableRow[facet]=rec[facet]
-
-
+                for rec in cntRecs['facets']['per_id']['buckets']:
+                    id = rec['val']
+                    tableRow = tableRes[order[id]]
+                    for facet in facetfields:
+                        if facet in rec:
+                            tableRow[facet]=rec[facet]
+                        else:
+                            tableRow[facet] = 0
         else:
-            idsReq = get_collex_metadata(
-                filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=False,
-                collapse_on=tableIndex, counts_only=True, filtered_needed=False, custom_facets=custom_facets_order,
-                raw_format=True
-            )
+            idsReq = get_collex_metadata(filters, fields, record_limit=limit, sources=sources, offset=offset,
+                                        records_only=False,collapse_on=tableIndex, counts_only=True, filtered_needed=False,
+                                         custom_facets=custom_facets_order, raw_format=True)
+            cnt = idsReq['facets']['tot']
             for rec in idsReq['facets']['per_id']['buckets']:
-                id= rec['val']
+                id = rec['val']
                 idsFilt.append(id)
                 order[id] = curInd
-                newRow={tableIndex: id}
+                newRow = {tableIndex: id}
                 for facet in facetfields:
-                    newRow[facet]=rec[facet]
+                    if facet in rec:
+                        newRow[facet]=rec[facet]
+                    else:
+                        newRow[facet] = 0
                 tableRes.append(newRow)
                 curInd = curInd + 1
             filters[tableIndex] = idsFilt
-            fieldRecs = get_collex_metadata(
-                filters, fields, record_limit=limit, sources=sources, records_only=True, collapse_on=tableIndex,
-                counts_only=False, filtered_needed=False
-            )
+            fieldRecs = get_collex_metadata(filters, fields, record_limit=limit, sources=sources,
+                                         records_only=True,collapse_on=tableIndex, counts_only=False, filtered_needed=False)
             for rec in fieldRecs['docs']:
                 id = rec[tableIndex]
                 tableRow = tableRes[order[id]]
                 for field in fields:
                     if not field == tableIndex:
-                        tableRow[field] = rec[field]
+                        if field in rec:
+                            tableRow[field] = rec[field]
+                        else:
+                            tableRow[field] = ''
 
-        '''result = get_collex_metadata(filters, fields, record_limit=limit, sources=sources, facets=["collection_id"],
-        #                                 collapse_on=collapse_on, counts_only=cntOnly,records_only=recOnly,
-        #                                 filtered_needed=False, custom_facets=custom_facets,raw_format=cntOnly)'''
-
-        i=1
     except Exception as e:
         logger.error("[ERROR] While attempting to populate the table:")
         logger.exception(e)
-        messages.error(request,"Encountered an error when attempting to populate the page - please contact the administrator.")
+        messages.error(
+           request,
+           "Encountered an error when attempting to populate the page - please contact the administrator."
+        )
 
+    return JsonResponse({"res": tableRes, "cnt": cnt, "diff": diffA})
 
-    i=1
-    return JsonResponse({"res":tableRes})
 
 # Data exploration and cohort creation page
 def explore_data_page(request):
@@ -398,6 +465,9 @@ def explore_data_page(request):
         with_related = (req.get('with_clinical', "True").lower() == "true")
         with_derived = (req.get('with_derived', "True").lower() == "true")
         collapse_on = req.get('collapse_on', 'SeriesInstanceUID')
+        if len(Attribute.objects.filter(name=collapse_on)) <= 0:
+            logger.error("[ERROR] Attempt to collapse on an invalid field: {}".format(collapse_on))
+            collapse_on='SeriesInstanceUID'
         is_json = (req.get('is_json', "False").lower() == "true")
         uniques = json.loads(req.get('uniques', '[]'))
         totals = json.loads(req.get('totals', '[]'))

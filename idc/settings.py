@@ -183,6 +183,7 @@ BQ_MAX_ATTEMPTS             = int(os.environ.get('BQ_MAX_ATTEMPTS', '10'))
 
 API_USER = os.environ.get('API_USER', 'api_user')
 API_AUTH_KEY = os.environ.get('API_AUTH_KEY', 'Token')
+API_AUTH_HEADER = os.environ.get('API_AUTH_HEADER', 'HTTP_AUTHORIZATION')
 
 # TODO Remove duplicate class.
 #
@@ -292,6 +293,7 @@ MIDDLEWARE = [
     'idc.team_only_middleware.TeamOnly',
     # Uncomment the next line for simple clickjacking protection:
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'request_logging.middleware.LoggingMiddleware',
     'offline.middleware.OfflineMiddleware',
 ]
 
@@ -383,11 +385,16 @@ LOGGING = {
     },
     'loggers': {
         'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
+            'handlers': ['console_dev', 'console_prod'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
         'main_logger': {
+            'handlers': ['console_dev', 'console_prod'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'axes': {
             'handlers': ['console_dev', 'console_prod'],
             'level': 'DEBUG',
             'propagate': True,
@@ -398,11 +405,6 @@ LOGGING = {
             'propagate': True,
         },
         'google_helpers': {
-            'handlers': ['console_dev', 'console_prod'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'data_upload': {
             'handlers': ['console_dev', 'console_prod'],
             'level': 'DEBUG',
             'propagate': True,
@@ -464,10 +466,9 @@ TEMPLATES = [
 AUTHENTICATION_BACKENDS = (
     # Prevent login hammering
     "axes.backends.AxesBackend",
-    # Needed to login by username in Django admin, regardless of `allauth`
+    # Local account logins
     "django.contrib.auth.backends.ModelBackend",
-
-    # `allauth` specific authentication methods, such as login by e-mail
+    # `allauth` specific authentication methods (Google)
     "allauth.account.auth_backends.AuthenticationBackend",
 )
 
@@ -548,13 +549,20 @@ else:
 #########################################
 # Axes Settings
 #########################################
-
 AXES_HANDLER = 'axes.handlers.cache.AxesCacheHandler' if not IS_DEV else 'axes.handlers.dummy.AxesDummyHandler'
 AXES_META_PRECEDENCE_ORDER = [
     'HTTP_X_FORWARDED_FOR',
     'REMOTE_ADDR',
 ]
 AXES_PROXY_COUNT=1
+
+
+#########################################
+# Request Logging
+#########################################
+REQUEST_LOGGING_MAX_BODY_LENGTH = int(os.environ.get('REQUEST_LOGGING_MAX_BODY_LENGTH', '1000'))
+REQUEST_LOGGING_ENABLE_COLORIZE = bool(os.environ.get('REQUEST_LOGGING_ENABLE_COLORIZE', 'False') == 'True')
+
 
 #########################################
 #   MailGun Email Settings for requests #
@@ -634,6 +642,7 @@ SITE_GOOGLE_ANALYTICS_TRACKING_ID = os.environ.get('SITE_GOOGLE_ANALYTICS_TRACKI
 # number should be adjusted
 MAX_FILE_LIST_REQUEST = int(os.environ.get('MAX_FILE_LIST_REQUEST', '65000'))
 MAX_BQ_RECORD_RESULT = int(os.environ.get('MAX_BQ_RECORD_RESULT', '5000'))
+MAX_SOLR_RECORD_REQUEST = int(os.environ.get('MAX_SOLR_RECORD_REQUEST', '2000'))
 
 # Rough max file size to allow for eg. barcode list upload, to prevent triggering RequestDataTooBig
 FILE_SIZE_UPLOAD_MAX = 1950000
