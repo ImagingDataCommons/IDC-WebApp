@@ -245,7 +245,7 @@ def help_page(request):
 def quota_page(request):
     return render(request, 'idc/quota.html', {'request': request, 'quota': settings.IMG_QUOTA})
 
-@login_required
+#@login_required
 def populate_tables(request):
     tableRes = []
     try:
@@ -445,7 +445,7 @@ def populate_tables(request):
 
 
 # Data exploration and cohort creation page
-@login_required
+#@login_required
 def explore_data_page(request):
     attr_by_source = {}
     attr_sets = {}
