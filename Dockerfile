@@ -43,10 +43,7 @@ RUN apt-get install -y lsb-release
 RUN echo "mysql-apt-config mysql-apt-config/select-server select mysql-5.7" | debconf-set-selections
 # having 'selected' mysql-5.7 for 'server', install the mysql config package
 RUN echo 'download mysql public build key'
-RUN apt-key del 1550412832
-RUN gpg --recv-keys 5072E1F5
-RUN gpg --export -a 5072e1f5 > mysql_pubkey.asc
-RUN apt-key add mysql_pubkey.asc || exit 1
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 5072E1F5
 RUN dpkg --install /tmp/mysql-apt-config_0.8.9-1_all.deb
 
 # fetch the updated package metadata (in particular, mysql-server-5.7)
