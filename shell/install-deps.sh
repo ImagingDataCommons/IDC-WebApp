@@ -34,6 +34,7 @@ if [ -n "$CI" ]; then
     apt-key del 1550412832
     gpg --recv-keys 5072E1F5
     gpg --export -a 5072e1f5 > mysql_pubkey.asc
+    apt-key add mysql_pubkey.asc || exit 1
     echo 'mysql build key update done.'
     wget https://dev.mysql.com/get/mysql-apt-config_0.8.9-1_all.deb
     apt-get install -y lsb-release
