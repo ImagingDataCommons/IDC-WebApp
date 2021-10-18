@@ -28,10 +28,13 @@ apt-get update -qq
 # Install and update apt-get info
 echo "Preparing System..."
 apt-get -y --force-yes install software-properties-common
+apt-get install ca-certificates
 if [ -n "$CI" ]; then
-    # Update mysql public build key
-    echo 'Loading mysql public build key'
+    # Use these next 4 lines to update mysql public build key
+    echo 'download mysql public build key'
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 5072E1F5
+#    wget -O - -q 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x8C718D3B5072E1F5' | grep -v '>' | grep -v '<' | grep -v '{' > mysql_pubkey.asc
+#    apt-key add mysql_pubkey.asc || exit 1
     echo 'mysql build key update done.'
     wget https://dev.mysql.com/get/mysql-apt-config_0.8.9-1_all.deb
     apt-get install -y lsb-release
@@ -39,7 +42,6 @@ if [ -n "$CI" ]; then
 fi
 
 apt-get update -qq
-apt-get install ca-certificates
 
 # Install apt-get dependencies
 echo "Installing Dependencies..."
