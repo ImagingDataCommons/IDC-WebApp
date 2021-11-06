@@ -30,13 +30,10 @@ urlpatterns = [
 
     url(r'^$', views.landing_page, name='landing_page'),
     url(r'^quota/', views.quota_page, name='quota_page'),
-    url(r'^test_methods/', views.test_methods, name='test_methods'),
-    url(r'^style_guide/', views.css_test),
     url(r'^users/(?P<user_id>\d+)/$', views.user_detail, name='user_detail'),
     url(r'^users/api/', views_api.user_detail, name='user_detail_api'),
 
     url(r'^cohort_detail/(?P<cohort_id>\d+)/$', demo_views.cohort_detail, name='cohort_detail'),
-    url(r'^cohort_test/', demo_views.cohort_test, name='cohort_test'),
 
     url(r'^cohorts/', include('cohorts.urls')),
     path('admin/', admin.site.urls),
@@ -48,22 +45,16 @@ urlpatterns = [
     url(r'^help/', views.help_page, name='help'),
     url(r'^explore/', views.explore_data_page, name='explore_data'),
     url(r'^tables/', views.populate_tables, name='populate_tables'),
-    url(r'^explore_demo/', demo_views.explore_demo_page, name='explore_demo'),
 
-    #url(r'^test/', views.test, name='test'),
-    # url(r'^viewer/', views.ohif_viewer_page, name='ohif_view'),
-    # url(r'^callback', views.ohif_callback_page, name='ohif_callback'),
-    # url(r'^ocallback/', views.ohif_callback_page, name='ohif_callback'),
-    # url(r'^projects/', views.ohif_projects_page, name='ohif_projects'),
-    # url(r'^ohif/', views.ohif_page, name='ohif'),
     url(r'^warning/', views.warn_page, name='warn'),
     url(r'^about/', views.about_page, name='about_page'),
     url(r'^dashboard/', views.dashboard_page, name='dashboard'),
     url(r'^extended_login/$', views.extended_login_view, name='extended_login'),
     url(r'^privacy/', views.privacy_policy, name='privacy'),
+    url(r'^news/', views.news_page, name='news'),
     url(r'^collaborators/', views.collaborators, name='collaborators'),
     url(r'^collections/', include('idc_collections.urls')),
-    url(r'^share/', include('sharing.urls')),
+    # url(r'^share/', include('sharing.urls')),
 ]
 
 if settings.IS_DEV:
