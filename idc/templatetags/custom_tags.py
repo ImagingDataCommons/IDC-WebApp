@@ -72,6 +72,9 @@ VALUE_SPECIFIC_ORDERS = {
     'residual_tumor': ['R0','R1','R2','RX','None',],
 }
 
+
+KEEP_ORDER=['SliceThickness']
+
 ATTR_SPECIFIC_ORDERS = [
 
 
@@ -165,10 +168,11 @@ def order_quant(items, attr):
 
 @register.filter
 def check_for_order(items, attr):
+    if not items:
+        return items
     if attr in VALUE_SPECIFIC_ORDERS:
         # If they have a specific order defined in the dict
         item_order = VALUE_SPECIFIC_ORDERS[attr]
-
 
         ordered_items = []
         for ordinal in item_order:
@@ -183,6 +187,8 @@ def check_for_order(items, attr):
     elif attr in DISPLAY_SORT:
         # If they should be sorted alphanumerically based on the value
         return sorted(items, key=lambda k: str(k['display_value']) )
+    elif attr in KEEP_ORDER:
+        return items
     else:
         # Otherwise, sort them by count, descending
         return sorted(items, key=lambda k: k['value'])
