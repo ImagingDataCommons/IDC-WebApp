@@ -233,7 +233,7 @@ def populate_tables(request):
                                           "unique_series": "unique(SeriesInstanceUID)"}}
                             }
             tableIndex = 'PatientID'
-            fields = ['collection_id', 'PatientID']
+            fields = ['collection_id', 'PatientID','access']
             facetfields=['unique_study', 'unique_series']
 
             if sort == 'collection_id':
@@ -279,13 +279,19 @@ def populate_tables(request):
                                         "facet": {"unique_series": "unique(SeriesInstanceUID)"}}
                              }
             tableIndex = 'StudyInstanceUID'
-            fields = ['PatientID','StudyInstanceUID','StudyDescription','Modality']
+            fields = ['collection_id','PatientID','StudyInstanceUID','StudyDescription','Modality','StudyDate','access']
             facetfields = ['unique_series']
-            sort_arg = 'PatientID asc'
+            sort_arg = 'PatientID asc, StudyDate asc'
 
-            if sort in ['PatientID','StudyInstanceUID', 'StudyDescription',]:
+            if sort in ['PatientID','StudyInstanceUID', 'StudyDescription', 'StudyDate']:
                 sortByField = True
                 sort_arg = "{} {}".format(sort, sortdir)
+                if sort == 'PatientID':
+                    sort_arg = sort_arg+', StudyDate asc'
+                #elif sort == 'StudyInstanceUID':
+                #    sort_arg = sort_arg + 'StudyDate asc'
+
+
             elif sort == 'SeriesInstanceUID':
                 sortByField = False
                 sort_arg = 'unique_series '+sortdir
@@ -298,7 +304,7 @@ def populate_tables(request):
         if table_type == 'series':
             custom_facets = {}
             tableIndex = 'SeriesInstanceUID'
-            fields = ['SeriesInstanceUID','StudyInstanceUID','SeriesDescription','SeriesNumber','BodyPartExamined','Modality']
+            fields = ['collection_id','SeriesInstanceUID','StudyInstanceUID','SeriesDescription','SeriesNumber','BodyPartExamined','Modality','access']
             facetfields = []
             sortByField = True
 

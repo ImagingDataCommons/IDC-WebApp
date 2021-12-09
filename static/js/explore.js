@@ -1,3 +1,20 @@
+/**
+ *
+ * Copyright 2021, Institute for Systems Biology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
     paths: {
@@ -6,12 +23,14 @@ require.config({
         jqueryui: 'libs/jquery-ui.min',
         underscore: 'libs/underscore-min',
         tablesorter: 'libs/jquery.tablesorter.min',
+        assetscore: 'libs/assets.core',
+        assetsresponsive: 'libs/assets.responsive',
         jquerydt: 'libs/jquery.dataTables.min',
         base: 'base',
         imagesearch: 'image_search',
-        //cohortfilelist: 'cohort_filelist',
         tippy: 'libs/tippy-bundle.umd.min',
-        '@popperjs/core': 'libs/popper.min'
+        '@popperjs/core': 'libs/popper.min',
+        session_security: 'session_security/script'
     },
     shim: {
         '@popperjs/core': {
@@ -27,22 +46,23 @@ require.config({
         'assetscore': ['jquery', 'bootstrap', 'jqueryui'],
         'assetsresponsive': ['jquery', 'bootstrap', 'jqueryui'],
         'tablesorter': ['jquery'],
-        'base': ['jquery']
-
+        'underscore': {exports: '_'},
+        'session_security': ['jquery'],
+        'base': ['jquery', 'jqueryui', 'bootstrap', 'session_security', 'underscore', 'utils', 'assetscore', 'assetsresponsive', 'tablesorter'],
+        'imagesearch': ['jquery', 'underscore', 'base', 'jquerydt', 'jqueryui', 'bootstrap']
     }
 });
 
 require([
     'jquery',
     'tippy',
-    'base',
+    'base', // This must always be loaded
     'imagesearch',
     'jqueryui',
     'jquerydt',
     'bootstrap',
-    'tablesorter',
-    //'cohortfilelist',
-], function ($, tippy, base, imagesearch, d3, cohortfilelist) {
+    'tablesorter'
+], function ($, tippy, base) {
     var saving_cohort = false;
 
     $('#save-cohort-modal').on('show.bs.modal', function() {
@@ -191,9 +211,16 @@ require([
 
     tippy('.collection_name', {
         content: function(reference) {
+            let warning='<p style="color:red">Image files in this collection are not publicly available.</p>'
             let tooltip = collection_tooltips[$(reference).siblings('input.collection_value').attr('value')];
+            let collection_id=$(reference)[0].id
             if(tooltip) {
-                return '<div class="collection-tooltip">'+tooltip+'</div>';
+                if ((collection_id in window.collection) && (window.collection[collection_id].access==='Public')) {
+                    return '<div class="collection-tooltip">' + tooltip + '</div>';
+                }
+                else{
+                    return '<div class="collection-tooltip">' + tooltip + warning + '</div>';
+                }
             }
             return '<span></span>';
 
@@ -204,13 +231,12 @@ require([
         allowHTML: true,
         interactive: true
     });
+
     const temp='<html><strong>now</strong></html>';
     tippy('.explainer', {
         interactive: true,
         allowHTML:true,
         content: 'As some attributes have non mutually exclusive values the charts may contain non zero counts for these values even when they are not selected in the left hand panel. See <a href="https://learn.canceridc.dev/portal/data-exploration-and-cohorts/exploring-imaging-data#understanding-counts-in-the-search-results" target="_blank" rel="noopener noreferrer">here</a> for a detailed explanation.'
-        //interactive:true
-
     });
 
     tippy('.tooltip_filter_info',{
@@ -237,34 +263,65 @@ require([
 
     tippy.delegate('.studies-table', {
         content: function(reference) {
-            return $(reference).data('study-id');
+            return '<span class="tippy-uid">'+$(reference).data('study-id')+'</span>';
         },
         theme: 'dark',
         placement: 'right',
-        arrow: false,
-        target: '.study-id-col',
-        maxWidth: 300
+        arrow: true,
+        target: 'td.study-id-tltp',
+        interactive:'true',
+        interactiveBorder:10,
+        maxWidth: 600,
+        allowHTML:true
     });
+
+    tippy.delegate('.studies-table', {
+        content: 'Images in this collection are not publicly available',
+        theme: 'dark',
+        placement: 'right',
+        arrow: false,
+        interactive:true,
+        target: '.coll-explain',
+        maxWidth: 130
+    });
+
 
     tippy.delegate('.series-table', {
         content: function(reference) {
-            return $(reference).data('study-id');
+            return '<span class="tippy-uid">'+$(reference).data('study-id')+'</span>';
         },
         theme: 'dark',
         placement: 'right',
-        arrow: false,
-        target: '.study-id-col',
-        maxWidth: 300
+        arrow: true,
+        interactive:'true',
+        interactiveBorder:10,
+        target: 'td.study-id-tltp',
+        maxWidth: 600,
+        allowHTML:true
     });
+
 
     tippy.delegate('.series-table', {
         content: 'Please open at the study level to see this series',
         theme: 'dark',
         placement: 'right',
         arrow: false,
+        interactive:true,
         target: '.no-viewer-tooltip',
         maxWidth: 130
     });
+
+    tippy.delegate('.series-table', {
+        content: 'Images in this collection are not publicly available',
+        theme: 'dark',
+        placement: 'right',
+        arrow: false,
+        interactive:true,
+        target: '.coll-explain',
+        maxWidth: 130
+    });
+
+
 
     tippy.delegate('.series-table', {
         content: function(reference) {
@@ -275,5 +332,12 @@ require([
         arrow: false,
         target: '.description-tip',
         maxWidth: 800
+    });
+
+    tippy('.coll-explain', {
+        allowHTML:true,
+        content: 'For collections denoted by the <i class="fa fa-minus-circle"></i> icon image files are not publicly available',
+        interactive:true
+
     });
 });
