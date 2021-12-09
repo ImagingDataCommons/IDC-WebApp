@@ -107,6 +107,11 @@
                                 <span class="value">Series Instance UID</span>
                             </label></li>
 
+                            <li class="checkbox bq-only"><label>
+                                <input class="column-checkbox bq-only" type="checkbox" value="SOPInstanceUID" checked>
+                                <span class="value">SOP Instance UID</span>
+                            </label></li>
+
                             <li class="checkbox"><label>
                                 <input class="column-checkbox" type="checkbox" value="source_DOI" checked>
                                 <span class="value">Source DOI</span>
@@ -121,6 +126,16 @@
                                 <input class="column-checkbox" type="checkbox" value="crdc_series_uuid" checked>
                                 <span class="value">CRDC Series UUID</span>
                             </label></li>
+
+                            <li class="checkbox bq-only"><label>
+                                <input class="column-checkbox bq-only" type="checkbox" value="crdc_instance_uuid" checked>
+                                <span class="value">CRDC SOP Instance UUID</span>
+                            </label></li>
+
+                            <li class="checkbox bq-only"><label>
+                                <input class="column-checkbox bq-only" type="checkbox" value="gcs_url" checked>
+                                <span class="value">Cloud Storage Path</span>
+                            </label></li>
                         </div>
                         </div>
 
@@ -128,8 +143,9 @@
                         <div class="export-option">
                             <span id="file-export-option" title="" class="value">
                                 <input class="file-manifest export-option" type="radio" name="manifest-type" value="file-manifest" checked> Files</span>
-                            <span id="bq-export-option" style="margin-left:10px" class="value" {% if not is_social %}title="Export to BigQuery is only available with a Google Account."{% endif %}>
-                                <input class="bq-manifest export-option" type="radio" name="manifest-type" value="bq-manifest" {% if not is_social %}disabled{% endif %}> BigQuery</span>
+                            <span id="bq-export-option" style="margin-left:10px" class="value">
+                                <input class="bq-manifest export-option" type="radio" name="manifest-type" value="bq-manifest" {% if not is_social %}disabled{% endif %}> BigQuery
+                                {% if not is_social %} <i class="fa fa-exclamation-circle bq-disabled"></i>{% endif %}</span>
                         </div>
                         <br>
                         {% if is_social %}
