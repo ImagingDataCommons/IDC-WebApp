@@ -48,7 +48,6 @@ require.config({
         'tablesorter': ['jquery'],
         'underscore': {exports: '_'},
         'session_security': ['jquery'],
-        'base': ['jquery', 'jqueryui', 'bootstrap', 'session_security', 'underscore', 'utils', 'assetscore', 'assetsresponsive', 'tablesorter'],
         'imagesearch': ['jquery', 'underscore', 'base', 'jquerydt', 'jqueryui', 'bootstrap']
     }
 });
@@ -67,7 +66,7 @@ require([
 
     $('#save-cohort-modal').on('show.bs.modal', function() {
         var filters = {};
-        $('#program_set input:checked, ' +
+        $('#program_set .search-checkbox-list input:checked , ' +
             '#search_orig_set .search-checkbox-list input:checked, ' +
             '#search_related_set .search-checkbox-list input:checked, ' +
             '#search_derived_set .search-checkbox-list input:checked').each(function(){
@@ -336,7 +335,7 @@ require([
 
     tippy('.coll-explain', {
         allowHTML:true,
-        content: 'For collections denoted by the <i class="fa fa-minus-circle"></i> icon image files are not publicly available',
+        content: 'For collections denoted by the <i class="fa-solid fa-circle-minus"></i> icon image files are not publicly available',
         interactive:true
 
     });

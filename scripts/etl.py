@@ -21,6 +21,7 @@ from builtins import object
 import datetime
 import logging
 import os
+from os.path import join, dirname, exists
 import re
 import json
 from csv import reader as csv_reader
@@ -201,8 +202,12 @@ def add_programs(program_set):
     return results
 
 
-def add_data_sources(source_set):
+def add_data_sources(source_set, subversions, set_types):
     for source in source_set:
+        source.update({
+            "versions": subversions,
+            "set_types": set_types
+        })
         add_data_source(**source)
 
 
@@ -270,7 +275,7 @@ def add_source_joins(froms, from_col, tos=None, to_col=None):
         DataSourceJoin.objects.bulk_create(src_joins)
 
 
-def load_collections(filename):
+def load_collections(filename, data_version="7.0"):
     try:
         collection_file = open(filename, "r")
         new_collection_set = []
@@ -279,35 +284,36 @@ def load_collections(filename):
             collex = {
                 'data': {
                     "collection_id": line[0],
-                    "name": line[1],
-                    "collections": line[2],
-                    "image_types": line[3],
-                    "supporting_data": line[4],
-                    "subject_count": line[5],
-                    "doi": line[6],
-                    "cancer_type": line[7],
-                    "species": line[8],
-                    "location": line[9],
-                    "analysis_artifacts": line[10],
-                    "description": re.sub(r' style="[^"]+"', '', (re.sub(r'<div [^>]+>',"<p>", line[11]).replace("</div>","</p>"))),
-                    "collection_type": line[12],
-                    "access": line[14],
-                    "date_updated": datetime.datetime.strptime(line[15], '%Y-%m-%d'),
-                    "nbia_collection_id": line[16],
-                    "tcia_collection_id": line[16],
-                    "active": bool((line[17]).lower() == "true")
+                    "collection_uuid": line[1],
+                    "name": line[2],
+                    "collections": line[3],
+                    "image_types": line[4],
+                    "supporting_data": line[5],
+                    "subject_count": line[6],
+                    "doi": line[7],
+                    "cancer_type": line[8],
+                    "species": line[9],
+                    "location": line[10],
+                    "analysis_artifacts": line[11],
+                    "description": re.sub(r' style="[^"]+"', '', (re.sub(r'<div [^>]+>',"<p>", line[12]).replace("</div>","</p>"))),
+                    "collection_type": line[13],
+                    "access": line[15],
+                    "date_updated": datetime.datetime.strptime(line[16], '%Y-%m-%d'),
+                    "nbia_collection_id": line[17],
+                    "tcia_collection_id": line[17],
+                    "active": bool((line[18]).lower() == "true")
                 },
-                "data_versions": [{"ver": "5.0", "name": "TCIA Image Data"}]
+                "data_versions": [{"ver": data_version, "name": "TCIA Image Data"}]
             }
-            if line[13] and len(line[13]):
+            if line[14] and len(line[14]):
                 try:
-                    prog = Program.objects.get(short_name=line[13])
+                    prog = Program.objects.get(short_name=line[14])
                     collex['data']['program'] = prog
                 except Exception as e:
-                    logger.info("[STATUS] Program {} not found for collection {} - it will not be added!".format(line[13],line[1]))
+                    logger.info("[STATUS] Program {} not found for collection {} - it will not be added!".format(line[14],line[2]))
             try:
-                Collection.objects.get(name=line[1])
-                logger.info("[STATUS] Collection {} already exists - it will be updated.".format(line[1]))
+                Collection.objects.get(collection_uuid=line[1])
+                logger.info("[STATUS] Collection {} already exists - it will be updated.".format(line[2]))
                 updated_collection_set[line[1]] = collex
             except ObjectDoesNotExist:
                 new_collection_set.append(collex)
@@ -336,7 +342,7 @@ def add_collections(new,update):
 
         collex_to_dv = []
         for collex in new:
-            obj = Collection.objects.get(name=collex['data']['name'])
+            obj = Collection.objects.get(collection_uuid=collex['data']['collection_uuid'])
 
             if len(collex.get('data_versions',[])):
                 collex_to_dv = []
@@ -621,12 +627,40 @@ def load_display_vals(filename):
     return display_vals
 
 
+def update_data_versions(filename):
+    f = open(join(dirname(__file__),filename), "r")
+    config = json.load(f)
+
+    add_data_versions(
+        config.new_major_version,
+        [{'name': x, 'ver': config.subversion_number} for x in config.new_sub_versions],
+        config.bioclin_version
+    )
+
+    add_data_sources(config.data_sources, config.new_sub_versions, config.set_types)
+
+    for ds in config.data_sources:
+        for jn in ds.joins:
+            add_source_joins(
+                [ds.name],
+                jn.from_col,
+                jn.sources,
+                jn.to_col
+            )
+        copy_attrs([ds.attr_from], [ds.name])
+
+    deactivate_data_versions(config.minor, config.major)
+
+    return
+
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument('-c', '--collex-file', type=str, default='', help='List of Collections to update/create')
-    parser.add_argument('-v', '--display-vals', type=str, default='', help='List of display values to add/update')
-    parser.add_argument('-p', '--programs-file', type=str, default='', help='List of programs to add/update')
-    parser.add_argument('-a', '--attributes-file', type=str, default='', help='List of attributes to add/update')
+    parser.add_argument('-v', '--version-file', type=str, default='', help='JSON file of version data to update')
+    parser.add_argument('-c', '--collex-file', type=str, default='', help='CSV data of collections to update/create')
+    parser.add_argument('-d', '--display-vals', type=str, default='', help='CSV data of display values to add/update')
+    parser.add_argument('-p', '--programs-file', type=str, default='', help='CSV data of programs to add/update')
+    parser.add_argument('-a', '--attributes-file', type=str, default='', help='CSV data of attributes to add/update')
+    parser.add_argument('-s', '--solr-files', type=str, default='n', help='Should Solr parameter and JSON schema files be made? (Yy/Nn)')
     return parser.parse_args()
 
 
@@ -634,76 +668,13 @@ def main():
 
     try:
         args = parse_args()
-        # new_versions = ["TCIA Image Data Version 5","TCIA Derived Data Version 5"]
-        #
-        # set_types = ["IDC Source Data","Derived Data"]
-        # bioclin_version = ["GDC Data Release 9"]
-        #
-        # add_data_versions(
-        #     {'name': "IDC Data Release",
-        #      'version_number': "5.0",
-        #      'case_count': 52042,
-        #      'collex_count': 112,
-        #      'data_volume': 16.67,
-        #      'series_count': 420747
-        #      },
-        #     [{'name': x, 'ver': '5'} for x in new_versions],
-        #     bioclin_version
-        # )
-        #
-        # add_data_sources([
-        #     {
-        #         'name': 'dicom_derived_series_v5',
-        #         'source_type': DataSource.SOLR,
-        #         'count_col': 'PatientID',
-        #         'programs': [],
-        #         'versions': new_versions,
-        #         'data_sets': set_types,
-        #         'aggregate_level': "SeriesInstanceUID"
-        #     },
-        #     {
-        #         'name': 'dicom_derived_study_v5',
-        #         'source_type': DataSource.SOLR,
-        #         'count_col': 'PatientID',
-        #         'programs': [],
-        #         'versions': new_versions,
-        #         'data_sets': set_types,
-        #         'aggregate_level': "StudyInstanceUID"
-        #     },
-        #     {
-        #         'name': 'idc-dev-etl.idc_v5.dicom_pivot_v5',
-        #         'source_type': DataSource.BIGQUERY,
-        #         'count_col': 'PatientID',
-        #         'programs': [],
-        #         'versions': new_versions,
-        #         'data_sets': set_types,
-        #         'aggregate_level': 'SOPInstanceUID'
-        #     }
-        # ])
-        #
-        # add_source_joins(
-        #     ['dicom_derived_study_v5','dicom_derived_series_v5'],
-        #     "PatientID",
-        #     ["tcga_bios","tcga_clin"],
-        #     "case_barcode"
-        # )
-        #
-        # add_source_joins(
-        #     ["idc-dev-etl.idc_v5.dicom_pivot_v5"],
-        #     "PatientID",
-        #     ["idc-dev-etl.idc_v4.tcga_biospecimen_rel9","idc-dev-etl.idc_v4.tcga_clinical_rel9"],
-        #     "case_barcode"
-        # )
-        #
-        # copy_attrs(["idc-dev-etl.idc_v4.dicom_pivot_v4"],["idc-dev-etl.idc_v5.dicom_pivot_v5"])
-        # copy_attrs(["dicom_derived_series_v4"],["dicom_derived_series_v5","dicom_derived_study_v5"])
-        #
-        # deactivate_data_versions(["TCIA Image Data Wave 4","TCIA Derived Data Wave 4"], ["4.0"])
-        #
-        # len(args.attributes_file) and load_attributes(args.attributes_file,
-        #     ["dicom_derived_series_v5","dicom_derived_study_v5"], ["idc-dev-etl.idc_v5.dicom_pivot_v5"]
-        # )
-        #
+
+        len(args.version_file) and update_data_versions(args.version_file)
+
+        len(args.attributes_file) and load_attributes(args.attributes_file,
+            ["dicom_derived_series_v7","dicom_derived_study_v7"], ["idc-dev-etl.idc_v7.dicom_pivot_v7"]
+        )
+
         len(ATTR_SET.keys()) and add_attributes(ATTR_SET)
         len(args.programs_file) and load_programs(args.programs_file)
         len(args.collex_file) and load_collections(args.collex_file)
@@ -712,9 +683,10 @@ def main():
             for attr in dvals:
                 update_display_values(Attribute.objects.get(name=attr), dvals[attr]['vals'])
 
-        # for src in [("idc-dev-etl.idc_v5.dicom_derived_all", "dicom_derived_series_v5",),
-        #             ("idc-dev-etl.idc_v5.dicom_derived_all", "dicom_derived_study_v5",),]:
-        #     create_solr_params(src[0],src[1])
+        if args.solr_files.lower() == 'y':
+            for src in [("idc-dev-etl.idc_v7.dicom_derived_all", "dicom_derived_series_v7",),
+                    ("idc-dev-etl.idc_v7.dicom_derived_all", "dicom_derived_study_v7",),]:
+                create_solr_params(src[0],src[1])
 
     except Exception as e:
         logging.exception(e)
