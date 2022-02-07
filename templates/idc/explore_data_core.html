@@ -29,7 +29,7 @@
     <div class ="row">
         <div class="tab-content data-tab-content">
             <input id="number_ajax" type="hidden" value="0">
-            <div class="spinner" style="display: none;"><i class="fa fa-spinner fa-spin spin"></i></div>
+            <div class="spinner" style="display: none;"><i class="fa-solid fa-spinner fa-spin spin"></i></div>
             <div id="lh_panel" class="tab-pane data-tab active flex_div" role="tabpanel">
                 <div  class="col-lg-3 col-md-3 main_cols">
                     <div class="filter-panel panel data-tab-content-panel lh">
@@ -55,20 +55,23 @@
                                  <li class="list-group-item">
                                      <div id="Program_heading" class="list-group-item__heading">
                                          <a role="button" data-toggle="collapse" href="#Program" aria-expanded="false" aria-controls="Program">
-                                             <i class="fa fa-caret-right"></i> <i class="fa fa-caret-down"></i>COLLECTION
+                                             <i class="fa fa-solid fa-caret-right"></i> <i class="fa fa-solid fa-caret-down"></i>COLLECTION
                                          </a>
 
                                          <span class="controls">
-                                             <i class="fa fa-minus-circle coll-explain"></i>
-                                             <i class="fa fa-cog" title="Settings"></i>
-                                             <i class="fa fa-search" title="Filter values"></i>
+                                             <i class="fa-solid fa-circle-minus coll-explain"></i>
+                                             <i class="fa-solid fa-cog" title="Settings"></i>
+                                             <i class="fa-solid fa-search" title="Filter values"></i>
                                          </span>
                                      </div>
                                      <div id="Program" data-filter-attr-nm="Program" class="collapse filter-panel collection-list">
                                          <input id="collection_search" class="collection-text-filter notDisp value-search" type="text" placeholder="Search..." onkeyup="updateColl(true)">
-                                         <div class="cntr notDisp">
+                                             <div class="sorter cntr notDisp">
+                                                 <span>Sort by: <input type="radio" class="sort_val"  value="alpha" name="Program" checked onclick="updateColl()">Alpha<input type="radio" class="sort_val"  value="num" name="Program" onclick="updateColl()">Num</span>
+
+                                            </div>
                                             <input id="hide-zeros" class="hide-zeros " type="checkbox" value="hide-zeros" onchange="updateColl()"> Hide collections with 0 cases
-                                          </div>
+
                                          {% with programs.items|length|add:"-5" as more %}
                                          <p class="more-checks" style="display: block;" ><a class="show-more">show {{ more }} more</a><span class="checks"><a class="check-all">Check All</a> / <a class="uncheck-all">Uncheck All</a></span></p>
                                          <p class="less-checks" style="display: none;" > <a class="show-less">show less</a><span class="checks"><a class="check-all">Check All</a> / <a class="uncheck-all">Uncheck All</a></span></p>
@@ -87,7 +90,7 @@
                                                                    {% if projD.access == "Public" %}
                                                                          <span id="{{ proj }}" class="collection_name value collection_id">{{ projD.display }} </span> <span class="float-right case_count count">{{ projD.val }}</span>
                                                                    {% else %}
-                                                                       <span id="{{ proj }}" class="collection_name value collection_id">{{ projD.display }}<i class="fa fa-minus-circle"></i></span> <span class="float-right case_count count">{{ projD.val }}</span>
+                                                                       <span id="{{ proj }}" class="collection_name value collection_id">{{ projD.display }}<i class="fa-solid fa-circle-minus"></i></span> <span class="float-right case_count count">{{ projD.val }}</span>
                                                                    {% endif %}
                                                                </div>
 
@@ -101,7 +104,7 @@
                                                                 data-filter-display-attr="Program" data-filter-display-val="{{ progK|upper }}"
                                                                  type="checkbox" value="{{ progK }}">
                                                          <a role="button" data-toggle="collapse" href="#{{ progK }}" aria-expanded="false" aria-controls="{{ progK }}">
-                                                             <i class="fa fa-caret-right"></i> <i class="fa fa-caret-down"></i>
+                                                             <i class="fa fa-solid fa-caret-right"></i> <i class="fa fa-solid fa-caret-down"></i>
                                                          </a>
 
                                                          <span class="value">
@@ -137,7 +140,7 @@
                                                                          {% if projD.access == 'Public' %}
                                                                               <span id="{{ proj }}" class="collection_name value">{{ projD.display }} </span> <span class="float-right case_count count plotit">{{ projD.val }}</span>
                                                                          {% else %}
-                                                                              <span id="{{ proj }}" class="collection_name value">{{ projD.display }} <i class="fa fa-minus-circle"></i></span> <span class="float-right case_count count plotit">{{ projD.val }}</span>
+                                                                              <span id="{{ proj }}" class="collection_name value">{{ projD.display }} <i class="fa-solid fa-circle-minus"></i></span> <span class="float-right case_count count plotit">{{ projD.val }}</span>
                                                                          {% endif %}
                                                                 </label>
                                                                </li>
@@ -210,11 +213,11 @@
                                          <li class="list-group-item">
                                             <div id="{{ attr.name }}_heading" class="list-group-item__heading">
                                                 <a role="button" data-toggle="collapse"  href="#{{ attr.name }}" aria-expanded="false" aria-controls="{{ attr.name }}">
-                                                    <i class="fa fa-caret-right"></i> <i class="fa fa-caret-down"></i> <span class="attDisp">{{ attr.display_name }} {% if attr.units %}({{ attr.units }}){% endif %}</span> <span class="notDisp noCase"> (0 cases)</span>
+                                                    <i class="fa fa-solid fa-caret-right"></i> <i class="fa fa-solid fa-caret-down"></i> <span class="attDisp">{{ attr.display_name }} {% if attr.units %}({{ attr.units }}){% endif %}</span> <span class="notDisp noCase"> (0 cases)</span>
                                                 </a>
                                                 <span class="controls">
-                                                     <i class="fa fa-cog" title="Sort results"></i>
-                                                     <i class="fa fa-search" title="Filter displayed values"></i>
+                                                     <i class="fa-solid fa-cog" title="Sort results"></i>
+                                                     <i class="fa-solid fa-search" title="Filter displayed values"></i>
                                                  </span>
                                             </div>
 
@@ -274,7 +277,7 @@
                                             <li class="list-group-item">
                                                    <div id="{{ attr_setV.name }}_heading" class="list-group-item__heading">
                                                          <a role="button" data-toggle="collapse" href="#{{ attr_setV.name }}" aria-expanded="false" aria-controls="{{ attr_setV.name }}" class="collapsed">
-                                                         <i class="fa fa-caret-right"></i> <i class="fa fa-caret-down"></i>{{ attr_setV.display_name }}
+                                                         <i class="fa fa-solid fa-caret-right"></i> <i class="fa fa-solid fa-caret-down"></i>{{ attr_setV.display_name }}
                                                         </a>
                                                   </div>
 
@@ -285,12 +288,12 @@
                                                        <li class="list-group-item">
                                                           <div id="{{ attr.name }}_heading" class="list-group-item__heading">
                                                         <a role="button" data-toggle="collapse"  href="#{{ attr.name }}" aria-expanded="false" aria-controls="{{ attr.name }}">
-                                                         <i class="fa fa-caret-right"></i> <i class="fa fa-caret-down"></i> <span class="attDisp">{{ attr.display_name }} {% if attr.units %}({{ attr.units }}){% endif %}</span> <span class="notDisp noCase"> (0 cases)</span>
+                                                         <i class="fa fa-solid fa-caret-right"></i> <i class="fa fa-solid fa-caret-down"></i> <span class="attDisp">{{ attr.display_name }} {% if attr.units %}({{ attr.units }}){% endif %}</span> <span class="notDisp noCase"> (0 cases)</span>
                                                        </a>
                                                           {% if attr_setV.name != 'quantitative'%}
                                                               <span class="controls">
-                                                                 <i class="fa fa-cog" title="Sort results"></i>
-                                                                 <i class="fa fa-search" title="Filter displayed values"></i>
+                                                                 <i class="fa-solid fa-cog" title="Sort results"></i>
+                                                                 <i class="fa-solid fa-search" title="Filter displayed values"></i>
                                                              </span>
                                                           {% endif %}
                                                     </div>
@@ -356,7 +359,7 @@
                                     <li class="list-group-item">
                                       <div id="tcga_clinical_heading" class="list-group-item__heading">
                                          <a role="button" data-toggle="collapse" href="#tcga_clinical" aria-expanded="false" aria-controls="tcga_clinical" class="collapsed disabled">
-                                         <i class="fa fa-caret-right"></i> <i class="fa fa-caret-down"></i>TCGA
+                                         <i class="fa fa-solid fa-caret-right"></i> <i class="fa fa-solid fa-caret-down"></i>TCGA
                                         </a>
                                       </div>
                                       <div id="tcga_clinical" class="collapse list-group-item__body" aria-expanded="false">
@@ -366,11 +369,11 @@
                                                    <li class="list-group-item">
                                                  <div id="{{ attr.name }}_heading" class="list-group-item__heading">
                                                      <a role="button" data-toggle="collapse"  href="#{{ attr.name }}" aria-expanded="false" aria-controls="{{ attr.name }}">
-                                                         <i class="fa fa-caret-right" disabled></i> <i class="fa fa-caret-down"disabled></i> <span class="attDisp">{{ attr.display_name }} {% if attr.units %}({{ attr.units }}){% endif %}</span> <span class="notDisp noCase"> (0 TCGA cases)</span>
+                                                         <i class="fa fa-solid fa-caret-right" disabled></i> <i class="fa fa-solid fa-caret-down"disabled></i> <span class="attDisp">{{ attr.display_name }} {% if attr.units %}({{ attr.units }}){% endif %}</span> <span class="notDisp noCase"> (0 TCGA cases)</span>
                                                      </a>
                                                      <span class="controls">
-                                                         <i class="fa fa-cog" title="Sort results"></i>
-                                                         <i class="fa fa-search" title="Filter displayed values"></i>
+                                                         <i class="fa-solid fa-cog" title="Sort results"></i>
+                                                         <i class="fa-solid fa-search" title="Filter displayed values"></i>
                                                      </span>
                                                  </div>
                                                  <div id="{{ attr.name }}" data-filter-attr-id="{{ attr.id }}" class="collapse list-group-item__body collapse" aria-expanded="false"
@@ -469,7 +472,7 @@
                     <div class="tabpanel panel-default" role="tabpanel">
                         <div class="panel-heading clearfix">
                             <h4 class="panel-title">Search Results
-                                <div class="tooltip_filter_info" style="float:right"><i class="fa fa-info-circle"></i></div>
+                                <div class="tooltip_filter_info" style="float:right"><i class="fa-solid fa-info-circle"></i></div>
                             </h4>
 
                             <div style="display:none">
@@ -570,7 +573,10 @@
                              <table id="proj_table" class="table table-striped">
                                 <thead id="projects_table_head">
                                     <tr>
-                                         <th class="ckbx text_data"></th>
+                                         <th class="ckbx text_data">
+                                             <i class="fa-solid fa-plus-circle fa-lg" onclick="(updateMultipleRows($($(this).parentsUntil('table')[2]).parent(),true,'projects'))" style="font-family :'Font Awesome 6 Free' !important"></i>
+                                             <i class="fa-solid fa-circle-minus fa-lg" onclick="(updateMultipleRows($($(this).parentsUntil('table')[2]).parent(),false,'projects'))" style="font-family :'Font Awesome 6 Free' !important"></i>
+                                         </th>
                                         <th class='text_data'>Collection Name </th><th class='numeric_data'>Total # of Cases</th><th class='numeric_data'># of Cases(this cohort)</th>
                                     </tr>
                                 </thead>
@@ -589,8 +595,8 @@
                                 <thead id="cases_table_head">
                                     <tr>
                                         <th class="ckbx text_data notVis">
-                                             <i class="fa fa-plus-circle fa-lg" onclick="(updateMultipleRows($($(this).parentsUntil('table')[2]).parent(),true,'cases'))" style="font-family :'FontAwesome' !important"></i>
-                                             <i class="fa fa-minus-circle fa-lg" onclick="(updateMultipleRows($($(this).parentsUntil('table')[2]).parent(),false,'cases'))" style="font-family :'FontAwesome' !important"></i>
+                                             <i class="fa-solid fa-plus-circle fa-lg" onclick="(updateMultipleRows($($(this).parentsUntil('table')[2]).parent(),true,'cases'))" style="font-family :'Font Awesome 6 Free' !important"></i>
+                                             <i class="fa-solid fa-circle-minus fa-lg" onclick="(updateMultipleRows($($(this).parentsUntil('table')[2]).parent(),false,'cases'))" style="font-family :'Font Awesome 6 Free' !important"></i>
                                         </th>
                                         <th class='text_data'>Collection Name</th><th class='numeric_data'>Case Id</th><th class='numeric_data'>Total # of Studies</th>
 
@@ -613,8 +619,8 @@
                               <thead id="studies_table_head">
                              <tr>
                                  <th class="ckbx text_data notVis">
-                                     <i class="fa fa-plus-circle fa-lg" onclick="(updateMultipleRows($($(this).parentsUntil('table')[2]).parent(),true,'studies'))"></i>
-                                     <i class="fa fa-minus-circle fa-lg" onclick="(updateMultipleRows($($(this).parentsUntil('table')[2]).parent(),false,'studies'))"></i>
+                                     <i class="fa-solid fa-plus-circle fa-lg" onclick="(updateMultipleRows($($(this).parentsUntil('table')[2]).parent(),true,'studies'))"></i>
+                                     <i class="fa-solid fa-circle-minus fa-lg" onclick="(updateMultipleRows($($(this).parentsUntil('table')[2]).parent(),false,'studies'))"></i>
                                  </th>
                                  <th class='col1 text_data case-id'>Case Id</th>
                                  <th class='col2 text_data study-id study-id-col'>Study Id</th>
