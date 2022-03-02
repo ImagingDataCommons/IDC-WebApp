@@ -23,14 +23,30 @@ require.config({
         bootstrap: 'libs/bootstrap.min',
         jqueryui: 'libs/jquery-ui.min',
         underscore: 'libs/underscore-min',
+        tablesorter: 'libs/jquery.tablesorter.min',
         assetscore: 'libs/assets.core',
         assetsresponsive: 'libs/assets.responsive',
-        base: 'base'
+        jquerydt: 'libs/jquery.dataTables.min',
+        base: 'base',
+        tippy: 'libs/tippy-bundle.umd.min',
+        '@popperjs/core': 'libs/popper.min',
+        session_security: 'session_security/script'
     },
     shim: {
+        '@popperjs/core': {
+            exports: "@popperjs/core"
+        },
+        'tippy': {
+            exports: 'tippy',
+            deps: ['@popperjs/core']
+        },
         'bootstrap': ['jquery'],
         'jqueryui': ['jquery'],
+        'jquerydt': ['jquery'],
+        'underscore': {exports: '_'},
+        'tablesorter': ['jquery'],
         'assetscore': ['jquery', 'bootstrap', 'jqueryui'],
+        'session_security': ['jquery'],
         'assetsresponsive': ['jquery', 'bootstrap', 'jqueryui']
     }
 });
@@ -38,11 +54,12 @@ require.config({
 require([
     'jquery',
     'jqueryui',
-    'base',
+    'tippy',
+    'base', // Do not remove
     'bootstrap',
     'assetscore',
     'assetsresponsive',
-], function($, jqueryui, base, bootstrap) {
+], function($, jqueryui, tippy, base) {
     A11y.Core();
 
     var downloadToken = new Date().getTime();
@@ -63,13 +80,13 @@ require([
         let export_option = $(this).attr("value")
         update_export_option(export_option);
         if(export_option == 'bq-manifest') {
-            $('#columns-container').hide();
             $('.file-name').hide();
             $('.table-name').show();
+            $('.bq-only').show();
         } else {
-            $('#columns-container').show();
             $('.file-name').show();
             $('.table-name').hide();
+            $('.bq-only').hide();
         }
     });
 
@@ -77,6 +94,7 @@ require([
         $('#bq-manifest').hide();
         $('#file-manifest').hide();
         $('#' + export_option).show();
+        export_option !== 'bq-manifest' ? $('.bq-only').hide() : $('.bq-only').show();
     };
 
     update_export_option("file-manifest");
@@ -140,7 +158,7 @@ require([
         var checked_columns = [];
         $('.column-checkbox').each(function() {
             var cb = $(this)[0];
-            if (cb.checked) {
+            if (cb.checked && (manifest_type !== 'file-manifest' || !   $(this).hasClass('bq-only'))) {
                 checked_columns.push(cb.value);
             }
         });
@@ -200,14 +218,14 @@ require([
     });
 
     $('.column-checkbox').change(function() {
-        update_download_manifest_buttons();
+        update_download_manifest_buttons($(this));
     });
 
     $("#export-manifest-name").change(function(){
         update_download_manifest_buttons();
     });
 
-    var update_download_manifest_buttons = function(){
+    var update_download_manifest_buttons = function(clicked){
         var is_list = ($('tr:not(:first) input.cohort').length > 0);
 
         var checked_cohorts = $('tr:not(:first) input.cohort:checked').length;
@@ -222,18 +240,16 @@ require([
                 $('.download-file,.file-manifest').attr('disabled', 'disabled');
                 $('.download-file,.file-manifest').attr('title', 'Only a single cohort with an active data version can be downloaded as a file.');
                 $('input.bq-manifest').trigger('click');
-            }
-
-            else {
+            } else {
                 $('.download-file,.file-manifest').removeAttr('disabled');
                 $('.download-file,.file-manifest').removeAttr('title');
-                $('input.file-manifest').trigger('click');
+                clicked && !clicked.hasClass('column-checkbox') && $('input.file-manifest').trigger('click');
                 if(is_list) {
                     let cohort_row=$('input.cohort:checked').parents('tr');
                     if(cohort_row.data('inactive-versions') === "True") {
                         $('.download-file,.file-manifest').attr('disabled', 'disabled');
                         $('.download-file,.file-manifest').attr('title', 'Only a single cohort with an active data version can be downloaded as a file.');
-                        $('input.bq-manifest').trigger('click');
+                        clicked && !clicked.hasClass('column-checkbox') && $('input.bq-manifest').trigger('click');
                     } else {
                         let file_parts_count = cohort_row.data('file-parts-count');
                         let display_file_parts_count = cohort_row.data('display-file-parts-count')
@@ -250,7 +266,7 @@ require([
                             }
                         } else {
                             $('#file-manifest-max-exceeded').hide();
-                            $('#file-manifest').show();
+                            clicked && !clicked.hasClass('column-checkbox') && $('#file-manifest').show();
 
                             var select_box_div = $('#file-part-select-box');
                             var select_box = select_box_div.find('select');
@@ -298,6 +314,17 @@ require([
 
         $('#export-manifest-name').val("cohorts_"+cohort_ids.join("_")+$('#export-manifest-name').data('name-base'));
         update_download_manifest_buttons();
+    });
+
+    tippy('.bq-disabled', {
+        content: 'Exporting to BigQuery requires a linked Google Social Account. You can link your account to a Google ID from the '
+            +  '<a target="_blank" rel="noopener noreferrer" href="/users/' + user_id + '/">'
+            + 'Account Details</a> page.',
+        theme: 'dark',
+        placement: 'right',
+        arrow: true,
+        interactive: true,
+        allowHTML: true
     });
 
 });

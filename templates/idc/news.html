@@ -21,7 +21,7 @@
     <div class="container-fluid">
         <div class ="row">
             <div class="col-lg-12 col-md-12">
-                <div class="panel panel-default" role="panel panel-default">
+                <div class="panel panel-default short-inner-content" role="panel panel-default">
                     <div class="panel-heading"><h4>The list of posts below is populated automatically from the
                         <a href="https://discourse.canceridc.dev/c/announcements/5" target="_blank" rel="noreferrer nofollow">
                             "Announcements" category</a>
@@ -38,9 +38,9 @@
 
 {% block js_file %}
 	{{ block.super }}
-	<script src="{% static 'js/news.js' %}"></script>
+	<script type="text/javascript" src="{% static 'js/news.js' %}?v={{ APP_VERSION }}"></script>
     <script>
     var showWarning = true;
     </script>
-    <script src="https://discourse.canceridc.dev/javascripts/embed-topics.js"></script>
+    <script type="text/javascript" src="https://discourse.canceridc.dev/javascripts/embed-topics.js"></script>
 {% endblock %}
