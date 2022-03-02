@@ -35,6 +35,10 @@
 
     {% block header %}{% endblock %}
 
+    {% if CRAZY_EGG %}
+        <script type="text/javascript" src="https://script.crazyegg.com/pages/scripts/0076/1527.js" async="async" ></script>
+    {% endif %}
+
     {% if SITE_GOOGLE_ANALYTICS %}
         <!-- Global site tag (gtag.js) - Google Analytics -->
         <script async src="https://www.googletagmanager.com/gtag/js?id={{ SITE_GOOGLE_ANALYTICS_TRACKING_ID }}"></script>
@@ -86,11 +90,11 @@
         <div class="row">
             {% block content %}{% endblock %}
         </div>
-        <!-- The landing page and collections page has a special layout, so it has its own footer include -->
-        {% if request.path != '/' and request.path != '/collections/' %}
-            {% include 'share/site_footer.html'  %}
-        {% endif %}
     </div>
+    <!-- The landing page and collections page have a special layout, so they have their own footer include -->
+    {% if request.path != '/' and request.path != '/collections/' and request.path != '/cohorts/' %}
+        {% include 'share/site_footer.html'  %}
+    {% endif %}
 </main>
 
 <!-- Warning Modal -->
@@ -196,7 +200,7 @@
 {% endblock %}
 
 {% block js_file %}
-    <script src="{% static 'js/libs/require.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/libs/require.js' %}"></script>
 {% endblock %}
 
 </body>

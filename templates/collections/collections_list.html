@@ -19,30 +19,30 @@
 <div class="container-fluid">
     <div class ="row">
         <div class="col-lg-12 col-md-12 collex-panel hidden">
-            <div class="panel panel-default" role="panel panel-default" id="collections-list">
+            <div class="panel panel-default short-inner-content" role="panel panel-default" id="collections-list">
                 <div class="panel-body">
                 <table id="collections-table" class="table collex-table sortable_table table-striped table-hover">
                     <thead>
                         <th></th>
                         <th class="id-col">ID</th>
                         <th class="collex-type-col">Collection Type</th>
+                        <th class="access-col">Access</th>
                         <th class="cancer-type-col">Cancer Type</th>
                         <th class="image-type-col">Image Types</th>
                         <th class="subject-col">Subject Count</th>
                         <th class="locations-col">Locations</th>
                         <th class="supporting-data-col">Supporting Data</th>
-
                     </thead>
                     <colgroup>
                         <col style="width: 3%">
                         <col style="width: 12%">
+                        <col style="width: 8%">
                         <col style="width: 8%">
                         <col style="width: 13%">
                         <col style="width: 8%">
                         <col style="width: 8%">
                         <col style="width: 9%">
                         <col style="width: 9%">
-
                     </colgroup>
                     <tbody>
                         {% for collection in active_collections %}
@@ -52,7 +52,7 @@
                                     data-collex-id="{{ collection.collection_id }}"
                                     title="Click to display collection description."
                                 >
-                                    <i class="fa fa-plus-circle show-button"> </i><i class="fa fa-minus-circle hide-button"> </i></td>
+                                    <i class="fa-solid fa-circle-plus show-button"> </i><i class="fa-solid fa-circle-minus hide-button"> </i></td>
                                 <td class="collection-explore"
                                     data-collex-id="{{ collection.collection_id }}"
                                     data-collex-collex="{{ collection.collections }}"
@@ -67,6 +67,7 @@
                                     </a>
                                 </td>
                                 <td>{{ collection.get_collection_type }}</td>
+                                <td>{{ collection.access }}</td>
                                 <td>{{ collection.cancer_type }}</td>
                                 <td>{{ collection.image_types }}</td>
                                 <td>{{ collection.subject_count }}</td>
@@ -79,17 +80,17 @@
                 </table>
                 </div>
             </div>
-             <!-- Include footer here instead of base.html so it can be hidden by default -->
-            {% include 'share/site_footer.html'  %}
         </div>
     </div>
 </div>
+<!-- Include footer here instead of base.html so it can be hidden by default -->
+{% include 'share/site_footer.html' with hide="True" %}
 {% endblock %}
 
 {% block js_file %}
     {{ active_collection_descs|json_script:"collection_descs" }}
 	{{ block.super }}
-	<script src="{% static 'js/collections_list.js' %}"></script>
+	<script type="text/javascript" src="{% static 'js/collections_list.js' %}?v={{ APP_VERSION }}"></script>
     <script>
         const collection_descs = JSON.parse(document.getElementById('collection_descs').textContent);
     </script>
