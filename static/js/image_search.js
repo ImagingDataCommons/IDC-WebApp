@@ -3212,11 +3212,6 @@ require([
 
 
     $(document).ready(function () {
-
-        $('#body').on("unload", function(){
-            alert('hi');
-        })
-
         window.selItems = new Object();
         window.selItems.selStudies = new Object();
         window.selItems.selCases = new Object();
