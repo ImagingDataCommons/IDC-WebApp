@@ -345,7 +345,7 @@ MIDDLEWARE.append(
 # End django-session-security #
 ###############################
 
-TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+TEST_RUNNER = 'django.tesbut.runner.DiscoverRunner'
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -639,7 +639,7 @@ CONN_MAX_AGE = 60
 ############################
 SITE_GOOGLE_ANALYTICS             = bool(os.environ.get('SITE_GOOGLE_ANALYTICS_TRACKING_ID', None) is not None)
 SITE_GOOGLE_ANALYTICS_TRACKING_ID = os.environ.get('SITE_GOOGLE_ANALYTICS_TRACKING_ID', '')
-CRAZY_EGG                         = bool(os.environ.get('CRAZY_EGG', 'False') == 'True')
+RESEARCH_STUDY                    = bool(os.environ.get('RESEARCH_STUDY', 'False') == 'True')
 
 ##############################################################
 #   MAXes to prevent size-limited events from causing errors
