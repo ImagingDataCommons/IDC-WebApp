@@ -126,6 +126,10 @@ SOLR_TYPES = {
     "DATETIME": "pdate"
 }
 
+SOLR_TYPE_EXCEPTION = {
+    'SamplesPerPixel': 'string'
+}
+
 SOLR_SINGLE_VAL = {
     "StudyInstanceUID": ["PatientID", "StudyInstanceUID", "crdc_study_uuid"],
     "SeriesInstanceUID": ["PatientID", "StudyInstanceUID", "SeriesInstanceUID", "crdc_study_uuid", "crdc_series_uuid"]
@@ -395,7 +399,7 @@ def create_solr_params(schema_src, solr_src):
         if not re.search(r'has_',field['name']):
             field_schema = {
                 "name": field['name'],
-                "type": SOLR_TYPES[field['type']],
+                "type": SOLR_TYPES[field['type']] if field['name'] not in SOLR_TYPE_EXCEPTION else SOLR_TYPE_EXCEPTION[field['name']],
                 "multiValued": False if field['name'] in SOLR_SINGLE_VAL.get(solr_src.aggregate_level, {}) else True,
                 "stored": True
             }
@@ -708,7 +712,7 @@ def main():
         len(args.version_file) and update_data_versions(args.version_file)
 
         len(args.attributes_file) and load_attributes(args.attributes_file,
-            ["dicom_derived_series_v9", "dicom_derived_study_v9"], ["idc-dev-etl.idc_v9_dev.dicom_pivot_v9"]
+            ["dicom_derived_series_v10", "dicom_derived_study_v10"], ["idc-dev-etl.idc_v9_dev.dicom_pivot_v10"]
         )
 
         len(ATTR_SET.keys()) and add_attributes(ATTR_SET)
@@ -720,8 +724,8 @@ def main():
                 update_display_values(Attribute.objects.get(name=attr), dvals[attr]['vals'])
 
         if args.solr_files.lower() == 'y':
-            for src in [("idc-dev-etl.idc_v9_pub.dicom_derived_all", "dicom_derived_series_v9",),
-                    ("idc-dev-etl.idc_v9_pub.dicom_derived_all", "dicom_derived_study_v9",),]:
+            for src in [("idc-dev-etl.idc_v10_pub.dicom_derived_all", "dicom_derived_series_v10",),
+                    ("idc-dev-etl.idc_v10_pub.dicom_derived_all", "dicom_derived_study_v10",),]:
                 create_solr_params(src[0], src[1])
 
     except Exception as e:
