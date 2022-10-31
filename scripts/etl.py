@@ -126,6 +126,10 @@ SOLR_TYPES = {
     "DATETIME": "pdate"
 }
 
+SOLR_TYPE_EXCEPTION = {
+    'SamplesPerPixel': 'string'
+}
+
 SOLR_SINGLE_VAL = {
     "StudyInstanceUID": ["PatientID", "StudyInstanceUID", "crdc_study_uuid"],
     "SeriesInstanceUID": ["PatientID", "StudyInstanceUID", "SeriesInstanceUID", "crdc_study_uuid", "crdc_series_uuid"]
@@ -205,16 +209,17 @@ def add_programs(program_set):
     return results
 
 
-def add_data_sources(source_set, subversions, set_types):
+def add_data_sources(source_set, subversions, set_types, attr_exclude):
     for source in source_set:
         source.update({
             "versions": subversions,
-            "set_types": set_types
+            "set_types": set_types,
+            "attr_exclude": attr_exclude
         })
         add_data_source(**source)
 
 
-def add_data_source(name, count_col, source_type, versions, programs, aggregate_level, set_types, joins, attr_from):
+def add_data_source(name, count_col, source_type, versions, programs, aggregate_level, set_types, joins, attr_from, attr_exclude):
     obj = None
     try:
         obj, created = DataSource.objects.update_or_create(
@@ -249,7 +254,7 @@ def add_data_source(name, count_col, source_type, versions, programs, aggregate_
                 jn['sources'],
                 jn['to']
             )
-        copy_attrs([attr_from], [name])
+        copy_attrs([attr_from], [name], attr_exclude)
 
         print("DataSource entry created: {}".format(obj.name))
     except Exception as e:
@@ -395,7 +400,7 @@ def create_solr_params(schema_src, solr_src):
         if not re.search(r'has_',field['name']):
             field_schema = {
                 "name": field['name'],
-                "type": SOLR_TYPES[field['type']],
+                "type": SOLR_TYPES[field['type']] if field['name'] not in SOLR_TYPE_EXCEPTION else SOLR_TYPE_EXCEPTION[field['name']],
                 "multiValued": False if field['name'] in SOLR_SINGLE_VAL.get(solr_src.aggregate_level, {}) else True,
                 "stored": True
             }
@@ -504,14 +509,14 @@ def add_attributes(attr_set):
             logger.exception(e)
 
 
-def copy_attrs(from_data_sources, to_data_sources):
+def copy_attrs(from_data_sources, to_data_sources, attr_excludes):
     to_sources = DataSource.objects.filter(name__in=to_data_sources)
     from_sources = DataSource.objects.filter(name__in=from_data_sources)
     to_sources_attrs = to_sources.get_source_attrs()
     bulk_add = []
 
     for fds in from_sources:
-        from_source_attrs = fds.attribute_set.exclude(id__in=to_sources_attrs['ids'])
+        from_source_attrs = fds.attribute_set.exclude(id__in=to_sources_attrs['ids']).exclude(name__in=attr_excludes)
         print("Copying {} attributes from {} to: {}.".format(
             len(from_source_attrs.values_list('name',flat=True)),
             fds.name, "; ".join(to_data_sources),
@@ -596,10 +601,13 @@ def update_display_values(attr, updates):
             for upd in to_update:
                 upd.display_value = updates[upd.raw_value]['display_value']
             Attribute_Display_Values.objects.bulk_update(to_update, ['display_value'])
+            logger.info("[STATUS] Updated {} display values.".format(str(len(to_update))))
         to_add = set([x for x in updates]).difference(set([x.raw_value for x in to_update]))
         for rv in to_add:
             new_vals.append(Attribute_Display_Values(raw_value=rv, display_value=updates[rv]['display_value'], attribute=attr))
-        len(new_vals) and Attribute_Display_Values.objects.bulk_create(new_vals)
+        if len(new_vals):
+            Attribute_Display_Values.objects.bulk_create(new_vals)
+            logger.info("[STATUS] Added {} display values.".format(str(len(new_vals))))
 
 
 def load_tooltips(source_objs, attr_name, source_tooltip, obj_attr=None):
@@ -682,7 +690,7 @@ def update_data_versions(filename):
         config['bioclin_version']
     )
 
-    add_data_sources(config['data_sources'], config['new_sub_versions'], config['set_types'])
+    add_data_sources(config['data_sources'], config['new_sub_versions'], config['set_types'], config['attr_exclude'])
 
     deactivate_data_versions(config['deactivate']['minor'], config['deactivate']['major'])
 
@@ -708,7 +716,7 @@ def main():
         len(args.version_file) and update_data_versions(args.version_file)
 
         len(args.attributes_file) and load_attributes(args.attributes_file,
-            ["dicom_derived_series_v9", "dicom_derived_study_v9"], ["idc-dev-etl.idc_v9_dev.dicom_pivot_v9"]
+            ["dicom_derived_series_v11", "dicom_derived_study_v11"], ["idc-dev-etl.idc_v11_pub.dicom_pivot_v11"]
         )
 
         len(ATTR_SET.keys()) and add_attributes(ATTR_SET)
@@ -720,8 +728,8 @@ def main():
                 update_display_values(Attribute.objects.get(name=attr), dvals[attr]['vals'])
 
         if args.solr_files.lower() == 'y':
-            for src in [("idc-dev-etl.idc_v9_pub.dicom_derived_all", "dicom_derived_series_v9",),
-                    ("idc-dev-etl.idc_v9_pub.dicom_derived_all", "dicom_derived_study_v9",),]:
+            for src in [("idc-dev-etl.idc_v12_pub.dicom_derived_all", "dicom_derived_series_v12",),
+                    ("idc-dev-etl.idc_v12_pub.dicom_derived_all", "dicom_derived_study_v12",),]:
                 create_solr_params(src[0], src[1])
 
     except Exception as e:

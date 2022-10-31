@@ -1,4 +1,9 @@
 if [ -n "$CI" ]; then
+    echo "Check our Python and Ubuntu versions since they keep getting updated without warning..."
+
+    ls -l /usr/bin/python3*
+    cat /etc/os-release
+
     export HOME=/home/circleci/${CIRCLE_PROJECT_REPONAME}
     export HOMEROOT=/home/circleci/${CIRCLE_PROJECT_REPONAME}
 
@@ -98,7 +103,7 @@ fi
 
 if [ "$DEBUG" = "True" ] && [ "$DEBUG_TOOLBAR" = "True" ]; then
     echo "Installing Django Debug Toolbar for local dev..."
-    pip3 install -q django-debug-toolbar -t ${HOMEROOT}/lib --only-binary all
+    pip3 install -q django-debug-toolbar==3.2.4 -t ${HOMEROOT}/lib --only-binary all
 fi
 
 if [ "$IS_DEV" = "True" ]; then
@@ -138,6 +143,5 @@ if [ -n "${CI}" ]; then
     else
         TIER=${DEPLOYMENT_TIER,,}
     fi
-    SHA=$(git rev-list -1 HEAD)
-    echo "APP_VERSION=${TIER}.$(date '+%Y%m%d%H%M').${SHA:0:7}" > ${HOMEROOT}/version.env
+    echo "APP_VERSION=${TIER}.$(date '+%Y%m%d%H%M').${APP_SHA}" > ${HOMEROOT}/version.env
 fi

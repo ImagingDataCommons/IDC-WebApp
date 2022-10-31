@@ -257,7 +257,14 @@ require([
 
                     var oArray = oVals.sort().map(item => '<span class="filter-att">' + item.toString() + '</span>');
                     nstr = '<span class="filter-type">' + disp + '</span>';
-                    nstr += 'IN (' + oArray.join("") + ')';
+                    var joinElem = $('#'+curKey).find('.join_val').filter(':checked');
+                    if (joinElem.length >0){
+                       var joinstr=joinElem.attr("value");
+                       nstr += 'IN (' + oArray.join(joinstr) + ')';
+                    }
+                    else {
+                        nstr += 'IN (' + oArray.join("") + ')';
+                    }
                     if (curKey ==='access'){
                      accessStr=nstr;
                     }
@@ -328,7 +335,7 @@ require([
                 //$(elem).parent().parent().addClass('isActive');
             }
 
-            else{
+            else {
                 if ((id in window.filterObj) && ('none' in window.filterObj[id])){
                     delete window.filterObj[id]['none'];
                     if (!('rng' in window.filterObj[id])){
@@ -369,11 +376,11 @@ require([
          });
 
 
-              var labelMin = $('<div class="labelMin"/>').text(min).css({
-                  position: 'absolute',
-                  top:-7,
-                  left: -22,
-                });
+          var labelMin = $('<div class="labelMin"/>').text(min).css({
+              position: 'absolute',
+              top:-7,
+              left: -22,
+            });
 
 
         var labelMax = $('<div class="labelMax" />').text(max);
@@ -409,7 +416,7 @@ require([
         if (isActive){
             $('#'+divName).find('.reset').removeClass('disabled');
         }
-        else{
+        else {
             $('#'+divName).find('.reset').addClass('disabled');
         }
 
@@ -462,7 +469,7 @@ require([
                     if (index ==0) {
                         $(this).text(lower.toString());
                     }
-                    else{
+                    else {
                         $(this).text(upper.toString());
                     }
                });
@@ -490,7 +497,7 @@ require([
             if ( (projId in collectionsData) && (!hasColl || (collFilt.indexOf(projId)>-1)) ){
                 cRow[3] = collectionsData[projId]['count'];
             }
-            else{
+            else {
                cRow[3] = 0;
             }
             if (cRow[3]===0){
@@ -507,7 +514,7 @@ require([
                     delete window.selItems.selCases[projId];
                 }
             }
-            else{
+            else {
                 usedCollectionData.push(cRow);
             }
 
@@ -700,7 +707,7 @@ require([
                             if (window.selItems.selProjects.indexOf(data)>-1) {
                                 return '<input type="checkbox" checked>'
                             }
-                            else{
+                            else {
                                 return '<input type="checkbox">'
                             }
                         }
@@ -754,7 +761,7 @@ require([
                 if ( (cache.backendReqStrt<=request.start) && ( (cache.backendReqStrt+cache.backendReqLength) >= (request.start+request.length)  )){
                     updateNeeded=false;
                 }
-                else{
+                else {
                     updateNeeded = true;
                 }
             } else if (cache.cacheLength===cache.recordsTotal){
@@ -774,7 +781,7 @@ require([
             if (isNum){
                 cmp=parseFloat(a[col])- parseFloat(b[col]);
             }
-            else{
+            else {
                 cmp=(a[col]>b[col] ? 1 :  a[col]==b[col]? 0: -1)
             }
 
@@ -786,7 +793,7 @@ require([
                 if (auxIsNum){
                     cmp=parseFloat(a[auxCol])- parseFloat(b[auxCol]);
                 }
-                else{
+                else {
                     cmp=(a[auxCol]>b[auxCol] ? 1 :  a[auxCol]==b[auxCol]? 0: -1)
                 }
 
@@ -812,7 +819,7 @@ require([
             auxCol = cache.colOrder[auxColId]
             auxIsNum = ( $(thead.children('tr').children().get(auxColId)).hasClass('numeric_data') ? true: false);
         }
-        else{
+        else {
             auxColId=-1
             auxCol=''
             auxIsNum= false;
@@ -1196,9 +1203,9 @@ require([
                             if (row['access'].includes('Limited') ) {
                                 return '<i class="fa-solid fa-circle-minus coll-explain"></i>';
                             }
-                            else{
+                            else {
                                 var modality = row['Modality'];
-                                if ((modality[0] === 'SM') || (modality === 'SM')) {
+                                if (( Array.isArray(modality) && modality.includes('SM')) || (modality === 'SM')) {
                                     return '<a href="' + SLIM_VIEWER_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                                  } else {
                                     return '<a href="' + DICOM_STORE_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
@@ -1244,11 +1251,8 @@ require([
                         var ret = checkClientCache(request, 'studies');
                         ssCallNeeded = ret[0];
                         var reorderNeeded = ret[1];
-
                         if (ssCallNeeded) {
-
-                            //curFilterObj = JSON.parse(JSON.stringify(parseFilterObj()));
-                            var curFilterObj = new Object();
+                            var curFilterObj = parseFilterObj();
                             curFilterObj.collection_id = window.selItems.selProjects;
                             curFilterObj.PatientID = caseArr;
                             if (studyID.trim().length > 0) {
@@ -1260,7 +1264,7 @@ require([
                                     if (window.selItems.selStudies[caseId].indexOf(studyID)>-1){
                                         window.selItems.selStudies[caseId]=[studyID]
                                     }
-                                    else{
+                                    else {
                                         delete window.selItems.selStudies[caseId];
                                     }
                                 }
@@ -1363,7 +1367,8 @@ require([
     }
 
     window.updateSeriesTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,seriesID) {
-
+        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV"])
+        var slimViewAbleModality=new Set(["SM"])
         $('#series_tab').attr('data-rowsremoved', rowsRemoved);
         $('#series_tab').attr('data-refreshafterfilter', refreshAfterFilter);
         if ($('#series_tab_wrapper').find('.dataTables_controls').length>0){
@@ -1451,10 +1456,10 @@ require([
                             return '<i class="fa-solid fa-circle-minus coll-explain"></i>';
                         }
 
-                        else if ((row['Modality'] === 'SEG' || row['Modality'][0] === 'SEG') || (row['Modality'] === 'RTSTRUCT' || row['Modality'][0] === 'RTSTRUCT') || (row['Modality'] === 'RTPLAN' || row['Modality'][0] === 'RTPLAN') || (row['Modality'] === 'RWV' || row['Modality'][0] === 'RWV')) {
+                        else if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){return nonViewAbleModality.has(el)}) ) || nonViewAbleModality.has(row['Modality']) )   {
                             return '<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash no-viewer-tooltip"></i>';
 
-                            } else if ((row['Modality'] === 'SM') || (row['Modality'][0] === 'SM')) {
+                            } else if (  ( Array.isArray(row['Modality']) && row['Modality'].some(function(el){return slimViewAbleModality.has(el)}) ) || (slimViewAbleModality.has(row['Modality']))) {
                                 return '<a href="' + SLIM_VIEWER_PATH + row['StudyInstanceUID'] + '/series/' + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
 
                             } else {
@@ -1472,7 +1477,7 @@ require([
                 var backendReqStrt = Math.max(0, request.start - Math.floor(backendReqLength * 0.5));
                 var rowsRemoved = $('#series_tab').data('rowsremoved');
                 var refreshAfterFilter = $('#series_tab').data('refreshafterfilter');
-                var cols = ['StudyInstanceUID', 'SeriesNumber', 'Modality', 'BodyPartExamined', 'SeriesDescription']
+                var cols = ['StudyInstanceUID', 'SeriesInstanceUID','SeriesNumber', 'Modality', 'BodyPartExamined', 'SeriesDescription']
                 var ssCallNeeded = true;
                 var caseArr = new Array();
                 for (caseid in window.selItems.selCases) {
@@ -1497,7 +1502,6 @@ require([
                     var reorderNeeded = ret[1];
 
                     if (ssCallNeeded) {
-                        //curFilterObj = JSON.parse(JSON.stringify(parseFilterObj()));
                         var curFilterObj = new Object();
                         curFilterObj.collection_id = window.selItems.selProjects;
                         curFilterObj.PatientID = caseArr;
@@ -1674,7 +1678,7 @@ require([
 
     var update_bq_filters = function() {
         let filters = parseFilterObj();
-        if(Object.keys(filters).length <= 0) {
+        if (Object.keys(filters).length <= 0) {
             $('.bq-string-display').attr("disabled","disabled");
             $('.bq-string-display').attr("title","Select a filter to enable this feature.");
             $('.bq-string').html("");
@@ -1687,7 +1691,7 @@ require([
 
     var update_filter_url = function() {
         let filters = parseFilterObj();
-        if(Object.keys(filters).length <= 0) {
+        if (Object.keys(filters).length <= 0) {
             $('.get-filter-uri').attr("disabled","disabled");
             $('.get-filter-uri').attr("title","Select a filter to enable this feature.");
             $('.filter-url').html("");
@@ -1698,13 +1702,18 @@ require([
         } else {
             $('.get-filter-uri').removeAttr("disabled");
             $('.copy-url').removeAttr("disabled");
-            $('.get-filter-uri').attr("title","Click to display this filter set's Query URL.");
+            $('.get-filter-uri').attr("title","Click to display this filter set's query URL.");
             let url = BASE_URL+"/explore/filters/?";
             let encoded_filters = []
-            for (i in filters) {
+            for (let i in filters) {
                 if (filters.hasOwnProperty(i)) {
-                    _.each(filters[i], function (val) {
-                        encoded_filters.push(i + "=" + encodeURI(val));
+                    let vals = filters[i];
+                    if(!Array.isArray(filters[i])) {
+                        vals = filters[i]['values'];
+                        encoded_filters.push(i+"_op="+encodeURI(filters[i]['op']));
+                    }
+                    _.each(vals, function (val) {
+                        encoded_filters.push(i+"="+encodeURI(val));
                     });
                 }
             }
@@ -1719,8 +1728,8 @@ require([
     var updateFacetsData = function (newFilt) {
         update_filter_url();
         update_bq_filters();
-        if(window.location.href.search(/\/filters\//g) >= 0) {
-            if(!first_filter_load) {
+        if (window.location.href.search(/\/filters\//g) >= 0) {
+            if (!first_filter_load) {
                 window.history.pushState({}, '', window.location.origin + "/explore/")
             } else {
                 first_filter_load = false;
@@ -1795,8 +1804,7 @@ require([
                             if (('filtered_counts' in data) && ('access' in data['filtered_counts']['origin_set']['All']['attributes']) && ('Limited' in data['filtered_counts']['origin_set']['All']['attributes']['access']) && (data['filtered_counts']['origin_set']['All']['attributes']['access']['Limited']['count']>0) ){
                                $('#search_def_access').removeClass('notDisp');
                                $('.access_warn').removeClass('notDisp');
-                            }
-                            else{
+                            } else {
                                 $('#search_def_access').addClass('notDisp');
                                 $('.access_warn').addClass('notDisp');
                             }
@@ -1808,8 +1816,7 @@ require([
                                 $('#search_def_stats').removeClass('notDisp');
                                 $('#search_def_stats').html('<span style="color:red">There are no cases matching the selected set of filters</span>');
                                 //window.alert('There are no cases matching the selected set of filters.')
-                            }
-                            else{
+                            } else {
                                 $('#search_def_stats').addClass('notDisp');
                                 $('#search_def_stats').html("Don't show this!");
                             }
@@ -2021,13 +2028,13 @@ require([
             var titA = lbl.split('Quarter');
             title1=titA[0]+' Quarter';
             title2=titA[1];
-        } else if(lbl.includes('Background')){
+        } else if (lbl.includes('Background')){
             var titA = lbl.split('Activity');
             var titB = titA[1].split('(');
             title0 = titA[0];
             title1= 'Activity '+titB[0];
             title2= '('+titB[1];
-        } else if(lbl.includes('(')){
+        } else if (lbl.includes('(')){
            var titA = lbl.split('(');
            title1=titA[0];
            title2='('+titA[1];
@@ -2125,7 +2132,7 @@ require([
            );
          })
         .on("click",function(d){
-            if(!is_cohort) {
+            if (!is_cohort) {
                 manageUpdateFromPlot(plotId, d.data.key);
             }
         });
@@ -2226,8 +2233,7 @@ require([
             var cntUf=0;
             if (dic.hasOwnProperty('unfilt') && dic['unfilt'].hasOwnProperty(val)) {
                 cntUf = dic['unfilt'][val].count
-            }
-            else {
+            } else {
                 cntUf = 0;
             }
 
@@ -2262,11 +2268,9 @@ require([
         }
         var textFilt=false;
         var textFiltVal='';
-        if ($('#'+filterCat).children('.text-filter').length>0){
+        if ($('#'+filterCat).children('.text-filter').length>0) {
             textFiltVal = $('#'+filterCat).children('.text-filter')[0].value;
-
-        }
-        else if ($('#'+filterCat).find('.collection_value').length>0){
+        } else if ($('#'+filterCat).find('.collection_value').length>0){
             textFiltVal = $('#collection_search')[0].value;
         }
 
@@ -2286,7 +2290,7 @@ require([
                 } else {
                     $('#'+filterCat).attr('data-curmax','NA');
                 }
-            } else{
+            } else {
                 $('#'+filterCat).attr('data-curmin','NA');
                 $('#'+filterCat).attr('data-curmax','NA');
             }
@@ -2315,8 +2319,7 @@ require([
 
                      else if ($(b).children().children('.value').text().trim() < $(a).children().children('.value').text().trim()){
                          return 1;
-                     }
-                     else{
+                     } else {
                          return -1;
                      }
 
@@ -2330,8 +2333,7 @@ require([
                          }
                          else if ( ($(b).children().children('input:checkbox')[0].checked || $(b).children().children('input:checkbox')[0].indeterminate) && !($(a).children().children('input:checkbox')[0].checked || $(a).children().children('input:checkbox')[0].indeterminate)){
                             return 1;
-                         }
-                        else {
+                         } else {
 
                             return (parseFloat($(a).children().children('.case_count').text()) < parseFloat($(b).children().children('.case_count').text()) ? 1 : -1)
                            }
@@ -2367,37 +2369,36 @@ require([
                 } else {
                     $(elem).parent().parent().removeClass('filtByVal');
                     if (srch){
-                        ctrl = $(elem).closest('.list-group-item').find('.list-group-item__heading').find('a');
+                        let ctrl = $(elem).closest('.list-group-item').find('.list-group-item__heading').find('a');
                         if (ctrl.attr('aria-expanded')==='false'){
                             ctrl.click();
                         }
                     }
                 }
             }
-            var checked = $(elem).prop('checked');
-            var spans = $(elem).parent().find('span');
+            let checked = $(elem).prop('checked');
+            let spans = $(elem).parent().find('span');
             //var lbl = spans.get(0).innerHTML;
-            var cntUf = parseInt(spans.filter('.case_count')[0].innerHTML);
+            let cntUf = parseInt(spans.filter('.case_count')[0].innerHTML);
 
-
-            var isZero
+            let isZero = true;
             if ( (cntUf>0) || checked)  {
                 if (cntUf>0){
                     numNonZero++;
                 }
                 $(elem).parent().parent().removeClass('zeroed');
-                isZero=false;
+                isZero = false;
             } else {
                 $(elem).parent().parent().addClass('zeroed');
-                isZero=true;
+                isZero = true;
             }
-            var allChildrenHidden = false;
+            let allChildrenHidden = false;
             if ( $(elem).parent().siblings().filter('.list-group-sub-item__body').length>0 ){
                 if ($(elem).parent().siblings().filter('.list-group-sub-item__body').find('.checkbox').not('.notDisp').length===0){
                     allChildrenHidden = true;
                 }
             }
-            var thisAttrAvail = (( ( !isZero || showZeros) && !filtByVal  && !allChildrenHidden) || checked) ? true:false;
+            let thisAttrAvail = (( ( !isZero || showZeros) && !filtByVal  && !allChildrenHidden) || checked) ? true:false;
             if  ( thisAttrAvail){
                   numAttrAvail++;
                   numCnts+=cntUf;
@@ -2414,7 +2415,6 @@ require([
             } else {
                 $(elem).parent().parent().addClass('notDisp');
             }
-
         }
 
         if (hasFilters){
@@ -2431,25 +2431,22 @@ require([
             if ($('#' + filterCat).children('.more-checks').children('.show-more').length>0){
                 $('#' + filterCat).children('.more-checks').children('.show-more')[0].innerText = "show " + numMore.toString() + " more";
                 if (numMore>0){
-                        $('#' + filterCat).children('.more-checks').children('.show-more').removeClass('notDisp');
-                        $('#' + filterCat).children('.less-checks').children('.show-less').removeClass('notDisp');
-                    } else{
-                        $('#' + filterCat).children('.more-checks').children('.show-more').addClass('notDisp');
-                        $('#' + filterCat).children('.less-checks').children('.show-less').addClass('notDisp');
-                    }
+                    $('#' + filterCat).children('.more-checks').children('.show-more').removeClass('notDisp');
+                    $('#' + filterCat).children('.less-checks').children('.show-less').removeClass('notDisp');
+                } else {
+                    $('#' + filterCat).children('.more-checks').children('.show-more').addClass('notDisp');
+                    $('#' + filterCat).children('.less-checks').children('.show-less').addClass('notDisp');
+                }
             }
-
             if ( numAttrAvail < 1)  {
                 $('#' + filterCat).children('.more-checks').hide();
                 $('#' + filterCat).children('.less-checks').hide();
                 $('#' + filterCat).children('.check-uncheck').hide();
-
             } else if (showExtras) {
                 $('#' + filterCat).children('.more-checks').hide();
                 $('#' + filterCat).children('.less-checks').show();
                 $('#' + filterCat).children('.check-uncheck').show();
             } else {
-
                 $('#' + filterCat).children('.more-checks').show();
                 $('#' + filterCat).children('.check-uncheck').show();
                 if ($('#' + filterCat).children('.more-checks').children('.show-more').length>0){
@@ -2465,7 +2462,7 @@ require([
         //var filtSet = ["search_orig_set","segmentation","quantitative","qualitative","tcga_clinical"];
         for (var i=0;i<filtSet.length;i++) {
             filterCats = findFilterCats(filtSet[i], false);
-            var resetParentVal=false;
+            let resetParentVal=false;
             progInd = filterCats.indexOf('Program');
             if (progInd>-1){
                 filterCats.splice(progInd,1);
@@ -2473,16 +2470,15 @@ require([
                 resetParentVal=true;
             }
 
-
             for (var j = 0; j < filterCats.length; j++) {
-                    var ret = updateFilters(filterCats[j],{},false,srch);
-                    if (resetParentVal && !(filterCats[j]==='Program')){
-                        parentVal=$('#'+filterCats[j]).siblings().filter('.list-group-item__heading').find('.case_count');
-                        parentVal[0].innerHTML=ret[1];
-                        if (ret[0]===0){
-                            $('#'+filterCats[j]).addClass('notDisp')
-                        }
+                let ret = updateFilters(filterCats[j],{},false,srch);
+                if (resetParentVal && !(filterCats[j]==='Program')){
+                    parentVal=$('#'+filterCats[j]).siblings().filter('.list-group-item__heading').find('.case_count');
+                    parentVal[0].innerHTML=ret[1];
+                    if (ret[0]===0){
+                        $('#'+filterCats[j]).addClass('notDisp')
                     }
+                }
             }
         }
         /*addSliders('search_orig_set', false, hideEmpty,'');
@@ -2491,8 +2487,8 @@ require([
     }
 
     window.updateColl = function(srch){
-        var checked=$('#Program').find('.hide-zeros')[0].checked;
-        var filtSet=['program_set']
+        let checked=$('#Program').find('.hide-zeros')[0].checked;
+        let filtSet=['program_set']
         /* for (program in window.programs){
             if (Object.keys(window.programs[program].projects).length>1){
                 filtSet.push(program)
@@ -2503,7 +2499,7 @@ require([
     }
 
     window.hideAtt = function(hideElem){
-        var filtSet = ["search_orig_set","segmentation","quantitative","qualitative","tcga_clinical"];
+        let filtSet = ["search_orig_set","segmentation","quantitative","qualitative","tcga_clinical"];
         setAllFilterElements(hideElem.checked, filtSet);
         addSliders('search_orig_set', false, hideElem.checked,'');
         addSliders('quantitative', false, hideElem.checked,'');
@@ -2511,17 +2507,15 @@ require([
     }
 
     var updateFilterSelections = function (id, dicofdic) {
-        filterCats = findFilterCats(id,false);
-        for (i = 0; i < filterCats.length; i++) {
-            cat = filterCats[i]
-            filtDic={'unfilt':'', 'filt':''}
+        let filterCats = findFilterCats(id,false);
+        for (let i = 0; i < filterCats.length; i++) {
+            let cat = filterCats[i]
+            let filtDic = {'unfilt':'', 'filt':''}
 
-            if ( (dicofdic.hasOwnProperty('unfilt')) &&  (dicofdic['unfilt'].hasOwnProperty(cat)))
-            {
+            if ( (dicofdic.hasOwnProperty('unfilt')) &&  (dicofdic['unfilt'].hasOwnProperty(cat))){
                 filtDic['unfilt']=dicofdic['unfilt'][cat]
             }
-            if ( (dicofdic.hasOwnProperty('filt')) && (dicofdic['filt'].hasOwnProperty(cat))  )
-            {
+            if ( (dicofdic.hasOwnProperty('filt')) && (dicofdic['filt'].hasOwnProperty(cat))) {
                 filtDic['filt']=dicofdic['filt'][cat]
             }
             updateFilters(filterCats[i], filtDic, true, false);
@@ -2529,11 +2523,19 @@ require([
     };
 
     var checkFilters = function(filterElem) {
-        var checked = $(filterElem).prop('checked');
-        var neighbours =$(filterElem).parentsUntil('.list-group-item__body, .list-group-sub-item__body','ul').children().children().children('input:checkbox');
-        var neighboursCk = $(filterElem).parentsUntil('.list-group-item__body, .list-group-sub-item__body','ul').children().children().children(':checked');
-        var allChecked= false;
-        var noneChecked = false;
+        let operatorInfo = false;
+        let operator = ""
+        let opInfoElem = $(filterElem).closest('.list-group-item__body, .list-group-sub-item__body','.colections-list').find('.join_val').filter('input:checked')
+        if (opInfoElem.length>0){
+            operatorInfo = true;
+            operator = opInfoElem.attr('value');
+        }
+
+        let checked = $(filterElem).prop('checked');
+        let neighbours =$(filterElem).parentsUntil('.list-group-item__body, .list-group-sub-item__body','ul').children().children().children('input:checkbox');
+        let neighboursCk = $(filterElem).parentsUntil('.list-group-item__body, .list-group-sub-item__body','ul').children().children().children(':checked');
+        let allChecked= false;
+        let noneChecked = false;
         if (neighboursCk.length===0){
             noneChecked = true;
         }
@@ -2542,29 +2544,28 @@ require([
             allChecked = true;
         }
 
-        var filterCats= $(filterElem).parentsUntil('.tab-pane','.list-group-item, .checkbox');
-        var j = 1;
+        let filterCats= $(filterElem).parentsUntil('.tab-pane','.list-group-item, .checkbox');
+        let j = 1;
 
-        var curCat='';
-        var lastCat='';
-        numCheckBoxes=0;
+        let curCat = '';
+        let lastCat = '';
+        numCheckBoxes = 0;
         for (var i=0;i<filterCats.length;i++){
-            var filtnm='';
+            let filtnm = '';
             ind = filterCats.length-1-i;
-            filterCat=filterCats[ind];
-            hasCheckBox=false;
+            filterCat = filterCats[ind];
+            hasCheckBox = false;
             if (filterCat.classList.contains('checkbox')){
-                 checkBox =$(filterCat).find('input:checkbox')[0];
-                 filtnm=checkBox.value;
+                 checkBox = $(filterCat).find('input:checkbox')[0];
+                 filtnm = checkBox.value;
                  hasCheckBox = true;
                  numCheckBoxes++;
             } else {
-
-                var filtnmSrc=$(filterCat).children('.list-group-sub-item__body, .list-group-item__body, .collection-list')
+                let filtnmSrc = $(filterCat).children('.list-group-sub-item__body, .list-group-item__body, .collection-list')
                 if (filtnmSrc.length<1){
-                    filtnmSrc=$(filterCat).children().children('.collection_id')
+                    filtnmSrc = $(filterCat).children().children('.collection_id')
                 }
-                var filtnm = filtnmSrc[0].id;
+                filtnm = filtnmSrc[0].id;
                 if  ($(filterCat).children('.list-group-item__heading').children('input:checkbox').length>0) {
                    hasCheckBox = true;
                    numCheckBoxes++;
@@ -2583,31 +2584,54 @@ require([
                 if (!(checkBox.indeterminate)) {
                     checkBox.checked = true;
                 }
-                if (!(filterObj.hasOwnProperty(curCat))){
-                    filterObj[curCat] = new Array();
-                }
-                if (filterObj[curCat].indexOf(filtnm)<0){
-                    filterObj[curCat].push(filtnm)
-                }
 
+                if (operatorInfo){
+                    if (!(filterObj.hasOwnProperty(curCat))) {
+                        filterObj[curCat] = new Object();
+                        filterObj[curCat]['values'] = new Array();
+                    }
+                    filterObj[curCat]['op'] = operator
+                    if (filterObj[curCat]['values'].indexOf(filtnm) < 0) {
+                        filterObj[curCat]['values'].push(filtnm);
+                    }
+
+                } else {
+                    if (!(filterObj.hasOwnProperty(curCat))) {
+                        filterObj[curCat] = new Array();
+                    }
+                    if (filterObj[curCat].indexOf(filtnm) < 0) {
+                        filterObj[curCat].push(filtnm);
+                    }
+                }
             }
 
             if (!checked && ( (ind===0) || ( (ind===1) && hasCheckBox && noneChecked)) ){
                checkBox.checked = false;
                //checkBox.indeterminate =  false;
-               if ( filterObj.hasOwnProperty(curCat) && (filterObj[curCat].indexOf(filtnm)>-1) ){
-                    pos = filterObj[curCat].indexOf(filtnm);
-                    filterObj[curCat].splice(pos,1);
-                    if (Object.keys(filterObj[curCat]).length===0){
-                         delete filterObj[curCat];
-                    }
+               if ( filterObj.hasOwnProperty(curCat)) {
+                   if (operatorInfo) {
+                       if (filterObj[curCat]['values'].indexOf(filtnm) > -1) {
+                           pos = filterObj[curCat]['values'].indexOf(filtnm);
+                           filterObj[curCat]['values'].splice(pos, 1);
+                           if (Object.keys(filterObj[curCat]['values']).length === 0) {
+                               delete filterObj[curCat];
+                           }
+                       }
+                   } else {
+                       if (filterObj[curCat].indexOf(filtnm) > -1) {
+                           pos = filterObj[curCat].indexOf(filtnm);
+                           filterObj[curCat].splice(pos, 1);
+                           if (Object.keys(filterObj[curCat]).length === 0) {
+                               delete filterObj[curCat];
+                           }
+                       }
+                   }
                }
-
                if (curCat.length>0){
-                 curCat+="."
-                 }
+                   curCat+="."
+               }
                 lastCat = curCat;
-                curCat+=filtnm;
+                curCat += filtnm;
                 if ($(filterElem).parent().hasClass('list-group-item__heading')){
                       chkList=$(filterElem).parent().siblings().filter('.list-group-item__body').find('input:checkbox');
                       for (var ind=0; ind<chkList.length;ind++){
@@ -2639,6 +2663,10 @@ require([
         }
     };
 
+    var applyFilters = function(){
+        mkFiltText();
+        updateFacetsData(true);
+    }
     var handleFilterSelectionUpdate = function(filterElem, mkFilt, doUpdate) {
         checkFilters(filterElem);
         if (mkFilt) {
@@ -2685,7 +2713,17 @@ require([
         $(tbl).find('tbody').append(rowSet);
     };
 
+
     var filterItemBindings = function (filterId) {
+
+        $('#' + filterId).find('.join_val').on('click', function () {
+            var attribute = $(this).closest('.list-group-item__body, .list-group-sub-item__body','.colections-list')[0].id;
+            if (filterObj.hasOwnProperty(attribute) && (window.filterObj[attribute]['values'].length>1)){
+                mkFiltText();
+                filterObj[attribute]['op']=$(this).attr('value');
+                updateFacetsData(true);
+            }
+        });
 
         $('#' + filterId).find('input:checkbox').not('#hide-zeros').on('click', function () {
             handleFilterSelectionUpdate(this, true, true);
@@ -2763,8 +2801,7 @@ require([
                         } else if (!$(ckElem).parent().parent().hasClass('filtByVal')) {
                             ckElem.checked = isCheck;
                         }
-                    }
-                    else {
+                    } else {
                         ckElem.checked = isCheck;
                     }
 
@@ -2801,21 +2838,21 @@ require([
     var addSliders = function(id,initialCreation,hideZeros, parStr){
         $('#'+id).find('.list-group-item__body.isQuant').each(function() {
 
-            var min = Math.floor(parseInt($(this).attr('data-min')));
-            var max = Math.ceil(parseInt($(this).attr('data-max')));
-            var lower = parseInt($(this).attr('data-curminrng'));
-            var upper = parseInt($(this).attr('data-curmaxrng'));
-            var addSlider = true;
-            var isActive = $(this).hasClass('isActive');
-            var wNone = $(this).hasClass('wNone');
-            var checked = ($(this).find('.noneBut').length>0) ? $(this).find('.noneBut').find(':input')[0].checked : false;
-            var txtLower = ($(this).find('.sl_lower').length>0) ? $(this).find('.sl_lower').val():'';
-            var txtUpper = ($(this).find('.sl_lower').length>0) ? $(this).find('.sl_upper').val():'';
-            var cntrNotDisp = ($(this).find('.cntr').length>0) ?$(this).find('.cntr').hasClass('notDisp'):true;
+            let min = Math.floor(parseInt($(this).attr('data-min')));
+            let max = Math.ceil(parseInt($(this).attr('data-max')));
+            let lower = parseInt($(this).attr('data-curminrng'));
+            let upper = parseInt($(this).attr('data-curmaxrng'));
+            let addSlider = true;
+            let isActive = $(this).hasClass('isActive');
+            let wNone = $(this).hasClass('wNone');
+            let checked = ($(this).find('.noneBut').length>0) ? $(this).find('.noneBut').find(':input')[0].checked : false;
+            let txtLower = ($(this).find('.sl_lower').length>0) ? $(this).find('.sl_lower').val():'';
+            let txtUpper = ($(this).find('.sl_lower').length>0) ? $(this).find('.sl_upper').val():'';
+            let cntrNotDisp = ($(this).find('.cntr').length>0) ?$(this).find('.cntr').hasClass('notDisp'):true;
 
 
             if (initialCreation){
-                var heading = $(this).prop('id') + '_heading';
+                let heading = $(this).prop('id') + '_heading';
                 $('#'+heading).find('.fa-cog').attr('title', 'Control slider');
                 $('#'+heading).find('.fa-search').remove();
 
@@ -2823,15 +2860,14 @@ require([
                 $(this).find('.less-checks').remove();
                 $(this).find('.sorter').remove();
                 $('#'+this.id+'_list').addClass('hide');
-            }
-            else {
-                var slideDivId = $(this).prop('id') + '_slide';
+            } else {
+                let slideDivId = $(this).prop('id') + '_slide';
                 curmin = $(this).attr('data-curmin');
                 curmax = $(this).attr('data-curmax');
                 $(this).find('#' + slideDivId).remove();
                 $(this).find('.cntr').remove();
                 //$(this).find('.noneBut').remove();
-                var inpName = $(this).prop('id') + '_input';
+                let inpName = $(this).prop('id') + '_input';
                 $(this).find('#'+inpName).remove();
                 if (hideZeros) {
                     if ( ( (curmin === 'NA') || (curmax === 'NA')) && !isActive ){
@@ -2863,7 +2899,7 @@ require([
             if (addSlider) {
                 $(this).addClass('hasSlider');
                 mkSlider($(this).prop('id'), min, max, 1, true, wNone, parStr, $(this).data('filter-attr-id'), $(this).data('filter-display-attr'), lower, upper, isActive,checked);
-                var cntrlDiv=$('<div class="cntr"></div>');
+                let cntrlDiv = $('<div class="cntr"></div>');
                 cntrlDiv.append('<div class="sliderset" style="display:block;margin-bottom:8px">Lower: <input type="text" style="display:inline" size="5" class="sl_lower" value="'+ txtLower + '">' +
                     ' Upper: <input class="sl_upper" type="text" style="display:inline" size="5" class="upper" value="' + txtUpper + '">' +
                     '<div class="slider-message notDisp" style="color:red"><br>Please set lower and upper bounds to numeric values with the upper value greater than the lower, then press Return in either text box. </div></div>')
@@ -2878,15 +2914,14 @@ require([
                 $(this).append(cntrlDiv);
                 $(this).find('.sliderset').keypress(function(event){
                    var keycode = (event.keyCode ? event.keyCode : event.which);
-                   if(keycode == '13'){
+                   if (keycode == '13'){
 
                    try {
-                      var txtlower = parseFloat($(this).parent().find('.sl_lower').val());
-                      var txtupper = parseFloat($(this).parent().find('.sl_upper').val());
+                       let txtlower = parseFloat($(this).parent().find('.sl_lower').val());
+                       let txtupper = parseFloat($(this).parent().find('.sl_upper').val());
                       if (txtlower<=txtupper){
                         setSlider($(this).closest('.hasSlider')[0].id+"_slide", false, txtlower, txtupper, false,true);
-                      }
-                      else{
+                      } else {
                           $(this).closest('.hasSlider').find('.slider-message').removeClass('notDisp');
 
                       }
@@ -2898,7 +2933,7 @@ require([
                }
               });
 
-            } else{
+            } else {
                 $(this).removeClass('hasSlider');
 
             }
@@ -2946,30 +2981,41 @@ require([
                                 'id': $('div.list-group-item__body[data-filter-attr-id="' + filter['id'] + '"]').children('.ui-slider')[0].id,
                                 'left_val': left_val,
                                 'right_val': right_val,
-                            })
+                            });
                         }
                      } else {
                        _.each(filter['values'], function (val) {
+                           if (filter.hasOwnProperty('op')) {
+                               if($(selEle).find('.join_val').length>0) {
+                                   $(selEle).find('.join_val').filter('input[value=' + filter['op'].toUpperCase() + ']').prop("checked", true);
+                               } else {
+                                   filter['op'] !== 'OR' && base.showJsMessage(
+                                       "warning",
+                                       "Invalid operator seen for attribute '"+$(selEle).attr('id')+"'; default of OR used instead.",
+                                       true
+                                   );
+                               }
+                           }
                            if ($(selEle).find('input[data-filter-attr-id="' + filter['id'] + '"][value="' + val + '"]').length>0) {
                                attValueFoundInside = true;
                            }
                            $('input[data-filter-attr-id="' + filter['id'] + '"][value="' + val + '"]').prop("checked", true);
                            checkFilters($('input[data-filter-attr-id="' + filter['id'] + '"][value="' + val + '"]'));
-
                       });
                   }
                 if (attValueFoundInside){
 
                     /*$(selEle).collapse('show');
                     $(selEle).find('.show-more').triggerHandler('click');
-                    $(selEle).parents('.tab-pane.search-set').length > 0 && $('a[href="#' + $(selector).parents('.tab-pane.search-set')[0].id + '"]').tab('show');
+                    $(selEle).parents('.tab-pane.search-set').length > 0 && $('a[href="#' +
+                    $(selector).parents('.tab-pane.search-set')[0].id + '"]').tab('show');
                      */
                     showFilters.push([selEle,selector]);
                 }
                });
             });
         });
-        if(sliders.length > 0) {
+        if (sliders.length > 0) {
             load_sliders(sliders, false);
         }
         mkFiltText();
@@ -2993,21 +3039,21 @@ require([
     var ANONYMOUS_SLIDERS = {};
 
     var save_anonymous_selection_data = function() {
-        var groups = [];
+        let groups = [];
 
         // Get all checked filters
-        var filters = [];
+        let filters = [];
 
         // For collection list
         $('.collection-list').each(function() {
-            var $group = $(this);
-            var checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val");
+            let $group = $(this);
+            let checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val");
             if (checkboxes.length > 0) {
-                var values = [];
-                var my_id = "";
+                let values = [];
+                let my_id = "";
                 checkboxes.each(function() {
-                    var $checkbox = $(this);
-                    var my_value = $checkbox[0].value;
+                    let $checkbox = $(this);
+                    let my_value = $checkbox[0].value;
                     my_id = $checkbox.data('filter-attr-id');
                     values.push(my_value);
                 });
@@ -3020,17 +3066,17 @@ require([
 
         // For other list item groups
         $('.list-group-item__body').each(function() {
-            var $group = $(this);
-            var my_id = $group.data('filter-attr-id');
+            let $group = $(this);
+            let my_id = $group.data('filter-attr-id');
             if (my_id != null)
             {
-                var checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val");
+                let checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val");
                 if (checkboxes.length > 0)
                 {
-                    var values = [];
+                    let values = [];
                     checkboxes.each(function() {
-                        var $checkbox = $(this);
-                        var my_value = $checkbox[0].value;
+                        let $checkbox = $(this);
+                        let my_value = $checkbox[0].value;
                         values.push(my_value);
                     });
                     filters.push({
@@ -3048,12 +3094,12 @@ require([
         // Get all sliders with not default value
         var sliders = [];
         $('.ui-slider').each(function() {
-            var $this = $(this);
-            var slider_id = $this[0].id;
-            var left_val = $this.slider("values", 0);
-            var right_val = $this.slider("values", 1);
-            var min = $this.slider("option", "min");
-            var max = $this.slider("option", "max");
+            let $this = $(this);
+            let slider_id = $this[0].id;
+            let left_val = $this.slider("values", 0);
+            let right_val = $this.slider("values", 1);
+            let min = $this.slider("option", "min");
+            let max = $this.slider("option", "max");
             if (left_val !== min || right_val !== max) {
                 sliders.push({
                    'id': slider_id,
@@ -3062,7 +3108,7 @@ require([
                 });
             }
         });
-        var sliderStr = JSON.stringify(sliders);
+        let sliderStr = JSON.stringify(sliders);
         sessionStorage.setItem('anonymous_sliders', sliderStr);
     };
 
@@ -3082,13 +3128,12 @@ require([
             let selEle = selectors[0];
             let selector = selectors[1];
             $(selEle).collapse('show');
-            $(selEle).find('.show-more').triggerHandler('click');
             $(selEle).parents('.tab-pane.search-set').length > 0 && $('a[href="#' + $(selector).parents('.tab-pane.search-set')[0].id + '"]').tab('show');
         });
     };
 
     $('#save-cohort-btn').on('click', function() {
-        if(!user_is_auth) {
+        if (!user_is_auth) {
             save_anonymous_selection_data();
             location.href=$(this).data('uri');
         }
@@ -3132,7 +3177,7 @@ require([
 
              if (!(has_filters || has_sliders)) {
                  // No anonymous filters seen--check for filter URI
-                if (Object.keys(filters_for_load).length > 0) {
+                if (filters_for_load && Object.keys(filters_for_load).length > 0) {
                      loadPending = load_filters(filters_for_load);
                      loadPending.done(function () {
                          //console.debug("External filter load done.");
@@ -3155,7 +3200,7 @@ require([
                  }
              }
          }
-         if(loadPending) {
+         if (loadPending) {
              loadPending.done(function() {
                  load_filter_selections(showFilters);
              });
@@ -3163,29 +3208,23 @@ require([
      }
 
     $('.fa-cog').on("click",function(){
-         //alert('hi');
-         srt=$(this).parent().parent().parent().find('.cntr')
-
-         if (srt.hasClass('notDisp')){
+         let srt = $(this).parent().parent().parent().find('.cntr')
+         if (srt.hasClass('notDisp')) {
              srt.removeClass('notDisp');
-         }
-         else{
+         } else {
              srt.addClass('notDisp');
          }
          $(this).parent().parent().parent().find('.text-filter, .collection-text-filter').addClass('notDisp');
-
-
      });
 
     $('.fa-search').on("click",function(){
          //alert('hi');
          srch=$(this).parent().parent().parent().find('.text-filter, .collection-text-filter, .analysis-text-filter');
 
-         if (srch.hasClass('notDisp')){
+         if (srch.hasClass('notDisp')) {
              srch.removeClass('notDisp');
              srch[0].focus();
-         }
-         else{
+         } else {
              srch.addClass('notDisp');
          }
          $(this).parent().parent().parent().find('.cntr').addClass('notDisp');
@@ -3211,7 +3250,32 @@ require([
     });
 
 
-    $(document).ready(function () {
+    updateViaHistory = function(){
+        let history = JSON.parse(document.getElementById('history').textContent);
+        if (history.hasOwnProperty('hz') && history['hz']){
+            for (let ckey in history['hz']){
+                if(history['hz'].hasOwnProperty(ckey)) {
+                    if (history['hz'][ckey]) {
+                        $('#'+ckey).find('.hide-zeros').click();
+                    }
+                }
+            }
+        }
+
+        if (history.hasOwnProperty('sorter') && history['sorter']){
+            for (let ckey in history['sorter']){
+                if(history['sorter'].hasOwnProperty(ckey)) {
+                    $('#'+ckey).find(':input').each(function(){
+                        if ($(this).val() == history['sorter'][ckey]) {
+                            $(this).click();
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    initializeTableData = function() {
         window.selItems = new Object();
         window.selItems.selStudies = new Object();
         window.selItems.selCases = new Object();
@@ -3220,7 +3284,10 @@ require([
         window.casesTableCache = { "data":[], "recordLimit":-1, "datastrt":0, "dataend":0, "req": {"draw":0, "length":0, "start":0, "order":{"column":0, "dir":"asc"} }};
         window.studyTableCache = { "data":[], "recordLimit":-1, "datastrt":0, "dataend":0, "req": {"draw":0, "length":0, "start":0, "order":{"column":0, "dir":"asc"} }};
         window.seriesTableCache = { "data":[], "recordLimit":-1, "datastrt":0, "dataend":0, "req": {"draw":0, "length":0, "start":0, "order":{"column":0, "dir":"asc"} }};
+    }
 
+    $(document).ready(function () {
+        initializeTableData();
         filterItemBindings('access_set');
         filterItemBindings('program_set');
         filterItemBindings('analysis_set');
@@ -3229,8 +3296,8 @@ require([
         filterItemBindings('search_derived_set');
         filterItemBindings('search_related_set');
 
-        max= Math.ceil(parseInt($('#age_at_diagnosis').data('data-max')));
-        min= Math.floor(parseInt($('#age_at_diagnosis').data('data-min')));
+        max = Math.ceil(parseInt($('#age_at_diagnosis').data('data-max')));
+        min = Math.floor(parseInt($('#age_at_diagnosis').data('data-min')));
 
         $('#SliceThickness').addClass('isQuant');
         $('#SliceThickness').addClass('wNone');
@@ -3254,17 +3321,23 @@ require([
         createPlots('tcga_clinical');
 
         updateProjectTable(window.collectionData);
+
         $('.clear-filters').on('click', function () {
             $('input:checkbox').not('#hide-zeros').not('.tbl-sel').prop('checked',false);
             $('input:checkbox').not('#hide-zeros').not('.tbl-sel').prop('indeterminate',false);
-            window.filterObj = new Object();
             $('.ui-slider').each(function(){
                 setSlider(this.id,true,0,0,true, false);
             })
             $('#search_def_warn').hide();
+            window.filterObj= {};
 
             mkFiltText();
             updateFacetsData(true);
+            initializeTableData();
+            /* updateProjectTable(window.collectionData);
+            $('#cases_tab').DataTable().destroy();
+            $('#studies_tab').DataTable().destroy();
+            $('#series_tab').DataTable().destroy(); */
         });
 
         load_preset_filters();
@@ -3297,5 +3370,49 @@ require([
                     +'&times;</span><span class="sr-only">Close</span></button>'
                 ).attr("style","display: none;")
         );
+
+        $(window).on("beforeunload",function(){
+            let hs = new Object();
+            hs['hz'] = new Object();
+            hs['sorter'] = new Object();
+            $('body').find('.hide-zeros').each(function(){
+                let pfar = $(this).closest('.collection-list, .search-configuration, #analysis_set ');
+                let pid = pfar[0].id;
+                let checked = pfar.find('.hide-zeros')[0].checked;
+                hs['hz'][pid] = checked;
+            });
+
+            $('body').find('.sorter').each(function(){
+                let pfar = $(this).closest('.collection-list, .list-group-item__body ');
+                let pid = pfar[0].id;
+                let sort = $(this).find('input:checked').val()
+                hs['sorter'][pid] = sort;
+            });
+
+            let url = encodeURI('/uihist/')
+            let nhs = {'his':JSON.stringify(hs)}
+            let csrftoken = $.getCookie('csrftoken');
+            let deferred = $.Deferred();
+
+            $.ajax({
+                url: url,
+                data: nhs,
+                dataType: 'json',
+                type: 'post',
+                contentType: 'application/x-www-form-urlencoded',
+                beforeSend: function(xhr){xhr.setRequestHeader("X-CSRFToken", csrftoken);},
+                success: function (data) {
+                },
+                error: function(data){
+                    console.debug('Error saving ui preferences.');
+                },
+                complete: function(data) {
+                    deferred.resolve();
+                }
+            });
+        });
+        if (document.contains(document.getElementById('history'))){
+            updateViaHistory();
+        }
     });
 });
