@@ -1,6 +1,6 @@
 <!--
 
- Copyright 2020, Institute for Systems Biology
+ Copyright 2022, Institute for Systems Biology
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
+
 
 -->
 
@@ -36,13 +37,10 @@
 
     {% block header %}{% endblock %}
 
-    {% if CRAZY_EGG %}
-        <script type="text/javascript" src="https://script.crazyegg.com/pages/scripts/0076/1527.js" async="async" ></script>
-    {% endif %}
-
     {% if SITE_GOOGLE_ANALYTICS %}
         <!-- Global site tag (gtag.js) - Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id={{ SITE_GOOGLE_ANALYTICS_TRACKING_ID }}"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ SITE_GOOGLE_ANALYTICS_TRACKING_ID }}">
+        </script>
         <script>
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
@@ -58,7 +56,10 @@
         var DICOM_STORE_PATH = '{{ DICOM_STORE_PATH }}';
         var SLIM_VIEWER_PATH = '{{ SLIM_VIEWER_PATH }}';
     </script>
-
+    <!-- Adobe User Research study -->
+    {% if RESEARCH_STUDY %}
+        <script src="https://assets.adobedtm.com/6a4249cd0a2c/9d422d6cad08/launch-7e4a83c1c1c3.min.js" async></script>
+    {% endif %}
 </head>
 <body class="{% block body_class %}content{% endblock %}" id="body">
 <!--Include site main header-->
@@ -77,7 +78,9 @@
                         {% for message in messages %}
                             {% if message.tags == 'error' or message.tags == 'warning' %}
                             <div class="alert alert-{{ message.tags }} alert-dismissible">
-                                <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                                <button type="button" class="close" data-dismiss="alert">
+                                    <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                                </button>
                                 {{ message }}
                             </div>
                             {% endif %}
@@ -99,7 +102,8 @@
 </main>
 
 <!-- Warning Modal -->
-<div class="modal fade" id="gov_warning" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="gov_warning-header" aria-hidden="true">
+<div class="modal fade" id="gov_warning" tabindex="-1" role="dialog" data-backdrop="static"
+     aria-labelledby="gov_warning-header" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -107,14 +111,24 @@
                 <h4 class="modal-title" id="gov_warning-header">Warning</h4>
             </div>
             <div class="modal-body">
-            <p>You are accessing a US Government web site which may contain information that must be protected under the
-                US Privacy Act or other sensitive information and is intended for Government authorized use only. </p>
-            <p>Unauthorized attempts to upload information, change information, or use of this web site may result in
+            <p>
+                You are accessing a US Government web site which may contain information that must be protected under
+                the US Privacy Act or other sensitive information and is intended for Government authorized use only.
+            </p>
+            <p>
+                Unauthorized attempts to upload information, change information, or use of this web site may result in
                 disciplinary action, civil, and/or criminal penalties. Unauthorized users of this website should have no
-                expectation of privacy regarding any communications or data processed by this website.</p>
-            <p> Anyone accessing this website expressly consents to monitoring of their actions and all communications
+                expectation of privacy regarding any communications or data processed by this website.
+            </p>
+            <p>
+                Anyone accessing this website expressly consents to monitoring of their actions and all communications
                 or data transiting or stored on related to this website and is advised that if such monitoring reveals
-                possible evidence of criminal activity, NIH may provide that evidence to law enforcement officials</p>
+                possible evidence of criminal activity, NIH may provide that evidence to law enforcement officials.
+            </p>
+            <p>
+                The IDC system is authorized to be used by the public to view and analyze cancer data based on the NCI
+                Data Use Agreements specific to individual datasets.
+            </p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary btn-warn">OK</button>
@@ -124,31 +138,36 @@
 </div>
 
 <!-- External Web Warning Modal -->
-<div class="modal fade" id="external-web-warning" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="external-web-warning-header" aria-hidden="true">
+<div class="modal fade" id="external-web-warning" tabindex="-1" role="dialog" data-backdrop="static"
+     aria-labelledby="external-web-warning-header" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">Leaving NCI website</h4>
             </div>
             <div class="modal-body">
-                <p>This link will take you to an external web site. Linking to a non-federal website does not indicate an endorsement by NCI of the sponsors
-                    or of the information and products presented on the website. You will be subject to the external website’s privacy policy when you leave
-                    NCI’s website.</p>
+                <p>This link will take you to an external web site. Linking to a non-federal website does not indicate
+                    an endorsement by NCI of the sponsors or of the information and products presented on the website.
+                    You will be subject to the external website’s privacy policy when you leave NCI’s website.</p>
             </div>
             <div class="modal-footer">
                 <a type="button" class="btn btn-primary btn-warn" data-dismiss="modal">Cancel</a>
-                <a type="button" href="" class="btn btn-primary btn-warn" id="go-to-external-link" target="_blank" rel="noopener noreferrer">OK</a>
+                <a type="button" href="" class="btn btn-primary btn-warn" id="go-to-external-link" target="_blank"
+                   rel="noopener noreferrer">OK</a>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Logout Modal -->
-<div class="modal fade" id="logout-modal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+<div class="modal fade" id="logout-modal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
                 <h4 class="modal-title" id="logoutModalLabel">Logout</h4>
             </div>
             <form method="post" action="{% url 'account_logout' %}">

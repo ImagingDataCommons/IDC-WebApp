@@ -107,8 +107,8 @@ jobs:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     working_directory: ~/IDC-WebApp
     docker:
-      - image: cimg/python:3.8
-      - image: cimg/mysql:5.7
+      - image: cimg/python:3.8.14
+      - image: cimg/mysql:5.7.36
         environment:
           MYSQL_ROOT_HOST: "%"
           MYSQL_USER: ubuntu
@@ -117,6 +117,11 @@ jobs:
           MYSQL_DATABASE: "build_database"
     steps:
       - checkout
+      - run:
+          name: Fix for bug with Git and Ubuntu 20+
+          command: |
+            SHA=$(git rev-list -1 HEAD)
+            echo "export APP_SHA=${SHA:0:7}" >> $BASH_ENV
       - run:
           name: Set Python Path
           command: |

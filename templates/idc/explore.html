@@ -41,10 +41,12 @@
                     <div class="row ">
                         <div class="col-xs-1"></div>
                         <div class="col-xs-10">
-                            <strong>Get started today!</strong>
-                            <strong> Contact us about setting up your own Google Cloud Platform Project with <a
-                                    href="https://learn.canceridc.dev/introduction/requesting-gcp-cloud-credits"
-                                    target="_blank" rel="noopener noreferrer">free cloud credits</a></strong>
+                            <b>IDC Community Office Hours open to all every Tuesday 16:30 – 17:30 (New York) and
+                                Wednesday 10:30-11:30 (New York) via Google Meet at
+                                <a class="external-link" href="" url="https://meet.google.com/xyt-vody-tvb"
+                                   data-toggle="modal" data-target="#external-web-warning">
+                                    https://meet.google.com/xyt-vody-tvb
+                                </a></b>.
                         </div>
                         <div class="col-xs-1">
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -67,8 +69,13 @@
             {% endif %}
             <button class="btn btn-default pull-right bq-string-display" data-toggle="modal"
                     data-target="#bq-string-display"
-                    title="View the BigQuery String for these filters"
-            > View BQ String
+                    title="View the BigQuery SQL String for these filters"
+            > View SQL String
+            </button>
+            <button class="btn btn-default pull-right download-images-btn" data-toggle="modal"
+                    data-target="#download-images"
+                    title="View instructions for image download"
+            > Download Images
             </button>
         </div>
     </div>
@@ -83,6 +90,7 @@
 {% block modal_includes %}
 
 {% include "cohorts/save-cohort-modal.html" %}
+{% include "idc/download-modal.html" %}
 {% include "idc/bq-string-modal.html" with bq_string_uri="True" %}
 
 {% endblock %}
@@ -93,6 +101,7 @@
     {{ filters_for_load|json_script:"filters_for_load" }}
     {{ collections|json_script:"collections" }}
     {{ programs|json_script:"programs" }}
+    {{ history|json_script:"history" }}
     <script>
         const filters_for_load = JSON.parse(document.getElementById('filters_for_load').textContent);
         const collection_tooltips = JSON.parse(document.getElementById('collection_tooltips').textContent);
