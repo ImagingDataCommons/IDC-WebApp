@@ -229,7 +229,6 @@ def save_ui_hist(request):
     return JsonResponse({}, status=status)
 
 
-@login_required
 def populate_tables(request):
     response = {}
     status = 200
