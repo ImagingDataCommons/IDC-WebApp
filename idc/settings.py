@@ -345,7 +345,7 @@ MIDDLEWARE.append(
 # End django-session-security #
 ###############################
 
-TEST_RUNNER = 'django.tesbut.runner.DiscoverRunner'
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -561,8 +561,9 @@ AXES_META_PRECEDENCE_ORDER = [
     'HTTP_X_FORWARDED_FOR',
     'REMOTE_ADDR',
 ]
-AXES_PROXY_COUNT=1
-
+AXES_PROXY_COUNT = 1
+AXES_COOLOFF_TIME = int(os.environ.get('AXES_COOLOFF_TIME', '5'))
+AXES_USERNAME_FORM_FIELD = "email"
 
 #########################################
 # Request Logging
