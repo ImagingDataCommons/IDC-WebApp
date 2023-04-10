@@ -49,6 +49,8 @@ require([
     'bootstrap'
 ], function($, _, base) {
 
+    const FLOAT_SLIDERS = ["Sphericity_quant"];
+
     $('.manifest-size-warning').hide();
 
     window.filterObj = {};
@@ -190,7 +192,7 @@ require([
                 window.filterObj[filtAtt] = new Object();
             }
             window.filterObj[filtAtt]['rng'] = attVal;
-            window.filterObj[filtAtt]['type'] = 'ebtwe';
+            window.filterObj[filtAtt]['type'] = 'ebtw';
         }
         if (updateNow) {
             mkFiltText();
@@ -223,12 +225,22 @@ require([
                 curArr = filterObj[curKey];
                 for (var j = 0; j < curArr.length; j++) {
                     if (!(('Program.' + curArr[j]) in filterObj)) {
-                        var colName=$('#'+curArr[j]).filter('.collection_name')[0].innerText;
+                        var colName = $('#' + curArr[j]).filter('.collection_name')[0].innerText;
                         collection.push(colName);
                     }
                 }
-            } else if (curKey.endsWith('_rng')) {
-                var realKey = curKey.substring(0, curKey.length - 4).split('.').pop();
+            }
+            else
+                {
+                var realKey="";
+                if (curKey.endsWith('_rng')){
+                    realKey = curKey.substring(0, curKey.length - 4).split('.').pop();
+                }
+                else{
+                    realKey = curKey.split('.').pop();
+                }
+                if (curKey.endsWith('_rng') && $('#' + realKey ).hasClass('isQuant')) {
+                //var realKey = curKey.substring(0, curKey.length - 4).split('.').pop();
                 var disp = $('#' + realKey + '_heading').children().children('.attDisp')[0].innerText;
                 if (curKey.startsWith('tcga_clinical') && tcgaColSelected) {
                     disp = 'tcga.' + disp;
@@ -240,7 +252,16 @@ require([
                 if (addKey) {
                     var fStr = '';
                     if ('rng' in filterObj[curKey]) {
-                        fStr += filterObj[curKey]['rng'][0].toString() + '-' + (filterObj[curKey]['rng'][1]).toString();
+                        if (Array.isArray(filterObj[curKey]['rng'][0])) {
+                            pset = new Array()
+                            for (var ind = 0; ind < filterObj[curKey]['rng'].length; ind++) {
+                                pair = filterObj[curKey]['rng'][ind];
+                                pset.push(pair[0].toString() + '-' + pair[1].toString());
+                            }
+                            fStr += pset.join(", ")
+                        } else {
+                            fStr += filterObj[curKey]['rng'][0].toString() + '-' + (filterObj[curKey]['rng'][1]).toString();
+                        }
                     }
                     if (('rng' in filterObj[curKey]) && ('none' in filterObj[curKey])) {
                         fStr += ', ';
@@ -252,8 +273,9 @@ require([
                     var nstr = '<span class="filter-type">' + disp + '</span> IN (<span class="filter-att">' + fStr + '</span>)';
                     oStringA.push(nstr);
                 }
-            } else {
-                var realKey = curKey.split('.').pop();
+            }
+                else {
+                //var realKey = curKey.split('.').pop();
                 var disp = $('#' + realKey + '_heading').children().children('.attDisp')[0].innerText;
                 if (curKey.startsWith('tcga_clinical') && tcgaColSelected) {
                     disp = 'tcga.' + disp;
@@ -271,22 +293,21 @@ require([
 
                     var oArray = oVals.sort().map(item => '<span class="filter-att">' + item.toString() + '</span>');
                     nstr = '<span class="filter-type">' + disp + '</span>';
-                    var joinElem = $('#'+curKey).find('.join_val').filter(':checked');
-                    if (joinElem.length >0){
-                       var joinstr=joinElem.attr("value");
-                       nstr += 'IN (' + oArray.join(joinstr) + ')';
-                    }
-                    else {
+                    var joinElem = $('#' + curKey).find('.join_val').filter(':checked');
+                    if (joinElem.length > 0) {
+                        var joinstr = joinElem.attr("value");
+                        nstr += 'IN (' + oArray.join(joinstr) + ')';
+                    } else {
                         nstr += 'IN (' + oArray.join("") + ')';
                     }
-                    if (curKey ==='access'){
-                     accessStr=nstr;
-                    }
-                    else {
+                    if (curKey === 'access') {
+                        accessStr = nstr;
+                    } else {
                         oStringA.push(nstr);
                     }
                 }
             }
+          }
         }
         if (hasTcga && tcgaColSelected) {
             $('#search_def_warn').show();
@@ -405,10 +426,7 @@ require([
             right: -14-8*max.toString().length,
             });
 
-
-
         var slideName = divName + '_slide';
-
         var inpName = divName + '_input';
         var strtInp = lower + '-' + upper;
         var nm=new Array();
@@ -426,7 +444,6 @@ require([
             $('#' + divName).append('<input id="' + inpName + '" type="text" value="' + strtInp + '" style="display:none">');
         }
 
-
         if (isActive){
             $('#'+divName).find('.reset').removeClass('disabled');
         }
@@ -436,7 +453,6 @@ require([
 
          $('#'+slideName).append(labelMin);
 
-
         $('#' + slideName).slider({
             values: [lower, upper],
             step: step,
@@ -445,15 +461,11 @@ require([
             range: true,
             disabled: is_cohort,
             slide: function (event, ui) {
-                  $('#' + inpName).val(ui.values[0] + "-" + ui.values[1]);
-
-                 $(this).find('.slide_tooltip').each( function(index){
+                $('#' + inpName).val(ui.values[0] + "-" + ui.values[1]);
+                $(this).find('.slide_tooltip').each( function(index){
                     $(this).text( ui.values[index].toString() );
                     $(this).closest('.ui-slider').parent().find('.sliderset').find(':input')[index].value=ui.values[index].toString();
-
-
                 });
-
             },
 
             stop: function (event, ui) {
@@ -1673,7 +1685,13 @@ require([
                         nm = nm.replace('_rng', '_' + window.filterObj[ckey].type);
                     }
                     if (  ('rng' in window.filterObj[ckey]) && ('none' in window.filterObj[ckey]) ){
-                        filtObj[nm] = [window.filterObj[ckey]['rng'],'None']
+                        if (Array.isArray(window.filterObj[ckey]['rng'][0])){
+                            filtObj[nm] = [...window.filterObj[ckey]['rng']];
+                            filtObj[nm].push('None');
+                        }
+                        else{
+                          filtObj[nm] = [window.filterObj[ckey]['rng'],'None']
+                        }
                     } else if ('rng' in window.filterObj[ckey]){
                         filtObj[nm] = window.filterObj[ckey]['rng']
                     } else if ('none' in window.filterObj[ckey]){
@@ -1932,7 +1950,7 @@ require([
 
                     if ($('.search-configuration').find('#hide-zeros')[0].checked) {
                         addSliders('search_orig_set', false, true, '');
-                        addSliders('quantitative', false, true, '');
+                        addSliders('quantitative', false, true, 'quantitative.');
                         addSliders('tcga_clinical', false, true, 'tcga_clinical.');
                     }
 
@@ -1953,18 +1971,26 @@ require([
     var manageUpdateFromPlot = function(plotId, label) {
         var listId = plotId.replace('_chart','_list');
         var filterId = plotId.replace('_chart','');
-
+        let isInt = !FLOAT_SLIDERS.includes(filterId);
         var isSlider = $('#'+filterId).hasClass('hasSlider') ? true : false;
         if (isSlider) {
-            var maxx = Math.ceil(parseInt(maxx=$('#' + filterId).attr('data-max')));
-            var minx= Math.floor(parseInt($('#' + filterId).attr('data-min')));
+            var maxx =parseFloat($('#' + filterId).attr('data-max'));
+            var minx=parseFloat($('#' + filterId).attr('data-min'));
 
+            if (isInt){
+                maxx=Math.ceil(maxx);
+                minx=Math.floor(minx);
+            }
+            else{
+                maxx=parseFloat(maxx.toFixed(2));
+                minx=parseFloat(minx.toFixed(2));
+            }
             var parStr = $('#'+filterId).find('#'+filterId+'_slide').data('attr-par');
 
             if ((label ==='None') && $('#'+filterId).hasClass('wNone')){
                 butElem = $('#'+filterId).find('.noneBut').children('input')[0];
                 butElem.checked=true
-                setSlider(slideDiv, filterId+"_slide", minx, maxx, true, false);
+                setSlider(filterId+"_slide", true, minx, maxx, isInt, false);
                 window.addNone(butElem,parStr,true);
             } else {
                 if ($('#'+filterId).hasClass('wNone')){
@@ -1974,9 +2000,17 @@ require([
                 }
 
                 var selArr = label.split(' To ');
-                var strt = parseInt((selArr[0] === '*') ? '0' : selArr[0]);
-                var end = parseInt((selArr[1] === '*') ? maxx : selArr[1]);
-                setSlider(filterId+"_slide", false, strt, end, true,true);
+                var strt = parseFloat((selArr[0] === '*') ? '0' : selArr[0]);
+                var end = parseFloat((selArr[1] === '*') ? maxx : selArr[1]);
+                if (isInt){
+                    strt = Math.floor(strt);
+                    end = Math.floor(end);
+                }
+                else{
+                    strt = parseFloat(strt.toFixed(2));
+                    end = parseFloat(end.toFixed(2));
+                }
+                setSlider(filterId+"_slide", false, strt, end, isInt,true);
             }
         } else {
             var inputList = $('#' + listId).find(':input');
@@ -2000,7 +2034,7 @@ require([
     var plotCategoricalData = function (plotId, lbl, plotData, isPie, showLbl) {
         var width = 150;
         var height = 150;
-        var shifty = 45;
+        var shifty = 48;
         var xshift=width/2+20;
         var margin = 0;
         var radius = Math.min(width, height) / 2 - margin;
@@ -2029,8 +2063,8 @@ require([
             : d3.select("#"+plotId)
                 .append("div")
                 .attr("class", "chart-tooltip")
-                .style("top", "200px")
-                .style("left", "20px");
+                .style("top", "180px")
+                .style("left", "0px");
 
         svg.selectAll("*").remove();
 
@@ -2056,7 +2090,13 @@ require([
            var titA = lbl.split('(');
            title1=titA[0];
            title2='('+titA[1];
-         } else {
+         }
+        else if (lbl.includes('Max Total Pixel')){
+            var titA = lbl.split('Pixel')
+            title1=titA[0]+'Pixel'
+            title2=titA[1]
+        }
+        else{
           title2=lbl;
          }
 
@@ -2326,8 +2366,13 @@ require([
 
         if (sorter.length>0){
              if (sorter.val()==="alpha"){
+                 const reRng= /^\d*\.?\d+\s+[Tt]o\s+\d*\.?\d+$/;
+
                  filterList.children('li').sort(
                     function (a,b){
+                     var valA=$(a).children().children('.value').text().trim();
+                     var valB=$(b).children().children('.value').text().trim();
+
                      if ( ($(a).children().children('input:checkbox')[0].checked || $(a).children().children('input:checkbox')[0].indeterminate) && !($(b).children().children('input:checkbox')[0].checked || $(b).children().children('input:checkbox')[0].indeterminate)){
                          return -1;
                      }
@@ -2335,7 +2380,16 @@ require([
                          return 1;
                      }
 
-                     else if ($(b).children().children('.value').text().trim() < $(a).children().children('.value').text().trim()){
+                     else if (reRng.test(valB) && reRng.test(valA)){
+                         if ( parseFloat(valB.toLowerCase().split('to')[0].trim()) <  parseFloat(valA.toLowerCase().split('to')[0].trim())){
+                             return 1;
+                         }
+                         else{
+                             return -1;
+                         }
+                     }
+
+                     else if (valB < valA){
                          return 1;
                      } else {
                          return -1;
@@ -2503,9 +2557,7 @@ require([
                 }
             }
         }
-        /*addSliders('search_orig_set', false, hideEmpty,'');
-        addSliders('quantitative', false, hideEmpty,'');
-        addSliders('tcga_clinical',false, hideEmpty,'tcga_clinical.');*/
+
     }
 
     window.updateColl = function(srch){
@@ -2524,7 +2576,7 @@ require([
         let filtSet = ["search_orig_set","segmentation","quantitative","qualitative","tcga_clinical"];
         setAllFilterElements(hideElem.checked, filtSet);
         addSliders('search_orig_set', false, hideElem.checked,'');
-        addSliders('quantitative', false, hideElem.checked,'');
+        addSliders('quantitative', false, hideElem.checked,'quantitative.');
         addSliders('tcga_clinical',false, hideElem.checked,'tcga_clinical.');
     }
 
@@ -2553,6 +2605,7 @@ require([
             operator = opInfoElem.attr('value');
         }
 
+        let isRng = $(filterElem).closest('.list-group-item__body, .list-group-sub-item__body','.colections-list').hasClass('isRng');
         let checked = $(filterElem).prop('checked');
         let neighbours =$(filterElem).parentsUntil('.list-group-item__body, .list-group-sub-item__body','ul').children().children().children('input:checkbox');
         let neighboursCk = $(filterElem).parentsUntil('.list-group-item__body, .list-group-sub-item__body','ul').children().children().children(':checked');
@@ -2587,6 +2640,8 @@ require([
                 if (filtnmSrc.length<1){
                     filtnmSrc = $(filterCat).children().children('.collection_id')
                 }
+
+
                 filtnm = filtnmSrc[0].id;
                 if  ($(filterCat).children('.list-group-item__heading').children('input:checkbox').length>0) {
                    hasCheckBox = true;
@@ -2601,6 +2656,17 @@ require([
             } else if (hasCheckBox){
                 checkBox.indeterminate = false;
             }
+            filtArg=filtnm;
+            isNoneCat=false;
+            if (isRng){
+                if (filtnm.match(/\s+[Tt]o\s+/)) {
+                    filtArg = filtnm.split(/\s+[Tt]o\s+/).map(Number);
+                }
+                else{
+                    isNoneCat=true;
+                }
+            }
+
 
             if ((checked) && (curCat.length>0) && hasCheckBox  ){
                 if (!(checkBox.indeterminate)) {
@@ -2617,7 +2683,25 @@ require([
                         filterObj[curCat]['values'].push(filtnm);
                     }
 
-                } else {
+                }
+                else if(isRng){
+                    curCatRng = curCat+"_rng";
+                    if (!(filterObj.hasOwnProperty(curCatRng))) {
+                        filterObj[curCatRng] = new Object();
+                        filterObj[curCatRng]['type']='ebtw'
+
+                    }
+                    if (isNoneCat){
+                        filterObj[curCatRng]['none']=true;
+                    }
+                    else {
+                        if (!(filterObj[curCatRng].hasOwnProperty('rng'))){
+                            filterObj[curCatRng]['rng'] = new Array();
+                        }
+                        filterObj[curCatRng]['rng'].push(filtArg)
+                    }
+                }
+                else {
                     if (!(filterObj.hasOwnProperty(curCat))) {
                         filterObj[curCat] = new Array();
                     }
@@ -2629,8 +2713,7 @@ require([
 
             if (!checked && ( (ind===0) || ( (ind===1) && hasCheckBox && noneChecked)) ){
                checkBox.checked = false;
-               //checkBox.indeterminate =  false;
-               if ( filterObj.hasOwnProperty(curCat)) {
+               if ( filterObj.hasOwnProperty(curCat) || (isRng && filterObj.hasOwnProperty(curCat+"_rng"))) {
                    if (operatorInfo) {
                        if (filterObj[curCat]['values'].indexOf(filtnm) > -1) {
                            pos = filterObj[curCat]['values'].indexOf(filtnm);
@@ -2639,7 +2722,27 @@ require([
                                delete filterObj[curCat];
                            }
                        }
-                   } else {
+                   }
+                   else if(isRng)
+                   {
+                       curCatRng = curCat+"_rng";
+                       if (isNoneCat && filterObj[curCatRng].hasOwnProperty('none')){
+                           delete filterObj[curCatRng]['none'];
+                       }
+
+                       else if (filterObj[curCatRng]['rng'].map(String).indexOf(filtArg.toString()) > -1) {
+                           pos = filterObj[curCatRng]['rng'].map(String).indexOf(filtArg.toString());
+                           filterObj[curCatRng]['rng'].splice(pos, 1);
+                           if (filterObj[curCatRng]['rng'].length === 0) {
+                               delete filterObj[curCatRng]['rng'];
+                           }
+                       }
+                       if (!filterObj[curCatRng].hasOwnProperty('rng')  && !filterObj[curCatRng].hasOwnProperty('none')){
+                           delete filterObj[curCatRng];
+                       }
+
+                   }
+                   else {
                        if (filterObj[curCat].indexOf(filtnm) > -1) {
                            pos = filterObj[curCat].indexOf(filtnm);
                            filterObj[curCat].splice(pos, 1);
@@ -2857,13 +2960,27 @@ require([
     }
  };
 
-    var addSliders = function(id,initialCreation,hideZeros, parStr){
+    var addSliders = function(id, initialCreation, hideZeros, parStr){
         $('#'+id).find('.list-group-item__body.isQuant').each(function() {
+            let attr_id = $(this).attr("id");
+            let isInt = !FLOAT_SLIDERS.includes(attr_id);
+            let min = parseFloat($(this).attr('data-min'));
+            let max = parseFloat($(this).attr('data-max'));
+            let lower = parseFloat($(this).attr('data-curminrng'));
+            let upper = parseFloat($(this).attr('data-curmaxrng'));
+            if (isInt){
+                min=Math.floor(min);
+                max=Math.ceil(max);
+                lower=Math.floor(lower);
+                upper=Math.ceil(upper);
+            }
+            else{
+                min=parseFloat(min.toFixed(2));
+                max=parseFloat(max.toFixed(2));
+                lower=parseFloat(lower.toFixed(2));
+                upper=parseFloat(upper.toFixed(2));
+            }
 
-            let min = Math.floor(parseInt($(this).attr('data-min')));
-            let max = Math.ceil(parseInt($(this).attr('data-max')));
-            let lower = parseInt($(this).attr('data-curminrng'));
-            let upper = parseInt($(this).attr('data-curmaxrng'));
             let addSlider = true;
             let isActive = $(this).hasClass('isActive');
             let wNone = $(this).hasClass('wNone');
@@ -2884,8 +3001,16 @@ require([
                 $('#'+this.id+'_list').addClass('hide');
             } else {
                 let slideDivId = $(this).prop('id') + '_slide';
-                curmin = $(this).attr('data-curmin');
-                curmax = $(this).attr('data-curmax');
+                curmin = parseFloat($(this).attr('data-curmin'));
+                curmax = parseFloat($(this).attr('data-curmax'));
+                if (isInt){
+                    curmin = Math.floor(curmin);
+                    curmax =Math.floor(curmax);
+                }
+                else{
+                    curmin= parseFloat(curmin.toFixed(2));
+                    curmax= parseFloat(curmax.toFixed(2));
+                }
                 $(this).find('#' + slideDivId).remove();
                 $(this).find('.cntr').remove();
                 //$(this).find('.noneBut').remove();
@@ -2899,16 +3024,16 @@ require([
                         if (curmin === 'NA') {
                                 min = lower;
                         } else {
-                            min = Math.min(lower, Math.floor(curmin));
+                            min = Math.min(lower, curmin);
                         }
                         if (curmax === 'NA'){
                                 max = upper;
                         } else {
-                            max = Math.max(upper, Math.ceil(curmax));
+                            max = Math.max(upper, curmax);
                         }
                     } else {
-                            min = Math.floor(curmin);
-                            max = Math.ceil(curmax);
+                            min = curmin;
+                            max = curmax;
                             lower=min;
                             upper=max;
                     }
@@ -2920,7 +3045,9 @@ require([
 
             if (addSlider) {
                 $(this).addClass('hasSlider');
-                mkSlider($(this).prop('id'), min, max, 1, true, wNone, parStr, $(this).data('filter-attr-id'), $(this).data('filter-display-attr'), lower, upper, isActive,checked);
+                let step = max <=1 ? 0.05 : 1;
+                let isInt = !FLOAT_SLIDERS.includes(attr_id);
+                mkSlider($(this).prop('id'), min, max, step, isInt, wNone, parStr, $(this).data('filter-attr-id'), $(this).data('filter-display-attr'), lower, upper, isActive,checked);
                 let cntrlDiv = $('<div class="cntr"></div>');
                 cntrlDiv.append('<div class="sliderset" style="display:block;margin-bottom:8px">Lower: <input type="text" style="display:inline" size="5" class="sl_lower" value="'+ txtLower + '">' +
                     ' Upper: <input class="sl_upper" type="text" style="display:inline" size="5" class="upper" value="' + txtUpper + '">' +
@@ -3011,7 +3138,7 @@ require([
                                if($(selEle).find('.join_val').length>0) {
                                    $(selEle).find('.join_val').filter('input[value=' + filter['op'].toUpperCase() + ']').prop("checked", true);
                                } else {
-                                   filter['op'] !== 'OR' && base.showJsMessage(
+                                   (filter['op'] !== 'OR' && filter['op'] !== 'BTW') && base.showJsMessage(
                                        "warning",
                                        "Invalid operator seen for attribute '"+$(selEle).attr('id')+"'; default of OR used instead.",
                                        true
@@ -3047,7 +3174,8 @@ require([
     var load_sliders = function(sliders, do_update) {
         _.each(sliders, function(slider) {
             var slider_id = slider['id'];
-            setSlider(slider_id, false, slider['left_val'], slider['right_val'], true, false);
+            var isInt = !FLOAT_SLIDERS.includes(slider_id.replace('_slide',''));
+            setSlider(slider_id, false, slider['left_val'], slider['right_val'], isInt, false);
             //updatePlotBinsForSliders(slider_id);
         });
 
@@ -3307,6 +3435,13 @@ require([
         window.studyTableCache = { "data":[], "recordLimit":-1, "datastrt":0, "dataend":0, "req": {"draw":0, "length":0, "start":0, "order":{"column":0, "dir":"asc"} }};
         window.seriesTableCache = { "data":[], "recordLimit":-1, "datastrt":0, "dataend":0, "req": {"draw":0, "length":0, "start":0, "order":{"column":0, "dir":"asc"} }};
     }
+    initSort = function(sortVal){
+        var sortdivs=$('body').find('.sorter')
+        for (div in sortdivs){
+            $(div).find(":input[value='" + sortVal + "']").click();
+        }
+    }
+
 
     $(document).ready(function () {
         initializeTableData();
@@ -3320,23 +3455,28 @@ require([
 
         max = Math.ceil(parseInt($('#age_at_diagnosis').data('data-max')));
         min = Math.floor(parseInt($('#age_at_diagnosis').data('data-min')));
-
-        $('#SliceThickness').addClass('isQuant');
-        $('#SliceThickness').addClass('wNone');
-        $('#SliceThickness').find('.text-filter').remove();
-
-        $('#age_at_diagnosis').addClass('isQuant');
-        $('#age_at_diagnosis').find('.text-filter').remove();
-        $('#age_at_diagnosis').addClass('wNone');
+        
+        //quantElem=['#SliceThickness', '#min_PixelSpacing', '#max_TotalPixelMatrixColumns', '#max_TotalPixelMatrixRows','#age_at_diagnosis']
+        quantElem=['#SliceThickness', '#age_at_diagnosis']
+        quantElem.forEach(function(elem){
+            $(elem).addClass('isQuant');
+            $(elem).addClass('wNone');
+            $(elem).find('.text-filter').remove();
+        });
+        rngElem=['#min_PixelSpacing', '#max_TotalPixelMatrixColumns', '#max_TotalPixelMatrixRows',]
+        rngElem.forEach(function(elem){
+            $(elem).addClass('isRng');
+        });
 
         $('#quantitative').find('.list-group-item__body').each(function() {
             $(this).addClass('isQuant');
+            $(this).addClass('wNone');
             $(this).find('.text-filter').remove();
         });
 
         addSliders('search_orig_set',true, false,'');
         addSliders('tcga_clinical',true, false,'tcga_clinical.');
-        addSliders('quantitative',true, false,'');
+        addSliders('quantitative',true, false,'quantitative.');
 
         createPlots('search_orig_set');
         createPlots('search_derived_set');
@@ -3380,7 +3520,7 @@ require([
             $('.filter-url').removeClass("is-hidden");
         });
 
-        $('#js-messages').append(
+        $('.filter-url-container').append(
             $('<div>')
                 .addClass('alert alert-warning alert-dismissible url-too-long')
                 .html(
@@ -3388,7 +3528,7 @@ require([
                     + "You will need to select fewer filters or the URL will not properly load when used."
                 )
                 .prepend(
-                    '<button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">'
+                    '<button type="button" class="close" data-hide="alert"><span aria-hidden="true">'
                     +'&times;</span><span class="sr-only">Close</span></button>'
                 ).attr("style","display: none;")
         );
@@ -3433,6 +3573,7 @@ require([
                 }
             });
         });
+        initSort('num');
         if (document.contains(document.getElementById('history'))){
             updateViaHistory();
         }
