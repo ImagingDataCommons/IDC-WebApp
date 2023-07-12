@@ -19,6 +19,7 @@
 
 {% load static %}
 {% load session_security_tags %}
+{% load custom_tags %}
 {% load i18n l10n %}
 <!DOCTYPE html>
 <html lang="en" class="no-js">
@@ -146,14 +147,15 @@
                 <h4 class="modal-title">Leaving NCI website</h4>
             </div>
             <div class="modal-body">
+                <p>You are being navigated to <b><span class="external-dest-link"></span></b></p>
                 <p>This link will take you to an external web site. Linking to a non-federal website does not indicate
                     an endorsement by NCI of the sponsors or of the information and products presented on the website.
                     You will be subject to the external website’s privacy policy when you leave NCI’s website.</p>
             </div>
             <div class="modal-footer">
-                <a type="button" class="btn btn-primary btn-warn" data-dismiss="modal">Cancel</a>
                 <a type="button" href="" class="btn btn-primary btn-warn" id="go-to-external-link" target="_blank"
-                   rel="noopener noreferrer">OK</a>
+                   rel="noopener noreferrer">Continue</a>
+                <a type="button" class="btn btn-primary btn-warn" data-dismiss="modal">Cancel</a>
             </div>
         </div>
     </div>
@@ -190,6 +192,7 @@
 <script>
     var warningSeen = {% if request.session.seenWarning %}true{% else %}false{% endif %};
     var user_is_auth = {% if request.user.is_authenticated %}true{% else %}false{% endif %};
+    var user_is_social = {% if request.user.is_authenticated and request.user|has_social %}true{% else %}false{% endif %};
 </script>
 
 {# If the user is not authenticated then there is no session to secure ! #}

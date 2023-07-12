@@ -1129,7 +1129,7 @@ require([
     }
 
     window.updateStudyTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,updateChildTables,studyID) {
-
+        let nonViewAbleModality= new Set(["XC"]);
         $('#studies_tab').data('rowsremoved',rowsRemoved);
         $('#studies_tab').data('refreshafterfilter',refreshAfterFilter);
         $('#studies_tab').data('updatechildtables',updateChildTables);
@@ -1232,16 +1232,18 @@ require([
                             }
                             else {
                                 var modality = row['Modality'];
-                                if (( Array.isArray(modality) && modality.includes('SM')) || (modality === 'SM')) {
+                                if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                                    return nonViewAbleModality.has(el)
+                                }) ) || nonViewAbleModality.has(row['Modality']) )   {
+                                    return '<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash not-viewable"></i>';
+                                } else if (( Array.isArray(modality) && modality.includes('SM')) || (modality === 'SM')) {
                                     return '<a href="' + SLIM_VIEWER_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                                  } else {
                                     return '<a href="' + DICOM_STORE_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                                 }
-                           }
+                            }
                         }
-
                     },
-
                 ],
                 "processing": true,
                 "serverSide": true,
@@ -1290,13 +1292,11 @@ require([
                                 for (caseId in window.selItems.selStudies){
                                     if (window.selItems.selStudies[caseId].indexOf(studyID)>-1){
                                         window.selItems.selStudies[caseId]=[studyID]
-                                    }
-                                    else {
+                                    } else {
                                         delete window.selItems.selStudies[caseId];
                                     }
                                 }
-                            }
-                            else if (refreshAfterFilter){
+                            } else if (refreshAfterFilter){
                                 for (caseId in window.selItems.selStudies){
                                     checkIds=checkIds.concat(window.selItems.selStudies[caseId])
                                 }
@@ -1369,22 +1369,17 @@ require([
                         }
                     }
                 }
-
             });
-
         }
-
         catch(err){
-                    alert("The following error was reported when processing server data: "+ err +". Please alert the systems administrator")
+            alert("The following error was reported when processing server data: "+ err +". Please alert the systems administrator")
         }
 
         $('#studies_tab').on('draw.dt', function(){
             $('#studies_table_head').children('tr').children().each(function(){
                 this.style.width=null;
                 }
-
             );
-
         })
 
         $('#studies_tab').children('tbody').attr('id','studies_table');
@@ -1394,7 +1389,7 @@ require([
     }
 
     window.updateSeriesTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,seriesID) {
-        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV"])
+        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV", "XC"])
         var slimViewAbleModality=new Set(["SM"])
         $('#series_tab').attr('data-rowsremoved', rowsRemoved);
         $('#series_tab').attr('data-refreshafterfilter', refreshAfterFilter);
@@ -1475,23 +1470,28 @@ require([
                         var coll_id="";
                         if (Array.isArray(row['collection_id'])){
                             coll_id=row['collection_id'][0];
-                        }
-                        else {
+                        } else {
                             coll_id=row['collection_id']
                         }
                         if (row['access'].includes('Limited') ) {
                             return '<i class="fa-solid fa-circle-minus coll-explain"></i>';
                         }
-
-                        else if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){return nonViewAbleModality.has(el)}) ) || nonViewAbleModality.has(row['Modality']) )   {
-                            return '<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash no-viewer-tooltip"></i>';
-
-                            } else if (  ( Array.isArray(row['Modality']) && row['Modality'].some(function(el){return slimViewAbleModality.has(el)}) ) || (slimViewAbleModality.has(row['Modality']))) {
-                                return '<a href="' + SLIM_VIEWER_PATH + row['StudyInstanceUID'] + '/series/' + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
-
-                            } else {
-                                return '<a href="' + DICOM_STORE_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
-                            }
+                        else if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                            return nonViewAbleModality.has(el)
+                        }) ) || nonViewAbleModality.has(row['Modality']) )   {
+                            let tooltip = (
+                                row['Modality'] === "XC" || (Array.isArray(row['Modality']) && row['Modality'].includes("XC"))
+                            ) ? "not-viewable" : "no-viewer-tooltip";
+                            return `<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash ${tooltip}"></i>`;
+                        } else if (  ( Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                            return slimViewAbleModality.has(el)}
+                        ) ) || (slimViewAbleModality.has(row['Modality']))) {
+                            return '<a href="' + SLIM_VIEWER_PATH + row['StudyInstanceUID'] + '/series/' + data +
+                                '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
+                        } else {
+                            return '<a href="' + DICOM_STORE_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' +
+                                data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
+                        }
 
                     }
                 },
@@ -1512,7 +1512,6 @@ require([
                         caseArr.push(window.selItems.selCases[caseid][i]);
                     }
                 }
-
                 var studyArr = new Array();
                 for (caseid in window.selItems.selStudies) {
                     for (var i = 0; i < window.selItems.selStudies[caseid].length; i++) {
@@ -1592,19 +1591,14 @@ require([
                             "recordsTotal": window.seriesCache.recordsTotal,
                             "recordsFiltered": window.seriesCache.recordsTotal
                         })
-
                     }
-                  }
+                }
               }
-
            });
-
         }
         catch(err){
             alert("The following error was reported when processing server data: "+ err +". Please alert the systems administrator");
         }
-
-
 
         $('#series_tab').on('draw.dt', function(){
             $('#series_table_head').children('tr').children().each(function(){
@@ -1715,10 +1709,12 @@ require([
             $('.bq-string-display').attr("disabled","disabled");
             $('.bq-string-display').attr("title","Select a filter to enable this feature.");
             $('.bq-string').html("");
+            $('#export-manifest-form input[name="filters"]').val("");
         } else {
             $('.bq-string-display').removeAttr("disabled");
             $('.bq-string-display').attr("title","Click to display this filter as a BQ string.");
             $('.bq-string-display').attr('filter-params', JSON.stringify(filters));
+            $('#export-manifest-form input[name="filters"]').val(JSON.stringify(filters));
         }
     };
 
@@ -1726,16 +1722,24 @@ require([
         let filters = parseFilterObj();
         if (Object.keys(filters).length <= 0) {
             $('.get-filter-uri').attr("disabled","disabled");
+            $('#export-manifest').attr("disabled","disabled");
+            $('#export-manifest').attr("title","Select a filter to enable this feature.");
             $('.get-filter-uri').attr("title","Select a filter to enable this feature.");
             $('.filter-url').html("");
             $('.copy-url').removeAttr("content");
             $('.copy-url').attr("disabled","disabled");
             $('.hide-filter-uri').triggerHandler('click');
             $('.url-too-long').hide();
+            $('#export-manifest-form').attr(
+                'action',
+                $('#export-manifest-form').data('uri-base')
+            );
         } else {
             $('.get-filter-uri').removeAttr("disabled");
+            $('#export-manifest').removeAttr("disabled");
             $('.copy-url').removeAttr("disabled");
             $('.get-filter-uri').attr("title","Click to display this filter set's query URL.");
+            $('#export-manifest').attr("title","Export these search results as a manifest for downloading.");
             let url = BASE_URL+"/explore/filters/?";
             let encoded_filters = []
             for (let i in filters) {
@@ -1772,7 +1776,15 @@ require([
         var parsedFiltObj = parseFilterObj();
         url = encodeURI('/explore/')
 
-        ndic={'totals':JSON.stringify(["PatientID", "StudyInstanceUID", "SeriesInstanceUID"]),'counts_only':'True', 'is_json':'True', 'is_dicofdic':'True', 'data_source_type':($("#data_source_type option:selected").val() || 'S'), 'filters':JSON.stringify(parsedFiltObj) }
+        ndic = {
+            'totals': JSON.stringify(["PatientID", "StudyInstanceUID", "SeriesInstanceUID"]),
+            'counts_only': 'True',
+            'is_json': 'True',
+            'is_dicofdic': 'True',
+            'data_source_type': ($("#data_source_type option:selected").val() || 'S'),
+            'filters':JSON.stringify(parsedFiltObj),
+            'disk_size': 'True'
+        }
         var csrftoken = $.getCookie('csrftoken');
         let deferred = $.Deferred();
         $.ajax({
@@ -1816,7 +1828,11 @@ require([
                             }
                         }
                         $('#search_def_stats').removeClass('notDisp');
-                        $('#search_def_stats').html(data.totals.PatientID.toString()+" Cases, "+data.totals.StudyInstanceUID.toString()+" Studies, and "+data.totals.SeriesInstanceUID.toString()+" Series in this cohort");
+                        $('#search_def_stats').html(data.totals.PatientID.toString() +
+                            " Cases, " + data.totals.StudyInstanceUID.toString() +
+                            " Studies, and " + data.totals.SeriesInstanceUID.toString() +
+                            " Series in this cohort. " +
+                            "Size on disk: " + data.totals.disk_size);
 
                         if (('filtered_counts' in data) && ('access' in data['filtered_counts']['origin_set']['All']['attributes']) && ('Limited' in data['filtered_counts']['origin_set']['All']['attributes']['access']) && (data['filtered_counts']['origin_set']['All']['attributes']['access']['Limited']['count']>0) ){
                             $('#search_def_access').removeClass('notDisp');
@@ -1833,7 +1849,10 @@ require([
                                 $('#save-cohort-btn').prop('title', '');
                             }
                             $('#search_def_stats').removeClass('notDisp');
-                            $('#search_def_stats').html(data.totals.PatientID.toString()+" Cases, "+data.totals.StudyInstanceUID.toString()+" Studies, and "+data.totals.SeriesInstanceUID.toString()+" Series in this cohort");
+                            $('#search_def_stats').html(data.totals.PatientID.toString() + " Cases, " +
+                                data.totals.StudyInstanceUID.toString()+" Studies, and " +
+                                data.totals.SeriesInstanceUID.toString()+" Series in this cohort. " +
+                                "Size on disk: " + data.totals.disk_size);
                             if (('filtered_counts' in data) && ('access' in data['filtered_counts']['origin_set']['All']['attributes']) && ('Limited' in data['filtered_counts']['origin_set']['All']['attributes']['access']) && (data['filtered_counts']['origin_set']['All']['attributes']['access']['Limited']['count']>0) ){
                                $('#search_def_access').removeClass('notDisp');
                                $('.access_warn').removeClass('notDisp');
