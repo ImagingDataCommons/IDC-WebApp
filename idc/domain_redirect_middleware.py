@@ -16,7 +16,7 @@
 
 from builtins import object
 import logging
-from django.http import HttpResponsePermanentRedirect
+from django.http import HttpResponseRedirect
 from django.conf import settings
 
 logger = logging.getLogger('main_logger')
@@ -29,6 +29,6 @@ class DomainRedirectMiddleware(object):
     def __call__(self, request):
         host = request.get_host().partition(":")[0]
         if host == settings.DOMAIN_REDIRECT_FROM:
-            return HttpResponsePermanentRedirect(settings.DOMAIN_REDIRECT_TO + request.path)
+            return HttpResponseRedirect(settings.DOMAIN_REDIRECT_TO + request.path)
         else:
             return self.get_response(request)
