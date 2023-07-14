@@ -295,7 +295,7 @@ SECURE_HSTS_SECONDS            = int(os.environ.get('SECURE_HSTS_SECONDS','3600'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'idc.domain_redirect_middleware.DomainRedirectMiddleware',
+    #'idc.domain_redirect_middleware.DomainRedirectMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'idc.checkreqsize_middleware.CheckReqSize',
