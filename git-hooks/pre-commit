@@ -26,7 +26,8 @@ BLACKLIST = [
 
 EXEMPTED = [
     'git-hooks/pre-commit',
-    'shell/database-setup.sh'
+    'shell/database-setup.sh',
+	'sample.env'
 ]
 
 #: For a complete list, we need to make an OS call:

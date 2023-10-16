@@ -1129,7 +1129,7 @@ require([
     }
 
     window.updateStudyTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,updateChildTables,studyID) {
-
+        let nonViewAbleModality= new Set(["XC"]);
         $('#studies_tab').data('rowsremoved',rowsRemoved);
         $('#studies_tab').data('refreshafterfilter',refreshAfterFilter);
         $('#studies_tab').data('updatechildtables',updateChildTables);
@@ -1156,7 +1156,7 @@ require([
                     $(row).addClass('case_' + data['PatientID']);
                     $(row).on('click', function(event){
                         var elem = event.target;
-                        if (!($(elem).is('a')) && !($(elem).hasClass('fa-eye')) && !($(elem).hasClass('tippy-box'))  && !($(elem).parents().hasClass('tippy-box'))  ) {
+                        if (!($(elem).is('a')) && !($(elem).hasClass('fa-download')) && !($(elem).hasClass('fa-copy')) && !($(elem).hasClass('fa-eye')) && !($(elem).hasClass('tippy-box'))  && !($(elem).parents().hasClass('tippy-box'))  ) {
                             if (!$(elem).parent().hasClass('ckbx')) {
                                 ckbx = $(elem).closest('tr').find('.ckbx').children()
                                 ckbx.prop("checked", !ckbx.prop("checked"));
@@ -1173,6 +1173,7 @@ require([
                     {className: "col1 study-description", "targets": [4]},
                     {className: "col1 numrows", "targets": [5]},
                     {className: "ohif open-viewer", "targets": [6]},
+                    {className: "download", "targets": [7]},
 
                 ],
                 "columns": [
@@ -1196,20 +1197,20 @@ require([
                     },
                     {
                         "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
-                            return pretty_print_id(data);
+                            return pretty_print_id(data) +
+                            ' <a class="copy-this-table" role="button" content="' + data +
+                                '" title="Copy Study ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
                         },
                         "createdCell": function (td, data) {
                             $(td).data('study-id', data);
                             return;
                         }
-
-
                     },
                     {
                         "type": "text", "orderable": true, data: 'StudyDate', render: function (data) {
                             // fix when StudyData is an array of values
                             var dt = new Date(Date.parse(data));
-                            var dtStr = (dt.getMonth() + 1).toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getDate().toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getFullYear().toString();
+                            var dtStr = (dt.getUTCMonth() + 1).toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getUTCDate().toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getUTCFullYear().toString();
                             return dtStr;
                         }
                     },
@@ -1232,16 +1233,31 @@ require([
                             }
                             else {
                                 var modality = row['Modality'];
-                                if (( Array.isArray(modality) && modality.includes('SM')) || (modality === 'SM')) {
+                                if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                                    return nonViewAbleModality.has(el)
+                                }) ) || nonViewAbleModality.has(row['Modality']) )   {
+                                    return '<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash not-viewable"></i>';
+                                } else if (( Array.isArray(modality) && modality.includes('SM')) || (modality === 'SM')) {
                                     return '<a href="' + SLIM_VIEWER_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                                  } else {
-                                    return '<a href="' + DICOM_STORE_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
+                                    let v3_link = '';
+                                    if(OHIF_V3_PATH) {
+                                        v3_link = ' | <a href="' + OHIF_V3_PATH + data + '" target="_blank" rel="noopener noreferrer">v3'
+                                    }
+                                    return '<a href="' + OHIF_V2_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
+                                        v3_link
                                 }
-                           }
+                            }
                         }
-
                     },
+                    {
+                          "type":"html",
+                          "orderable": false,
+                          data: 'StudyInstanceUID', render: function (data){
+                              return '<i class="fa fa-download study-export" data-uid="'+data+'"data-toggle="modal" data-target="#export-manifest-modal"></i>'
+                          }
 
+                      }
                 ],
                 "processing": true,
                 "serverSide": true,
@@ -1290,13 +1306,11 @@ require([
                                 for (caseId in window.selItems.selStudies){
                                     if (window.selItems.selStudies[caseId].indexOf(studyID)>-1){
                                         window.selItems.selStudies[caseId]=[studyID]
-                                    }
-                                    else {
+                                    } else {
                                         delete window.selItems.selStudies[caseId];
                                     }
                                 }
-                            }
-                            else if (refreshAfterFilter){
+                            } else if (refreshAfterFilter){
                                 for (caseId in window.selItems.selStudies){
                                     checkIds=checkIds.concat(window.selItems.selStudies[caseId])
                                 }
@@ -1369,22 +1383,17 @@ require([
                         }
                     }
                 }
-
             });
-
         }
-
         catch(err){
-                    alert("The following error was reported when processing server data: "+ err +". Please alert the systems administrator")
+            alert("The following error was reported when processing server data: "+ err +". Please alert the systems administrator")
         }
 
         $('#studies_tab').on('draw.dt', function(){
             $('#studies_table_head').children('tr').children().each(function(){
                 this.style.width=null;
                 }
-
             );
-
         })
 
         $('#studies_tab').children('tbody').attr('id','studies_table');
@@ -1394,7 +1403,7 @@ require([
     }
 
     window.updateSeriesTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,seriesID) {
-        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV"])
+        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV", "XC"])
         var slimViewAbleModality=new Set(["SM"])
         $('#series_tab').attr('data-rowsremoved', rowsRemoved);
         $('#series_tab').attr('data-refreshafterfilter', refreshAfterFilter);
@@ -1413,6 +1422,9 @@ require([
                  "order": [[0, "asc"]],
                  "createdRow": function (row, data, dataIndex) {
                     $(row).attr('id', 'series_' + data['SeriesInstanceUID'])
+                    $(row).attr('data-crdc',  data['crdc_series_uuid'])
+                    $(row).attr('data-aws',  data['aws_bucket'])
+                    $(row).attr('data-gcs',  data['gcs_bucket'])
                     $(row).addClass('text_head');
                  },
                 "columnDefs": [
@@ -1423,27 +1435,28 @@ require([
                     {className: "col1 body-part-examined", "targets": [4]},
                     {className: "series-description", "targets": [5]},
                     {className: "ohif open-viewer", "targets": [6]},
+                    {className: "download", "targets": [7]},
+
                  ],
                   "columns": [
                   {
                     "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
-                        return pretty_print_id(data);
+                        return pretty_print_id(data) +
+                            ' <a class="copy-this-table" role="button" content="' + data +
+                                '"  title="Copy Study ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
                     }, "createdCell": function (td, data) {
                         $(td).data('study-id', data);
                         return;
-
                     }
-
-                },
-                      {
+                }, {
                     "type": "text", "orderable": true, data: 'SeriesInstanceUID', render: function (data) {
-                        return pretty_print_id(data);
+                        return pretty_print_id(data) +
+                            ' <a class="copy-this-table" role="button" content="' + data +
+                                '"  title="Copy Series ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
                     }, "createdCell": function (td, data) {
                         $(td).data('series-id', data);
                         return;
-
                     }
-
                 },
                 {"type": "num", "orderable": true, data: 'SeriesNumber'},
                 {"type": "text", "orderable": true, data: 'Modality'},
@@ -1465,9 +1478,8 @@ require([
                             return;
 
                         }
-                    }
-                },
-                {
+                    },
+                },  {
                     "type": "html",
                     "orderable": false,
                     data: 'SeriesInstanceUID',
@@ -1475,26 +1487,45 @@ require([
                         var coll_id="";
                         if (Array.isArray(row['collection_id'])){
                             coll_id=row['collection_id'][0];
-                        }
-                        else {
+                        } else {
                             coll_id=row['collection_id']
                         }
                         if (row['access'].includes('Limited') ) {
                             return '<i class="fa-solid fa-circle-minus coll-explain"></i>';
                         }
-
-                        else if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){return nonViewAbleModality.has(el)}) ) || nonViewAbleModality.has(row['Modality']) )   {
-                            return '<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash no-viewer-tooltip"></i>';
-
-                            } else if (  ( Array.isArray(row['Modality']) && row['Modality'].some(function(el){return slimViewAbleModality.has(el)}) ) || (slimViewAbleModality.has(row['Modality']))) {
-                                return '<a href="' + SLIM_VIEWER_PATH + row['StudyInstanceUID'] + '/series/' + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
-
-                            } else {
-                                return '<a href="' + DICOM_STORE_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
+                        else if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                            return nonViewAbleModality.has(el)
+                        }) ) || nonViewAbleModality.has(row['Modality']) )   {
+                            let tooltip = (
+                                row['Modality'] === "XC" || (Array.isArray(row['Modality']) && row['Modality'].includes("XC"))
+                            ) ? "not-viewable" : "no-viewer-tooltip";
+                            return `<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash ${tooltip}"></i>`;
+                        } else if (  ( Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                            return slimViewAbleModality.has(el)}
+                        ) ) || (slimViewAbleModality.has(row['Modality']))) {
+                            return '<a href="' + SLIM_VIEWER_PATH + row['StudyInstanceUID'] + '/series/' + data +
+                                '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
+                        } else {
+                            let v3_link = '';
+                            if(OHIF_V3_PATH) {
+                                v3_link = ' | <a href="' + OHIF_V3_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' +
+                                data + '" target="_blank" rel="noopener noreferrer">v3'
                             }
+                            return '<a href="' + OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' +
+                                data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
+                                v3_link
+                        }
 
                     }
                 },
+                      {
+                          "type":"html",
+                          "orderable": false,
+                          data: 'SeriesInstanceUID', render: function (data){
+                              return '<i class="fa fa-download series-export" data-uid="'+data+'"data-toggle="modal" data-target="#export-manifest-modal"></i>'
+                          }
+
+                      }
             ],
             "processing": true,
             "serverSide": true,
@@ -1512,7 +1543,6 @@ require([
                         caseArr.push(window.selItems.selCases[caseid][i]);
                     }
                 }
-
                 var studyArr = new Array();
                 for (caseid in window.selItems.selStudies) {
                     for (var i = 0; i < window.selItems.selStudies[caseid].length; i++) {
@@ -1592,19 +1622,14 @@ require([
                             "recordsTotal": window.seriesCache.recordsTotal,
                             "recordsFiltered": window.seriesCache.recordsTotal
                         })
-
                     }
-                  }
+                }
               }
-
            });
-
         }
         catch(err){
             alert("The following error was reported when processing server data: "+ err +". Please alert the systems administrator");
         }
-
-
 
         $('#series_tab').on('draw.dt', function(){
             $('#series_table_head').children('tr').children().each(function(){
@@ -1618,7 +1643,7 @@ require([
     }
 
     var pretty_print_id = function (id) {
-        var newId = id.slice(0, 12) + '...' + id.slice(id.length - 12, id.length);
+        var newId = id.slice(0, 8) + '...' + id.slice(id.length - 8, id.length);
         return newId;
     }
 
@@ -1715,10 +1740,12 @@ require([
             $('.bq-string-display').attr("disabled","disabled");
             $('.bq-string-display').attr("title","Select a filter to enable this feature.");
             $('.bq-string').html("");
+            $('#export-manifest-form input[name="filters"]').val("");
         } else {
             $('.bq-string-display').removeAttr("disabled");
             $('.bq-string-display').attr("title","Click to display this filter as a BQ string.");
             $('.bq-string-display').attr('filter-params', JSON.stringify(filters));
+            $('#export-manifest-form input[name="filters"]').val(JSON.stringify(filters));
         }
     };
 
@@ -1726,16 +1753,24 @@ require([
         let filters = parseFilterObj();
         if (Object.keys(filters).length <= 0) {
             $('.get-filter-uri').attr("disabled","disabled");
+            $('#export-manifest').attr("disabled","disabled");
+            $('#export-manifest').attr("title","Select a filter to enable this feature.");
             $('.get-filter-uri').attr("title","Select a filter to enable this feature.");
             $('.filter-url').html("");
             $('.copy-url').removeAttr("content");
             $('.copy-url').attr("disabled","disabled");
             $('.hide-filter-uri').triggerHandler('click');
             $('.url-too-long').hide();
+            $('#export-manifest-form').attr(
+                'action',
+                $('#export-manifest-form').data('uri-base')
+            );
         } else {
             $('.get-filter-uri').removeAttr("disabled");
+            $('#export-manifest').removeAttr("disabled");
             $('.copy-url').removeAttr("disabled");
             $('.get-filter-uri').attr("title","Click to display this filter set's query URL.");
+            $('#export-manifest').attr("title","Export these search results as a manifest for downloading.");
             let url = BASE_URL+"/explore/filters/?";
             let encoded_filters = []
             for (let i in filters) {
@@ -1772,7 +1807,15 @@ require([
         var parsedFiltObj = parseFilterObj();
         url = encodeURI('/explore/')
 
-        ndic={'totals':JSON.stringify(["PatientID", "StudyInstanceUID", "SeriesInstanceUID"]),'counts_only':'True', 'is_json':'True', 'is_dicofdic':'True', 'data_source_type':($("#data_source_type option:selected").val() || 'S'), 'filters':JSON.stringify(parsedFiltObj) }
+        ndic = {
+            'totals': JSON.stringify(["PatientID", "StudyInstanceUID", "SeriesInstanceUID"]),
+            'counts_only': 'True',
+            'is_json': 'True',
+            'is_dicofdic': 'True',
+            'data_source_type': ($("#data_source_type option:selected").val() || 'S'),
+            'filters':JSON.stringify(parsedFiltObj),
+            'disk_size': 'True'
+        }
         var csrftoken = $.getCookie('csrftoken');
         let deferred = $.Deferred();
         $.ajax({
@@ -1816,7 +1859,11 @@ require([
                             }
                         }
                         $('#search_def_stats').removeClass('notDisp');
-                        $('#search_def_stats').html(data.totals.PatientID.toString()+" Cases, "+data.totals.StudyInstanceUID.toString()+" Studies, and "+data.totals.SeriesInstanceUID.toString()+" Series in this cohort");
+                        $('#search_def_stats').html(data.totals.PatientID.toString() +
+                            " Cases, " + data.totals.StudyInstanceUID.toString() +
+                            " Studies, and " + data.totals.SeriesInstanceUID.toString() +
+                            " Series in this cohort. " +
+                            "Size on disk: " + data.totals.disk_size);
 
                         if (('filtered_counts' in data) && ('access' in data['filtered_counts']['origin_set']['All']['attributes']) && ('Limited' in data['filtered_counts']['origin_set']['All']['attributes']['access']) && (data['filtered_counts']['origin_set']['All']['attributes']['access']['Limited']['count']>0) ){
                             $('#search_def_access').removeClass('notDisp');
@@ -1833,7 +1880,23 @@ require([
                                 $('#save-cohort-btn').prop('title', '');
                             }
                             $('#search_def_stats').removeClass('notDisp');
-                            $('#search_def_stats').html(data.totals.PatientID.toString()+" Cases, "+data.totals.StudyInstanceUID.toString()+" Studies, and "+data.totals.SeriesInstanceUID.toString()+" Series in this cohort");
+                            $('#search_def_stats').html(data.totals.PatientID.toString() + " Cases, " +
+                                data.totals.StudyInstanceUID.toString()+" Studies, and " +
+                                data.totals.SeriesInstanceUID.toString()+" Series in this cohort. " +
+                                "Size on disk: " + data.totals.disk_size);
+                            let select_box_div = $('#file-part-select-box');
+                            let select_box = select_box_div.find('select');
+                            if (data.totals.file_parts_count > 1) {
+                                select_box_div.show();
+                                for (let i = 0; i < data.totals.display_file_parts_count; ++i) {
+                                    select_box.append($('<option/>', {
+                                        value: i,
+                                        text : "File Part " + (i + 1)
+                                    }));
+                                }
+                            } else {
+                                select_box_div.hide();
+                            }
                             if (('filtered_counts' in data) && ('access' in data['filtered_counts']['origin_set']['All']['attributes']) && ('Limited' in data['filtered_counts']['origin_set']['All']['attributes']['access']) && (data['filtered_counts']['origin_set']['All']['attributes']['access']['Limited']['count']>0) ){
                                $('#search_def_access').removeClass('notDisp');
                                $('.access_warn').removeClass('notDisp');
@@ -3528,7 +3591,9 @@ require([
                 ).attr("style","display: none;")
         );
 
+        
         $(window).on("beforeunload",function(){
+            console.log("beforeunload called");
             let hs = new Object();
             hs['hz'] = new Object();
             hs['sorter'] = new Object();
@@ -3545,6 +3610,8 @@ require([
                 let sort = $(this).find('input:checked').val()
                 hs['sorter'][pid] = sort;
             });
+
+
 
             let url = encodeURI('/uihist/')
             let nhs = {'his':JSON.stringify(hs)}
@@ -3568,9 +3635,12 @@ require([
                 }
             });
         });
+
+
         initSort('num');
         if (document.contains(document.getElementById('history'))){
             updateViaHistory();
         }
+
     });
 });

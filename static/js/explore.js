@@ -314,20 +314,6 @@ require([
     });
 
     tippy.delegate('.studies-table', {
-        content: function(reference) {
-            return '<span class="tippy-uid">'+$(reference).data('study-id')+'</span>';
-        },
-        theme: 'dark',
-        placement: 'right',
-        arrow: true,
-        target: 'td.study-id-tltp',
-        interactive:'true',
-        interactiveBorder:10,
-        maxWidth: 600,
-        allowHTML:true
-    });
-
-    tippy.delegate('.studies-table', {
         content: 'Some or all of the images in this collection are not publicly available.',
         theme: 'dark',
         placement: 'right',
@@ -339,41 +325,59 @@ require([
 
     tippy.delegate('.series-table', {
         content: function(reference) {
-            return '<span class="tippy-uid">'+$(reference).data('study-id')+'</span>';
+            if($(reference).hasClass('not-viewable')) {
+                return 'No valid viewer is available for this modality.'
+            }
+            return 'Please open at the study level to view this series.';
         },
-        theme: 'dark',
-        placement: 'right',
-        arrow: true,
-        interactive:'true',
-        interactiveBorder:10,
-        target: 'td.study-id-tltp',
-        maxWidth: 600,
-        allowHTML:true
-    });
-
-    tippy.delegate('.series-table', {
-        content: function(reference) {
-            return '<span class="tippy-uid">'+$(reference).data('series-id')+'</span>';
-        },
-        theme: 'dark',
-        placement: 'right',
-        arrow: true,
-        interactive:'true',
-        interactiveBorder:10,
-        target: 'td.series-id-tltp',
-        maxWidth: 600,
-        allowHTML:true
-    });
-
-
-    tippy.delegate('.series-table', {
-        content: 'Please open at the study level to see this series',
         theme: 'dark',
         placement: 'right',
         arrow: false,
         interactive:true,
-        target: '.no-viewer-tooltip',
+        target: ['.no-viewer-tooltip', '.not-viewable'],
         maxWidth: 130
+    });
+
+    tippy.delegate('.studies-table', {
+        content: 'This study cannot be viewed.',
+        theme: 'dark',
+        placement: 'right',
+        arrow: false,
+        interactive:true,
+        target: ['.no-viewer-tooltip', '.not-viewable'],
+        maxWidth: 130
+    });
+
+    tippy.delegate('.series-table', {
+        content: 'Copied!',
+        theme: 'blue',
+        placement: 'right',
+        arrow: true,
+        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
+        target: '.copy-this-table',
+        onShow(instance) {
+            setTimeout(function() {
+                instance.hide();
+            }, 1000);
+        },
+        trigger: "click",
+        maxWidth: 85
+    });
+
+    tippy.delegate('.studies-table', {
+        content: 'Copied!',
+        theme: 'blue',
+        placement: 'right',
+        arrow: true,
+        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
+        target: '.copy-this-table',
+        onShow(instance) {
+            setTimeout(function() {
+                instance.hide();
+            }, 1000);
+        },
+        trigger: "click",
+        maxWidth: 85
     });
 
     tippy.delegate('.series-table', {
@@ -394,9 +398,26 @@ require([
         placement: 'right',
         arrow: false,
         target: '.description-tip',
+        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
         maxWidth: 800
     });
 
+    tippy.delegate('#body', {
+        content: function(reference) {
+            return "Copied!";
+        },
+        theme: 'blue',
+        placement: 'auto',
+        arrow: true,
+        target: '.copy-this',
+        trigger: 'click',
+        onShow(instance) {
+            setTimeout(function() {
+                instance.hide();
+            }, 1000);
+        },
+        maxWidth: 85
+    });
 
     $('.download-link').on('click', function(){
         $('#download-images').modal("hide");

@@ -31,11 +31,12 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
+from django.utils.html import escape
 
 from google_helpers.stackdriver import StackDriverLogger
 from cohorts.models import Cohort, Cohort_Perms
-from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips
-from idc_collections.collex_metadata_utils import build_explorer_context, get_collex_metadata
+from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips, DataSetType
+from idc_collections.collex_metadata_utils import build_explorer_context, get_collex_metadata, create_file_manifest
 from allauth.socialaccount.models import SocialAccount
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, JsonResponse
@@ -69,7 +70,8 @@ def landing_page(request):
         'Rectum': 'Colorectal',
         "Marrow, Blood": "Blood",
         "Testicles": "Testis",
-        "Adrenal Glands": "Adrenal Gland"
+        "Adrenal Glands": "Adrenal Gland",
+        "Adrenal": "Adrenal Gland"
     }
 
     skip = [
@@ -114,6 +116,7 @@ def privacy_policy(request):
     return render(request, 'idc/privacy.html', {'request': request, })
 
 
+# Displays the page of collaborators
 def collaborators(request):
     return render(request, 'idc/collaborators.html', {'request': request, })
 
@@ -161,6 +164,7 @@ def user_detail(request, user_id):
         return render(request, '403.html')
 
 
+# Callback method for logs of failed logins
 @receiver(user_login_failed)
 def user_login_failed_callback(sender, credentials, **kwargs):
     try:
@@ -197,13 +201,13 @@ def extended_login_view(request):
 
 # Health check callback
 #
-# Because the match for vm_ is always done regardless of its presense in the URL
+# Because the match for vm_ is always done regardless of its presence in the URL
 # we must always provide an argument slot for it
 def health_check(request, match):
     return HttpResponse('')
 
 
-# Quote page
+# Quota page for the viewer
 def quota_page(request):
     return render(request, 'idc/quota.html', {'request': request, 'quota': settings.IMG_QUOTA})
 
@@ -339,7 +343,7 @@ def populate_tables(request):
             custom_facets = {}
             tableIndex = 'SeriesInstanceUID'
             fields = ['collection_id', 'SeriesInstanceUID', 'StudyInstanceUID', 'SeriesDescription', 'SeriesNumber',
-                      'BodyPartExamined', 'Modality', 'access']
+                      'BodyPartExamined', 'Modality', 'access', 'crdc_series_uuid','gcs_bucket','aws_bucket']
             facetfields = []
             sortByField = True
 
@@ -459,11 +463,12 @@ def explore_data_page(request, filter_path=False, path_filters=None):
     status = 200
 
     try:
-        req = request.GET if request.GET else request.POST
+        req = request.GET or request.POST
         is_dicofdic = (req.get('is_dicofdic', "False").lower() == "true")
         source = req.get('data_source_type', DataSource.SOLR)
         versions = json.loads(req.get('versions', '[]'))
         filters = json.loads(req.get('filters', '{}'))
+        disk_size = (req.get('disk_size', 'False').lower() == "true")
 
         fields = json.loads(req.get('fields', '[]'))
         order_docs = json.loads(req.get('order_docs', '[]'))
@@ -496,9 +501,15 @@ def explore_data_page(request, filter_path=False, path_filters=None):
         if wcohort and is_json:
             filters = cohort_filters
 
+        versions = ImagingDataCommonsVersion.objects.filter(
+            version_number__in=versions
+        ).get_data_versions(active=True) if len(versions) else ImagingDataCommonsVersion.objects.filter(
+            active=True
+        ).get_data_versions(active=True)
+
         context = build_explorer_context(
             is_dicofdic, source, versions, filters, fields, order_docs, counts_only, with_related, with_derived,
-            collapse_on, is_json, uniques=uniques, totals=totals
+            collapse_on, is_json, uniques=uniques, totals=totals, disk_size=disk_size
         )
 
         if not is_json:
@@ -510,9 +521,13 @@ def explore_data_page(request, filter_path=False, path_filters=None):
             else:
                 filters_for_load = req.get('filters_for_load', None)
                 if filters_for_load:
-                    blacklist = re.compile(settings.BLACKLIST_RE, re.UNICODE)
-                    if blacklist.search(filters_for_load):
-                        logger.warning("[WARNING] Saw bad filters in filters_for_load:")
+                    denylist = re.compile(settings.DENYLIST_RE, re.UNICODE).search(filters_for_load)
+                    attr_disallow = re.compile(settings.ATTRIBUTE_DISALLOW_RE, re.UNICODE).search(filters_for_load)
+                    if denylist or attr_disallow:
+                        if denylist:
+                            logger.error("[ERROR] Saw possible attack in filters_for_load:")
+                        else:
+                            logger.warning("[WARN] Saw bad filter names in filters_for_load:")
                         logger.warning(filters_for_load)
                         filters_for_load = {}
                         messages.error(
@@ -557,6 +572,16 @@ def explore_data_page(request, filter_path=False, path_filters=None):
     return render(request, 'idc/explore.html', context)
 
 
+def explorer_manifest(request):
+    req = request.GET or request.POST
+    if req.get('manifest-type', 'file-manifest') == 'bq-manifest' :
+        messages.error(request, "BigQuery export requires a cohort! Please save your filters as a cohort.")
+        return JsonResponse({'msg': 'BigQuery export requires a cohort.'}, status=400)
+    return create_file_manifest(request)
+
+
+# Given a set of filters in a GET request, parse the filter set out into a filter set recognized
+# by the explore_data_page method and forward it on to that view, returning its response.
 def parse_explore_filters(request):
     try:
         if not request.GET:
@@ -575,20 +600,24 @@ def parse_explore_filters(request):
         attrs = Attribute.objects.filter(name__in=attr_names)
         attr_map = {x.name: {"id": x.id, "filter": filter_name_map[x.name]} for x in attrs}
         not_found = [x for x in attr_names if x not in attr_map.keys()]
-        if len(not_found) > 0:
-            not_rec = "{}".format("; ".join(not_found))
-            logger.warning("[WARNING] Saw invalid filters while parsing explore/filters call:")
-            logger.warning(not_rec)
-            messages.warning(request, "The following attribute names are not recognized: {}".format(not_rec))
-        else:
-            blacklist = re.compile(settings.BLACKLIST_RE, re.UNICODE)
-            if blacklist.search(str(filters)):
+        denylist = re.compile(settings.DENYLIST_RE, re.UNICODE).search(str(filters))
+        attr_disallow = re.compile(settings.ATTRIBUTE_DISALLOW_RE, re.UNICODE).search(str(filters))
+        if denylist or attr_disallow:
+            if denylist:
+                logger.error("[ERROR] Saw possible attack attempt!")
+            else:
                 logger.warning("[WARNING] Saw bad filters in filters_for_load:")
-                logger.warning(filters)
-                messages.error(
-                    request,
-                    "There was a problem with some of your filters - please ensure they're properly formatted."
-                )
+            logger.warning(str(filters))
+            messages.error(
+                request,
+                "There was a problem with some of your filters - please ensure they're properly formatted."
+            )
+        else:
+            if len(not_found) > 0:
+                not_rec = "{}".format("; ".join(not_found))
+                logger.warning("[WARNING] Saw invalid filters while parsing explore/filters call:")
+                logger.warning(not_rec)
+                messages.warning(request, "The following attribute names are not recognized: {}".format(escape(not_rec)))
             else:
                 if len(attrs) > 0:
                     filters = [{
