@@ -1101,14 +1101,9 @@ require([
                                 "recordsFiltered": window.casesCache.recordsTotal
                             })
                         }
-
                     }
-
                 }
-
-
             });
-
         }
         catch(err){
             alert("The following error occurred trying to update the case table:" +err+". Please alert the systems administrator");
@@ -1119,13 +1114,11 @@ require([
                 this.style.width=null;
                 }
             );
-
         })
 
         $('#cases_tab').find('tbody').attr('id','cases_table');
         $('#cases_panel').find('.dataTables_controls').find('.dataTables_length').after('<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" type="number"><button onclick="changePage(\'cases_tab_wrapper\')">Go</button></div>');
         $('#cases_panel').find('.dataTables_controls').find('.dataTables_paginate').after('<div class="dataTables_filter"><strong>Find by Case ID:</strong><input class="caseID_inp" type="text-box" value="'+caseID+'"><button onclick="filterTable(\'cases_panel\',\'caseID\')">Go</button></div>');
-
     }
 
     window.updateStudyTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,updateChildTables,studyID) {
@@ -1156,7 +1149,11 @@ require([
                     $(row).addClass('case_' + data['PatientID']);
                     $(row).on('click', function(event){
                         var elem = event.target;
-                        if (!($(elem).is('a')) && !($(elem).hasClass('fa-download')) && !($(elem).hasClass('fa-copy')) && !($(elem).hasClass('fa-eye')) && !($(elem).hasClass('tippy-box'))  && !($(elem).parents().hasClass('tippy-box'))  ) {
+                        if (!($(elem).is('a')) && !($(elem).hasClass('fa-download'))
+                            && !($(elem).hasClass('fa-copy')) && !($(elem).hasClass('fa-eye'))
+                            && !($(elem).hasClass('tippy-box'))  && !($(elem).parents().hasClass('tippy-box'))
+                            && !($(elem).hasClass('viewer-toggle')) && !($(elem).parents().hasClass('viewer-toggle'))
+                        ) {
                             if (!$(elem).parent().hasClass('ckbx')) {
                                 ckbx = $(elem).closest('tr').find('.ckbx').children()
                                 ckbx.prop("checked", !ckbx.prop("checked"));
@@ -1189,13 +1186,11 @@ require([
                                 return '<input type="checkbox" class="tbl-sel">';
                             }
                         }
-                    },
-                    {
+                    },{
                         "type": "text", "orderable": true, data: 'PatientID', render: function (data) {
                             return data;
                         }
-                    },
-                    {
+                    },{
                         "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
                             return pretty_print_id(data) +
                             ' <a class="copy-this-table" role="button" content="' + data +
@@ -1205,12 +1200,11 @@ require([
                             $(td).data('study-id', data);
                             return;
                         }
-                    },
-                    {
+                    },{
                         "type": "text", "orderable": true, data: 'StudyDate', render: function (data) {
                             // fix when StudyData is an array of values
                             var dt = new Date(Date.parse(data));
-                            var dtStr = (dt.getMonth() + 1).toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getDate().toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getFullYear().toString();
+                            var dtStr = (dt.getUTCMonth() + 1).toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getUTCDate().toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getUTCFullYear().toString();
                             return dtStr;
                         }
                     },
@@ -1240,17 +1234,34 @@ require([
                                 } else if (( Array.isArray(modality) && modality.includes('SM')) || (modality === 'SM')) {
                                     return '<a href="' + SLIM_VIEWER_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                                  } else {
-                                    let v3_link = '';
-                                    if(OHIF_V3_PATH) {
-                                        v3_link = ' | <a href="' + OHIF_V3_PATH + data + '" target="_blank" rel="noopener noreferrer">v3'
+                                    let v2_link = OHIF_V2_PATH + data;
+                                    let v3_link = OHIF_V3_PATH + "=" + data;
+                                    let volView_item = '<li title="VolView is disabled for this Study."><a class="disabled">VolView ' +
+                                        '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
+                                        '</a></li>';
+                                    let bucket = Array.isArray(row['aws_bucket']) ? row['aws_bucket'][0] : row['aws_bucket'];
+                                    if(bucket.indexOf(",") < 0) {
+                                        let volView_link = VOLVIEW_PATH + "=[" + row['crdc_series_uuid'].map(function (i) {
+                                            return "s3://" + row['aws_bucket'] + "/" + i;
+                                        }).join(",") + ']"';
+                                        volView_item = '<li><a class="external-link" href="" url="'+volView_link+'" ' +
+                                        'data-toggle="modal" data-target="#external-web-warning">VolView ' +
+                                        '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
+                                        '</a></li>';
                                     }
-                                    return '<a href="' + OHIF_V2_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
-                                        v3_link
+                                    return '<a href="' + v2_link + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
+                                        '<div class="dropdown viewer-toggle">' +
+                                        '<a id="btnGroupDropViewers" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa-solid fa-caret-down"></i></a>' +
+                                        '<ul class="dropdown-menu viewer-menu" aria-labelledby="btnGroupDropViewers">' +
+                                        '<li><a href="'+v2_link+'" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>' +
+                                        '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer">OHIF v3</a></li>' +
+                                        volView_item +
+                                        '</ul>' +
+                                        '</div>';
                                 }
                             }
                         }
-                    },
-                    {
+                    }, {
                           "type":"html",
                           "orderable": false,
                           data: 'StudyInstanceUID', render: function (data){
@@ -1399,7 +1410,6 @@ require([
         $('#studies_tab').children('tbody').attr('id','studies_table');
         $('#studies_tab_wrapper').find('.dataTables_controls').find('.dataTables_length').after('<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" type="number"><button onclick="changePage(\'studies_tab_wrapper\')">Go</button></div>');
         $('#studies_tab_wrapper').find('.dataTables_controls').find('.dataTables_paginate').after('<div class="dataTables_filter"><strong>Find by Study Instance UID:</strong><input class="studyID_inp" type="text-box" value="'+studyID+'"><button onclick="filterTable(\'studies_tab_wrapper\',\'studyID\')">Go</button></div>');
-
     }
 
     window.updateSeriesTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,seriesID) {
@@ -1479,7 +1489,7 @@ require([
 
                         }
                     },
-                },  {
+                }, {
                     "type": "html",
                     "orderable": false,
                     data: 'SeriesInstanceUID',
@@ -1506,26 +1516,31 @@ require([
                             return '<a href="' + SLIM_VIEWER_PATH + row['StudyInstanceUID'] + '/series/' + data +
                                 '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                         } else {
-                            let v3_link = '';
-                            if(OHIF_V3_PATH) {
-                                v3_link = ' | <a href="' + OHIF_V3_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' +
-                                data + '" target="_blank" rel="noopener noreferrer">v3'
-                            }
-                            return '<a href="' + OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' +
-                                data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
-                                v3_link
+                            let v2_link = OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' + data;
+                            let v3_link = OHIF_V3_PATH + "=" + row['StudyInstanceUID'] + '&SeriesInstanceUID=' + data;
+                            let volView_link = VOLVIEW_PATH + "=[s3://" + row['aws_bucket'] + '/'+row['crdc_series_uuid']+']"';
+                            let volView_item = '<li><a class="external-link" href="" url="'+volView_link+'" ' +
+                                'data-toggle="modal" data-target="#external-web-warning">VolView ' +
+                                '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
+                                '</a></li>';
+                            return '<a href="' + v2_link + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
+                                '<div class="dropdown viewer-toggle">' +
+                                '<a id="btnGroupDropViewers" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa-solid fa-caret-down"></i></a>' +
+                                '<ul class="dropdown-menu viewer-menu" aria-labelledby="btnGroupDropViewers">' +
+                                '<li><a href="'+v2_link+'" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>' +
+                                '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer">OHIF v3</a></li>' +
+                                volView_item +
+                                '</ul>' +
+                                '</div>';
                         }
-
                     }
-                },
-                      {
-                          "type":"html",
-                          "orderable": false,
-                          data: 'SeriesInstanceUID', render: function (data){
-                              return '<i class="fa fa-download series-export" data-uid="'+data+'"data-toggle="modal" data-target="#export-manifest-modal"></i>'
-                          }
-
+                }, {
+                      "type":"html",
+                      "orderable": false,
+                      data: 'SeriesInstanceUID', render: function (data){
+                          return '<i class="fa fa-download series-export" data-uid="'+data+'"data-toggle="modal" data-target="#export-manifest-modal"></i>'
                       }
+                  }
             ],
             "processing": true,
             "serverSide": true,
@@ -1658,7 +1673,7 @@ require([
         reformDic[listId] = new Object();
         for (item in progDic){
             if ((item !=='All') && (item !=='None') && (item in window.programs) && (Object.keys(progDic[item]['projects']).length>0)){
-                if ( Object.keys(window.programs[item]['projects']).length===1) {
+                if ( Object.keys(window.programs[item]['projects']).length===-1) {
                     nitem=Object.keys(progDic[item]['projects'])[0];
                     reformDic[listId][nitem]=new Object();
                     reformDic[listId][nitem]['count'] = progDic[item]['val'];
@@ -2902,6 +2917,48 @@ require([
     };
 
 
+    $('.collection_info').on("mouseenter", function(e){
+        $(e.target).addClass('fa-lg');
+        $(e.target).parent().parent().data("clickForInfo",false);;
+    });
+    $('.collection_info').on("mouseleave", function(e){
+           $(e.target).parent().parent().data("clickForInfo",false);
+           $(e.target).removeClass('fa-lg');
+           //$(e.target).css('style','background:transparent')
+    });
+
+
+
+
+    $('#collection_modal_button').on("click", function(){
+        $('#collection-modal').removeClass('in');
+        $('#collection-modal').css("display","none");
+    });
+
+    var displayInfo = function(targ) {
+
+        let collection_id=$(targ).attr('value');
+        let collectionDisp=$(targ).data('filterDisplayVal')
+
+        let pos =$(targ).parent().find('.collection_info').offset();
+
+
+        let tooltip = collection_tooltips[collection_id];
+        $('#collection-modal').find('#collecton-modal-title').text(collectionDisp);
+        $('#collection-modal').find('.modal-body').html(tooltip);
+
+        $('#collection-modal').addClass('fade');
+        $('#collection-modal').addClass('in');
+        $('#collection-modal').css("display","block");
+        var width=$('#collection-modal').find('.modal-content').outerWidth();
+        var height =$('#collection-modal').find('.modal-content').outerHeight();
+        $('#collection-modal').height(height);
+            $('#collection-modal').width(width);
+            
+        $('#collection-modal').css({position:"absolute", top: Math.max((pos.top-height),0), left: pos.left })
+    }
+
+
     var filterItemBindings = function (filterId) {
 
         $('#' + filterId).find('.join_val').on('click', function () {
@@ -2913,8 +2970,31 @@ require([
             }
         });
 
-        $('#' + filterId).find('input:checkbox').not('#hide-zeros').on('click', function () {
-            handleFilterSelectionUpdate(this, true, true);
+        $('#' + filterId).find('.collection_info, .collection_info2').on("mouseenter", function(e){
+        $(e.target).addClass('fa-lg');
+         });
+
+       $('#' + filterId).find('.collection_info, .collection_info2').on("mouseleave", function(e){
+           $(e.target).removeClass('fa-lg');
+       });
+
+       $('#' + filterId).find('.collection_info2').on("click", function(e){
+           var targ = e.target;
+           displayInfo(targ);
+       });
+
+
+         $('#' + filterId).find('input:checkbox').not('#hide-zeros').on('click', function (e) {
+            var targ=e.target;
+
+            if ($(e.target).parent().find('.collection_info.fa-lg').length>0){
+                $(targ).prop("checked",!$(targ).prop("checked"));
+                displayInfo(targ);
+            }
+            else{
+              handleFilterSelectionUpdate(this, true, true);
+            }
+
         });
 
         $('#' + filterId).find('.show-more').on('click', function () {
@@ -3426,7 +3506,6 @@ require([
      });
 
     $('.fa-search').on("click",function(){
-         //alert('hi');
          srch=$(this).parent().parent().parent().find('.text-filter, .collection-text-filter, .analysis-text-filter');
 
          if (srch.hasClass('notDisp')) {
