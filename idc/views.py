@@ -84,7 +84,8 @@ def landing_page(request):
         "Intraocular",
         "Mesothelium",
         "Chest-Abdomen-Pelvis, Leg, TSpine",
-        "Abdomen, Arm, Bladder, Chest, Head-Neck, Kidney, Leg, Retroperitoneum, Stomach, Uterus"
+        "Abdomen, Arm, Bladder, Chest, Head-Neck, Kidney, Leg, Retroperitoneum, Stomach, Uterus",
+        "Blood, Bone"
     ]
 
     for collection in collex:
@@ -343,7 +344,7 @@ def populate_tables(request):
             custom_facets = {}
             tableIndex = 'SeriesInstanceUID'
             fields = ['collection_id', 'SeriesInstanceUID', 'StudyInstanceUID', 'SeriesDescription', 'SeriesNumber',
-                      'BodyPartExamined', 'Modality', 'access', 'crdc_series_uuid','gcs_bucket','aws_bucket']
+                      'BodyPartExamined', 'Modality', 'access', 'crdc_series_uuid','gcs_bucket','aws_bucket', 'SOPClassUID']
             facetfields = []
             sortByField = True
 

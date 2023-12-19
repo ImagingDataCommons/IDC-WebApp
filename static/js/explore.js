@@ -64,6 +64,10 @@ require([
 ], function ($, tippy, base) {
     var saving_cohort = false;
 
+    $('#external-web-warning').on('show.bs.modal', function(){
+        $('#collection-modal').hide();
+    })
+
     $('#save-cohort-modal').on('show.bs.modal', function() {
 
         var modality_join = $('.join_val').filter(':checked').prop('value');
@@ -222,27 +226,9 @@ require([
         $('#save-cohort-modal').prop("saving", "saving");
     });
 
-
-
     $('#collection_modal_button').on("click", function(){
         $('#collection-modal').removeClass('in');
         $('#collection-modal').css("display","none");
-    });
-
-    tippy.delegate('div#analysis_results_id', {
-        content: function(reference) {
-            let tooltip = analysis_results_tooltips[$(reference).siblings('input').attr('value')];
-            if(tooltip) {
-                return '<div class="collection-tooltip">' + tooltip + '</div>';
-            }
-            return '<span></span>';
-        },
-        theme: 'light',
-        placement: 'right-end',
-        target: 'span.value',
-        arrow: false,
-        allowHTML: true,
-        interactive: true
     });
 
     tippy.delegate('table#proj_table', {
