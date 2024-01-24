@@ -311,7 +311,7 @@ require([
         if ($('#export-manifest-modal').find('input[name="mini"]').val()==='series') {
             let crdc=$('#export-manifest-modal').find('input[name="crdc"]').val()
             let bucket = ($('input.loc_type:checked').val() === "aws" ? $('input[name="aws"]').val() : $('input[name="gcs"]').val());
-            s5cmd_text = `s5cmd --no-sign-request --endpoint-url ${endpoint_url} cp 's3://${bucket}/${crdc}/*' .`;
+            s5cmd_text = `s5cmd --no-sign-request --endpoint-url ${endpoint_url} cp "s3://${bucket}/${crdc}/*" .`;
 
         }
 
