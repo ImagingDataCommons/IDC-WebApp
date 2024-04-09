@@ -18,7 +18,7 @@
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
     paths: {
-        jquery: 'libs/jquery-3.5.1',
+        jquery: 'libs/jquery-3.7.1.min',
         bootstrap: 'libs/bootstrap.min',
         jqueryui: 'libs/jquery-ui.min',
         base: 'base',
@@ -714,14 +714,30 @@ require([
                 "createdRow": function (row, data, dataIndex) {
                     $(row).data('projectid', data[0]);
                     $(row).attr('id', 'project_row_' + data[0]);
-                    $(row).on('click', function(event){
+                    $(row).on('click', function(event) {
                         var elem = event.target;
-                        if (!$(elem).parent().hasClass('ckbx')) {
-                            ckbx=$(elem).closest('tr').find('.ckbx').children()
-                            ckbx.prop("checked", !ckbx.prop("checked"));
-                        }
-                        updateProjectSelection([$(this)])
-                    })
+                        if ((!$(elem).hasClass('collection_info')) && (!$(elem).hasClass('copy-this-table')) && (!$(elem).hasClass('fa-copy'))){
+                            if (!$(elem).parent().hasClass('ckbx')) {
+                                ckbx = $(elem).closest('tr').find('.ckbx').children()
+                                ckbx.prop("checked", !ckbx.prop("checked"));
+                             }
+                        updateProjectSelection([$(this)]);
+                       }
+                       if ($(elem).hasClass('collection_info')){
+                           displayInfo($(elem));
+                       }
+                    });
+                    $(row).find('.collection_info').on("mouseenter", function(e){
+                        $(e.target).addClass('fa-lg');
+                        $(e.target).parent().parent().data("clickForInfo",false);;
+                      });
+                $(row).find('.collection_info').on("mouseleave", function(e){
+                      $(e.target).parent().parent().data("clickForInfo",false);
+                      $(e.target).removeClass('fa-lg');
+                  //$(e.target).css('style','background:transparent')
+                  });
+
+
                 },
                 "columnDefs": [
                     {className: "ckbx text_data", "targets": [0]},
@@ -739,7 +755,13 @@ require([
                             }
                         }
                     },
-                    {"type": "text", "orderable": true},
+                    {"type": "html", "orderable": true, render: function (td, data, row){
+                        return '<span id="'+row[0]+'"class="collection_name value">'+row[1]+'</span>\n' +
+                            '<span><i class="collection_info fa-solid fa-info-circle" value="'+row[0]+'" data-filter-display-val="'+row[1]+'"></i></span>'+
+                            ' <a class="copy-this-table" role="button" content="' + row[0] +
+                                '" title="Copy Study ID to the clipboard"><i class="fa-solid fa-copy"></i></a>'
+
+                        }},
                     {"type": "num", orderable: true},
                     {
                         "type": "num", orderable: true, "createdCell": function (td, data, row) {
@@ -911,11 +933,15 @@ require([
                     $(row).addClass('project_' + data['collection_id']);
                     $(row).on('click', function(event){
                         var elem = event.target;
-                        if (!$(elem).parent().hasClass('ckbx')) {
-                            ckbx = $(elem).closest('tr').find('.ckbx').children()
-                            ckbx.prop("checked", !ckbx.prop("checked"));
+
+                        if (!($(elem).is('a')) && !($(elem).hasClass('fa-copy'))){
+                            if (!$(elem).parent().hasClass('ckbx')) {
+                                ckbx = $(elem).closest('tr').find('.ckbx').children()
+                                ckbx.prop("checked", !ckbx.prop("checked"));
+                            }
+                            updateCasesOrStudiesSelection([$(this)], 'cases');
                         }
-                        updateCasesOrStudiesSelection([$(this)], 'cases')
+
                     })
                 },
                 "columnDefs": [
@@ -943,7 +969,9 @@ require([
                         }
                     },
                     {"type": "text", "orderable": true, data: 'PatientID', render: function (data) {
-                            return data;
+                            return data +
+                            ' <a class="copy-this-table" role="button" content="' + data +
+                                '" title="Copy Study ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
                         }
                     },
                     {"type": "num", "orderable": true, data: 'unique_study'},
@@ -1122,7 +1150,7 @@ require([
     }
 
     window.updateStudyTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,updateChildTables,studyID) {
-        let nonViewAbleModality= new Set(["XC"]);
+        let nonViewAbleModality= new Set([""]);
         $('#studies_tab').data('rowsremoved',rowsRemoved);
         $('#studies_tab').data('refreshafterfilter',refreshAfterFilter);
         $('#studies_tab').data('updatechildtables',updateChildTables);
@@ -1226,36 +1254,43 @@ require([
                                 return '<i class="fa-solid fa-circle-minus coll-explain"></i>';
                             }
                             else {
-                                var modality = row['Modality'];
-                                if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                                let modality = row['Modality'];
+                                let is_xc = (modality === "XC" || (Array.isArray(modality) && modality.includes("XC")));
+                                if ( (Array.isArray(modality) && modality.some(function(el){
                                     return nonViewAbleModality.has(el)
-                                }) ) || nonViewAbleModality.has(row['Modality']) )   {
+                                }) ) || nonViewAbleModality.has(modality) )   {
                                     return '<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash not-viewable"></i>';
                                 } else if (( Array.isArray(modality) && modality.includes('SM')) || (modality === 'SM')) {
                                     return '<a href="' + SLIM_VIEWER_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                                  } else {
-                                    let v2_link = OHIF_V2_PATH + data;
+                                    let v2_link = is_xc ? "" : OHIF_V2_PATH + data;
                                     let v3_link = OHIF_V3_PATH + "=" + data;
-                                    let volView_item = '<li title="VolView is disabled for this Study."><a class="disabled">VolView ' +
+                                    let v2_element = '<li title="Not available for this modality."><a class="disabled" href="'
+                                        + v2_link + '" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
+                                    let volView_element = '<li title="VolView is disabled for this Study."><a class="disabled">VolView ' +
                                         '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
                                         '</a></li>';
                                     let bucket = Array.isArray(row['aws_bucket']) ? row['aws_bucket'][0] : row['aws_bucket'];
-                                    if(bucket.indexOf(",") < 0) {
-                                        let volView_link = VOLVIEW_PATH + "=[" + row['crdc_series_uuid'].map(function (i) {
-                                            return "s3://" + row['aws_bucket'] + "/" + i;
-                                        }).join(",") + ']"';
-                                        volView_item = '<li><a class="external-link" href="" url="'+volView_link+'" ' +
-                                        'data-toggle="modal" data-target="#external-web-warning">VolView ' +
-                                        '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
-                                        '</a></li>';
+                                    if(!is_xc) {
+                                        if(bucket.indexOf(",") < 0) {
+                                            let volView_link = VOLVIEW_PATH + "=[" + row['crdc_series_uuid'].map(function (i) {
+                                                return "s3://" + row['aws_bucket'] + "/" + i;
+                                            }).join(",") + ']"';
+                                            volView_element = '<li><a class="external-link" href="" url="'+volView_link+'" ' +
+                                                'data-toggle="modal" data-target="#external-web-warning">VolView ' +
+                                                '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
+                                                '</a></li>';
+                                        }
+                                        v2_element = '<li><a href="'+v2_link+'" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
                                     }
+
                                     return '<a href="' + v2_link + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
                                         '<div class="dropdown viewer-toggle">' +
                                         '<a id="btnGroupDropViewers" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa-solid fa-caret-down"></i></a>' +
                                         '<ul class="dropdown-menu viewer-menu" aria-labelledby="btnGroupDropViewers">' +
-                                        '<li><a href="'+v2_link+'" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>' +
+                                        v2_element +
                                         '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer">OHIF v3</a></li>' +
-                                        volView_item +
+                                        volView_element +
                                         '</ul>' +
                                         '</div>';
                                 }
@@ -1413,7 +1448,7 @@ require([
     }
 
     window.updateSeriesTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,seriesID) {
-        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV", "XC"])
+        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV", "SR"])
         var nonViewAbleSOPClassUID= new Set(["1.2.840.10008.5.1.4.1.1.66"])
         var slimViewAbleModality=new Set(["SM"])
         $('#series_tab').attr('data-rowsremoved', rowsRemoved);
@@ -1495,7 +1530,9 @@ require([
                     "orderable": false,
                     data: 'SeriesInstanceUID',
                     render: function (data, type, row) {
-                        var coll_id="";
+                        let coll_id="";
+                        let modality = row['Modality'];
+                        let is_xc = (modality === "XC" || (Array.isArray(modality) && modality.includes("XC")));
                         if (Array.isArray(row['collection_id'])){
                             coll_id=row['collection_id'][0];
                         } else {
@@ -1510,32 +1547,41 @@ require([
                             || (Array.isArray(row['SOPClassUID']) && row['SOPClassUID'].some(function(el){
                             return nonViewAbleSOPClassUID.has(el)
                         }) ) ||  nonViewAbleSOPClassUID.has(row['SOPClassUID'])) {
-                            let tooltip = (
-                                row['Modality'] === "XC" || (Array.isArray(row['Modality']) && row['Modality'].includes("XC"))
-                            ) ? "not-viewable" : "no-viewer-tooltip";
+                            let tooltip = //is_xc ? "not-viewable" :
+                                "no-viewer-tooltip";
                             return `<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash ${tooltip}"></i>`;
-                        } else if (  ( Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                        } else if (  ( Array.isArray(modality) && modality.some(function(el){
                             return slimViewAbleModality.has(el)}
                         ) ) || (slimViewAbleModality.has(row['Modality']))) {
                             return '<a href="' + SLIM_VIEWER_PATH + row['StudyInstanceUID'] + '/series/' + data +
                                 '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                         } else {
-                            let v2_link = OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' + data;
+                            let v2_link = is_xc ? "" : OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' + data;
                             let v3_link = OHIF_V3_PATH + "=" + row['StudyInstanceUID'] + '&SeriesInstanceUID=' + data;
-                            let volView_link = VOLVIEW_PATH + "=[s3://" + row['aws_bucket'] + '/'+row['crdc_series_uuid']+']"';
-                            let volView_item = '<li><a class="external-link" href="" url="'+volView_link+'" ' +
-                                'data-toggle="modal" data-target="#external-web-warning">VolView ' +
-                                '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
-                                '</a></li>';
-                            return '<a href="' + v2_link + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
+                            let default_viewer = (modality === "XC" || (Array.isArray(modality) && modality.includes("XC"))) ? v3_link : v2_link;
+                            let volView_link = is_xc ? "" : VOLVIEW_PATH + "=[s3://" + row['aws_bucket'] + '/' + row['crdc_series_uuid']+']"';
+                            let v2_element = '<li title="Not available for this modality."><a class="disabled" href="'
+                                + v2_link + '" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
+                            let volView_element = '<li title="VolView is disabled for this Study."><a class="disabled">VolView ' +
+                                        '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
+                                        '</a></li>';
+
+                            if(!is_xc) {
+                                v2_element = '<li><a href="' + v2_link + '" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
+                                volView_element = '<li><a class="external-link" href="" url="' + volView_link + '" ' +
+                                    'data-toggle="modal" data-target="#external-web-warning">VolView ' +
+                                    '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
+                                    '</a></li>';
+                            }
+
+                            return '<a href="' + default_viewer + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
                                 '<div class="dropdown viewer-toggle">' +
                                 '<a id="btnGroupDropViewers" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa-solid fa-caret-down"></i></a>' +
                                 '<ul class="dropdown-menu viewer-menu" aria-labelledby="btnGroupDropViewers">' +
-                                '<li><a href="'+v2_link+'" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>' +
+                                v2_element +
                                 '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer">OHIF v3</a></li>' +
-                                volView_item +
-                                '</ul>' +
-                                '</div>';
+                                volView_element +
+                                '</ul></div>';
                         }
                     }
                 }, {
@@ -1711,9 +1757,8 @@ require([
                         if (!('Program.'+program in window.filterObj)){
                            collObj= collObj.concat(window.projSets[program]);
                         }
-                    } else {
-                        collObj.push(program);
                     }
+                   
                 }
             } else if (ckey.startsWith('Program.')){
                  for (ind=0;ind<window.filterObj[ckey].length;ind++){
