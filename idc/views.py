@@ -35,8 +35,9 @@ from django.utils.html import escape
 
 from google_helpers.stackdriver import StackDriverLogger
 from cohorts.models import Cohort, Cohort_Perms
-from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips, DataSetType
+from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips, DataSetType, DataVersion
 from idc_collections.collex_metadata_utils import build_explorer_context, get_collex_metadata, create_file_manifest
+from solr_helpers import query_solr_and_format_result
 from allauth.socialaccount.models import SocialAccount
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, JsonResponse
@@ -246,6 +247,7 @@ def populate_tables(request):
         fields = None
         collapse_on = None
         filters = json.loads(req.get('filters', '{}'))
+
         offset = int(req.get('offset', '0'))
         limit = int(req.get('limit', '500'))
         if limit > settings.MAX_SOLR_RECORD_REQUEST:
@@ -256,11 +258,29 @@ def populate_tables(request):
         checkIds = json.loads(req.get('checkids', '[]'))
         #table_data = get_table_data(filters, table_type)
         diffA = []
+        versions=[]
+        versions = ImagingDataCommonsVersion.objects.filter(
+            version_number__in=versions
+        ).get_data_versions(active=True) if len(versions) else ImagingDataCommonsVersion.objects.filter(
+            active=True
+        ).get_data_versions(active=True)
+
+        aggregate_level = "SeriesInstanceUID" if table_type == 'series' else "StudyInstanceUID"
+
+        data_types = [DataSetType.IMAGE_DATA,DataSetType.ANCILLARY_DATA,DataSetType.DERIVED_DATA]
+        data_sets = DataSetType.objects.filter(data_type__in=data_types)
+        aux_sources = data_sets.get_data_sources().filter(
+            source_type=DataSource.SOLR,
+            aggregate_level__in=["case_barcode", "sample_barcode", aggregate_level],
+            id__in=versions.get_data_sources().filter(source_type=DataSource.SOLR).values_list("id", flat=True)
+        ).distinct()
+
 
         sources = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
             active=True, source_type=DataSource.SOLR,
-            aggregate_level="SeriesInstanceUID" if table_type == 'series' else "StudyInstanceUID"
+            aggregate_level=aggregate_level
         )
+
 
         sortByField = True
         #idsReq=[]
@@ -366,7 +386,7 @@ def populate_tables(request):
             selFilters[tableIndex] = checkIds
             newCheckIds = get_collex_metadata(
                 selFilters, [tableIndex], record_limit=len(checkIds)+1,sources=sources, records_only=True,
-                collapse_on=tableIndex, counts_only=False, filtered_needed=False, sort=tableIndex+' asc'
+                collapse_on=tableIndex, counts_only=False, filtered_needed=False, aux_sources=aux_sources, sort=tableIndex+' asc'
             )
 
             nset = set([x[tableIndex] for x in newCheckIds['docs']])
@@ -375,7 +395,7 @@ def populate_tables(request):
         if sortByField:
             idsReq = get_collex_metadata(
                 filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=True,
-                collapse_on=tableIndex, counts_only=False, filtered_needed=False, sort=sort_arg
+                collapse_on=tableIndex, counts_only=False, filtered_needed=False, aux_sources=aux_sources, sort=sort_arg
             )
 
             cnt = idsReq['total']
@@ -395,7 +415,7 @@ def populate_tables(request):
             if not table_type == 'series':
                 cntRecs = get_collex_metadata(
                     filters, fields, record_limit=limit, sources=sources, collapse_on=tableIndex, counts_only=True,
-                    records_only=False, filtered_needed=False, custom_facets=custom_facets, raw_format=True
+                    records_only=False, filtered_needed=False, custom_facets=custom_facets, raw_format=True, aux_sources=aux_sources
                 )
 
                 for rec in cntRecs['facets']['per_id']['buckets']:
@@ -410,7 +430,7 @@ def populate_tables(request):
             idsReq = get_collex_metadata(
                 filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=False,
                 collapse_on=tableIndex, counts_only=True, filtered_needed=False, custom_facets=custom_facets_order,
-                raw_format=True
+                raw_format=True, aux_sources=aux_sources
             )
             cnt = idsReq['facets']['tot']
             for rec in idsReq['facets']['per_id']['buckets']:
@@ -428,7 +448,7 @@ def populate_tables(request):
             filters[tableIndex] = idsFilt
             fieldRecs = get_collex_metadata(
                 filters, fields, record_limit=limit, sources=sources, records_only=True, collapse_on=tableIndex,
-                counts_only=False, filtered_needed=False
+                counts_only=False, filtered_needed=False, aux_sources=aux_sources
             )
             for rec in fieldRecs['docs']:
                 id = rec[tableIndex]
@@ -454,7 +474,6 @@ def populate_tables(request):
         status = 400
 
     return JsonResponse(response, status=status)
-
 
 # Data exploration and cohort creation page
 def explore_data_page(request, filter_path=False, path_filters=None):
@@ -570,7 +589,13 @@ def explore_data_page(request, filter_path=False, path_filters=None):
         # In the case of is_json=True, the 'context' is simply attr_by_source
         return JsonResponse(context, status=status)
 
-    return render(request, 'idc/explore.html', context)
+    try:
+        return render(request, 'idc/explore.html', context)
+    except Exception as e:
+        logger.error("[ERROR] While attempting to render the search page:")
+        logger.exception(e)
+
+    return redirect(reverse('landing_page'))
 
 
 def explorer_manifest(request):
