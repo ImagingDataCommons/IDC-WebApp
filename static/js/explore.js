@@ -18,7 +18,7 @@
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
     paths: {
-        jquery: 'libs/jquery-3.5.1',
+        jquery: 'libs/jquery-3.7.1.min',
         bootstrap: 'libs/bootstrap.min',
         jqueryui: 'libs/jquery-ui.min',
         underscore: 'libs/underscore-min',
@@ -63,6 +63,10 @@ require([
     'tablesorter'
 ], function ($, tippy, base) {
     var saving_cohort = false;
+
+    $('#external-web-warning').on('show.bs.modal', function(){
+        $('#collection-modal').hide();
+    })
 
     $('#save-cohort-modal').on('show.bs.modal', function() {
 
@@ -222,43 +226,11 @@ require([
         $('#save-cohort-modal').prop("saving", "saving");
     });
 
-    tippy('.collection_name', {
-        content: function(reference) {
-            let warning='<p style="color:red">Some or all of the image files in this collection are not publicly available.</p>'
-            let tooltip = collection_tooltips[$(reference).siblings('input.collection_value').attr('value')];
-            let collection_id=$(reference)[0].id
-            if(tooltip) {
-                if ((collection_id in window.collection) && (window.collection[collection_id].access==='Public')) {
-                    return '<div class="collection-tooltip">' + tooltip + '</div>';
-                } else {
-                    return '<div class="collection-tooltip">' + tooltip + warning + '</div>';
-                }
-            }
-            return '<span></span>';
-        },
-        theme: 'light',
-        placement: 'right-end',
-        arrow: false,
-        allowHTML: true,
-        interactive: true
+    $('#collection_modal_button').on("click", function(){
+        $('#collection-modal').removeClass('in');
+        $('#collection-modal').css("display","none");
     });
-
-    tippy.delegate('div#analysis_results_id', {
-        content: function(reference) {
-            let tooltip = analysis_results_tooltips[$(reference).siblings('input').attr('value')];
-            if(tooltip) {
-                return '<div class="collection-tooltip">' + tooltip + '</div>';
-            }
-            return '<span></span>';
-        },
-        theme: 'light',
-        placement: 'right-end',
-        target: 'span.value',
-        arrow: false,
-        allowHTML: true,
-        interactive: true
-    });
-
+/*
     tippy.delegate('table#proj_table', {
         content: function(reference) {
             let collection_id=$(reference).parent('tr').data('projectid');
@@ -277,7 +249,7 @@ require([
         interactiveBorder: 10,
         maxWidth: 600,
     });
-
+*/
     const temp='<html><strong>now</strong></html>';
 
     tippy('.case-info', {
@@ -365,6 +337,38 @@ require([
     });
 
     tippy.delegate('.studies-table', {
+        content: 'Copied!',
+        theme: 'blue',
+        placement: 'right',
+        arrow: true,
+        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
+        target: '.copy-this-table',
+        onShow(instance) {
+            setTimeout(function() {
+                instance.hide();
+            }, 1000);
+        },
+        trigger: "click",
+        maxWidth: 85
+    });
+
+    tippy.delegate('.projects-table', {
+        content: 'Copied!',
+        theme: 'blue',
+        placement: 'right',
+        arrow: true,
+        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
+        target: '.copy-this-table',
+        onShow(instance) {
+            setTimeout(function() {
+                instance.hide();
+            }, 1000);
+        },
+        trigger: "click",
+        maxWidth: 85
+    });
+
+    tippy.delegate('.cases-table', {
         content: 'Copied!',
         theme: 'blue',
         placement: 'right',

@@ -164,7 +164,9 @@ else:
 
 APP_VERSION = os.environ.get("APP_VERSION", VERSION)
 
-DEV_TIER = bool(DEBUG or re.search(r'^dev\.', APP_VERSION))
+DEV_TIER = bool(DEBUG or re.search(r'^local-dev\.', APP_VERSION))
+
+print("[STATUS] DEV_TIER setting is {}".format(DEV_TIER))
 
 # If this is a GAE-Flex deployment, we don't need to specify SSL; the proxy will take
 # care of that for us
@@ -296,6 +298,7 @@ SECURE_HSTS_SECONDS            = int(os.environ.get('SECURE_HSTS_SECONDS','3600'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'idc.domain_redirect_middleware.DomainRedirectMiddleware',
+    'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'idc.checkreqsize_middleware.CheckReqSize',
@@ -679,7 +682,8 @@ DEFAULT_FETCH_COUNT = os.environ.get('DEFAULT_FETCH_COUNT', 10)
 
 
 # Explicitly check for known problems in descrpitions and names provided by users
-BLACKLIST_RE = r'((?i)<script>|(?i)</script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|(?i)<iframe>|(?i)</iframe>)'
+DENYLIST_RE = r'((?i)<script>|(?i)</script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|(?i)<iframe>|(?i)</iframe>)'
+ATTRIBUTE_DISALLOW_RE = r'([^a-zA-Z0-9_])'
 
 if DEBUG and DEBUG_TOOLBAR:
     INSTALLED_APPS += ('debug_toolbar',)
@@ -715,10 +719,9 @@ MIDDLEWARE.append('axes.middleware.AxesMiddleware',)
 # default is to add trailing '/' to urls ie /callback becomes /callback/. Ohif does not like /callback/ !
 APPEND_SLASH = False
 
-# If these are both available, the UI will offer the option of 2 different OHIF versions
-# if only one is set, that will be offered as a single link/button
 OHIF_V2_PATH=os.environ.get('OHIF_V2_PATH','')
 OHIF_V3_PATH=os.environ.get('OHIF_V3_PATH','')
+VOLVIEW_PATH=os.environ.get('VOLVIEW_PATH','')
 
 SLIM_VIEWER_PATH=os.environ.get('SLIM_VIEWER_PATH','')
 

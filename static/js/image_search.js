@@ -18,7 +18,7 @@
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
     paths: {
-        jquery: 'libs/jquery-3.5.1',
+        jquery: 'libs/jquery-3.7.1.min',
         bootstrap: 'libs/bootstrap.min',
         jqueryui: 'libs/jquery-ui.min',
         base: 'base',
@@ -714,14 +714,30 @@ require([
                 "createdRow": function (row, data, dataIndex) {
                     $(row).data('projectid', data[0]);
                     $(row).attr('id', 'project_row_' + data[0]);
-                    $(row).on('click', function(event){
+                    $(row).on('click', function(event) {
                         var elem = event.target;
-                        if (!$(elem).parent().hasClass('ckbx')) {
-                            ckbx=$(elem).closest('tr').find('.ckbx').children()
-                            ckbx.prop("checked", !ckbx.prop("checked"));
-                        }
-                        updateProjectSelection([$(this)])
-                    })
+                        if ((!$(elem).hasClass('collection_info')) && (!$(elem).hasClass('copy-this-table')) && (!$(elem).hasClass('fa-copy'))){
+                            if (!$(elem).parent().hasClass('ckbx')) {
+                                ckbx = $(elem).closest('tr').find('.ckbx').children()
+                                ckbx.prop("checked", !ckbx.prop("checked"));
+                             }
+                        updateProjectSelection([$(this)]);
+                       }
+                       if ($(elem).hasClass('collection_info')){
+                           displayInfo($(elem));
+                       }
+                    });
+                    $(row).find('.collection_info').on("mouseenter", function(e){
+                        $(e.target).addClass('fa-lg');
+                        $(e.target).parent().parent().data("clickForInfo",false);;
+                      });
+                $(row).find('.collection_info').on("mouseleave", function(e){
+                      $(e.target).parent().parent().data("clickForInfo",false);
+                      $(e.target).removeClass('fa-lg');
+                  //$(e.target).css('style','background:transparent')
+                  });
+
+
                 },
                 "columnDefs": [
                     {className: "ckbx text_data", "targets": [0]},
@@ -739,7 +755,13 @@ require([
                             }
                         }
                     },
-                    {"type": "text", "orderable": true},
+                    {"type": "html", "orderable": true, render: function (td, data, row){
+                        return '<span id="'+row[0]+'"class="collection_name value">'+row[1]+'</span>\n' +
+                            '<span><i class="collection_info fa-solid fa-info-circle" value="'+row[0]+'" data-filter-display-val="'+row[1]+'"></i></span>'+
+                            ' <a class="copy-this-table" role="button" content="' + row[0] +
+                                '" title="Copy the IDC collection_id to the clipboard"><i class="fa-solid fa-copy"></i></a>'
+
+                        }},
                     {"type": "num", orderable: true},
                     {
                         "type": "num", orderable: true, "createdCell": function (td, data, row) {
@@ -911,11 +933,15 @@ require([
                     $(row).addClass('project_' + data['collection_id']);
                     $(row).on('click', function(event){
                         var elem = event.target;
-                        if (!$(elem).parent().hasClass('ckbx')) {
-                            ckbx = $(elem).closest('tr').find('.ckbx').children()
-                            ckbx.prop("checked", !ckbx.prop("checked"));
+
+                        if (!($(elem).is('a')) && !($(elem).hasClass('fa-copy'))){
+                            if (!$(elem).parent().hasClass('ckbx')) {
+                                ckbx = $(elem).closest('tr').find('.ckbx').children()
+                                ckbx.prop("checked", !ckbx.prop("checked"));
+                            }
+                            updateCasesOrStudiesSelection([$(this)], 'cases');
                         }
-                        updateCasesOrStudiesSelection([$(this)], 'cases')
+
                     })
                 },
                 "columnDefs": [
@@ -943,7 +969,9 @@ require([
                         }
                     },
                     {"type": "text", "orderable": true, data: 'PatientID', render: function (data) {
-                            return data;
+                            return data +
+                            ' <a class="copy-this-table" role="button" content="' + data +
+                                '" title="Copy Case ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
                         }
                     },
                     {"type": "num", "orderable": true, data: 'unique_study'},
@@ -1101,14 +1129,9 @@ require([
                                 "recordsFiltered": window.casesCache.recordsTotal
                             })
                         }
-
                     }
-
                 }
-
-
             });
-
         }
         catch(err){
             alert("The following error occurred trying to update the case table:" +err+". Please alert the systems administrator");
@@ -1119,17 +1142,15 @@ require([
                 this.style.width=null;
                 }
             );
-
         })
 
         $('#cases_tab').find('tbody').attr('id','cases_table');
         $('#cases_panel').find('.dataTables_controls').find('.dataTables_length').after('<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" type="number"><button onclick="changePage(\'cases_tab_wrapper\')">Go</button></div>');
         $('#cases_panel').find('.dataTables_controls').find('.dataTables_paginate').after('<div class="dataTables_filter"><strong>Find by Case ID:</strong><input class="caseID_inp" type="text-box" value="'+caseID+'"><button onclick="filterTable(\'cases_panel\',\'caseID\')">Go</button></div>');
-
     }
 
     window.updateStudyTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,updateChildTables,studyID) {
-        let nonViewAbleModality= new Set(["XC"]);
+        let nonViewAbleModality= new Set([""]);
         $('#studies_tab').data('rowsremoved',rowsRemoved);
         $('#studies_tab').data('refreshafterfilter',refreshAfterFilter);
         $('#studies_tab').data('updatechildtables',updateChildTables);
@@ -1156,7 +1177,11 @@ require([
                     $(row).addClass('case_' + data['PatientID']);
                     $(row).on('click', function(event){
                         var elem = event.target;
-                        if (!($(elem).is('a')) && !($(elem).hasClass('fa-download')) && !($(elem).hasClass('fa-copy')) && !($(elem).hasClass('fa-eye')) && !($(elem).hasClass('tippy-box'))  && !($(elem).parents().hasClass('tippy-box'))  ) {
+                        if (!($(elem).is('a')) && !($(elem).hasClass('fa-download'))
+                            && !($(elem).hasClass('fa-copy')) && !($(elem).hasClass('fa-eye'))
+                            && !($(elem).hasClass('tippy-box'))  && !($(elem).parents().hasClass('tippy-box'))
+                            && !($(elem).hasClass('viewer-toggle')) && !($(elem).parents().hasClass('viewer-toggle'))
+                        ) {
                             if (!$(elem).parent().hasClass('ckbx')) {
                                 ckbx = $(elem).closest('tr').find('.ckbx').children()
                                 ckbx.prop("checked", !ckbx.prop("checked"));
@@ -1189,28 +1214,25 @@ require([
                                 return '<input type="checkbox" class="tbl-sel">';
                             }
                         }
-                    },
-                    {
+                    },{
                         "type": "text", "orderable": true, data: 'PatientID', render: function (data) {
                             return data;
                         }
-                    },
-                    {
+                    },{
                         "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
                             return pretty_print_id(data) +
                             ' <a class="copy-this-table" role="button" content="' + data +
-                                '" title="Copy Study ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
+                                '" title="Copy StudyInstanceUID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
                         },
                         "createdCell": function (td, data) {
                             $(td).data('study-id', data);
                             return;
                         }
-                    },
-                    {
+                    },{
                         "type": "text", "orderable": true, data: 'StudyDate', render: function (data) {
                             // fix when StudyData is an array of values
                             var dt = new Date(Date.parse(data));
-                            var dtStr = (dt.getMonth() + 1).toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getDate().toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getFullYear().toString();
+                            var dtStr = (dt.getUTCMonth() + 1).toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getUTCDate().toLocaleString('en-US', {minimumIntegerDigits: 2}) + "-" + dt.getUTCFullYear().toString();
                             return dtStr;
                         }
                     },
@@ -1232,25 +1254,50 @@ require([
                                 return '<i class="fa-solid fa-circle-minus coll-explain"></i>';
                             }
                             else {
-                                var modality = row['Modality'];
-                                if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                                let modality = row['Modality'];
+                                let is_xc = (modality === "XC" || (Array.isArray(modality) && modality.includes("XC")));
+                                if ( (Array.isArray(modality) && modality.some(function(el){
                                     return nonViewAbleModality.has(el)
-                                }) ) || nonViewAbleModality.has(row['Modality']) )   {
+                                }) ) || nonViewAbleModality.has(modality) )   {
                                     return '<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash not-viewable"></i>';
                                 } else if (( Array.isArray(modality) && modality.includes('SM')) || (modality === 'SM')) {
                                     return '<a href="' + SLIM_VIEWER_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                                  } else {
-                                    let v3_link = '';
-                                    if(OHIF_V3_PATH) {
-                                        v3_link = ' | <a href="' + OHIF_V3_PATH + data + '" target="_blank" rel="noopener noreferrer">v3'
+                                    let v2_link = is_xc ? "" : OHIF_V2_PATH + data;
+                                    let v3_link = OHIF_V3_PATH + "=" + data;
+                                    let v2_element = '<li title="Not available for this modality."><a class="disabled" href="'
+                                        + v2_link + '" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
+                                    let default_viewer = (modality === "XC" || (Array.isArray(modality) && modality.includes("XC"))) ? v3_link : v2_link;
+                                    let volView_element = '<li title="VolView is disabled for this Study."><a class="disabled">VolView ' +
+                                        '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
+                                        '</a></li>';
+                                    let bucket = Array.isArray(row['aws_bucket']) ? row['aws_bucket'][0] : row['aws_bucket'];
+                                    if(!is_xc) {
+                                        if(bucket.indexOf(",") < 0) {
+                                            let volView_link = VOLVIEW_PATH + "=[" + row['crdc_series_uuid'].map(function (i) {
+                                                return "s3://" + row['aws_bucket'] + "/" + i;
+                                            }).join(",") + ']"';
+                                            volView_element = '<li><a class="external-link" href="" url="'+volView_link+'" ' +
+                                                'data-toggle="modal" data-target="#external-web-warning">VolView ' +
+                                                '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
+                                                '</a></li>';
+                                        }
+                                        v2_element = '<li><a href="'+v2_link+'" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
                                     }
-                                    return '<a href="' + OHIF_V2_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
-                                        v3_link
+
+                                    return '<a href="' + default_viewer + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
+                                        '<div class="dropdown viewer-toggle">' +
+                                        '<a id="btnGroupDropViewers" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa-solid fa-caret-down"></i></a>' +
+                                        '<ul class="dropdown-menu viewer-menu" aria-labelledby="btnGroupDropViewers">' +
+                                        v2_element +
+                                        '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer">OHIF v3</a></li>' +
+                                        volView_element +
+                                        '</ul>' +
+                                        '</div>';
                                 }
                             }
                         }
-                    },
-                    {
+                    }, {
                           "type":"html",
                           "orderable": false,
                           data: 'StudyInstanceUID', render: function (data){
@@ -1399,11 +1446,11 @@ require([
         $('#studies_tab').children('tbody').attr('id','studies_table');
         $('#studies_tab_wrapper').find('.dataTables_controls').find('.dataTables_length').after('<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" type="number"><button onclick="changePage(\'studies_tab_wrapper\')">Go</button></div>');
         $('#studies_tab_wrapper').find('.dataTables_controls').find('.dataTables_paginate').after('<div class="dataTables_filter"><strong>Find by Study Instance UID:</strong><input class="studyID_inp" type="text-box" value="'+studyID+'"><button onclick="filterTable(\'studies_tab_wrapper\',\'studyID\')">Go</button></div>');
-
     }
 
     window.updateSeriesTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,seriesID) {
-        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV", "XC"])
+        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV", "SR"])
+        var nonViewAbleSOPClassUID= new Set(["1.2.840.10008.5.1.4.1.1.66"])
         var slimViewAbleModality=new Set(["SM"])
         $('#series_tab').attr('data-rowsremoved', rowsRemoved);
         $('#series_tab').attr('data-refreshafterfilter', refreshAfterFilter);
@@ -1443,7 +1490,7 @@ require([
                     "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
                         return pretty_print_id(data) +
                             ' <a class="copy-this-table" role="button" content="' + data +
-                                '"  title="Copy Study ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
+                                '"  title="Copy StudyInstanceUID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
                     }, "createdCell": function (td, data) {
                         $(td).data('study-id', data);
                         return;
@@ -1452,7 +1499,7 @@ require([
                     "type": "text", "orderable": true, data: 'SeriesInstanceUID', render: function (data) {
                         return pretty_print_id(data) +
                             ' <a class="copy-this-table" role="button" content="' + data +
-                                '"  title="Copy Series ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
+                                '"  title="Copy SeriesInstanceUID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
                     }, "createdCell": function (td, data) {
                         $(td).data('series-id', data);
                         return;
@@ -1479,12 +1526,14 @@ require([
 
                         }
                     },
-                },  {
+                }, {
                     "type": "html",
                     "orderable": false,
                     data: 'SeriesInstanceUID',
                     render: function (data, type, row) {
-                        var coll_id="";
+                        let coll_id="";
+                        let modality = row['Modality'];
+                        let is_xc = (modality === "XC" || (Array.isArray(modality) && modality.includes("XC")));
                         if (Array.isArray(row['collection_id'])){
                             coll_id=row['collection_id'][0];
                         } else {
@@ -1495,37 +1544,54 @@ require([
                         }
                         else if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){
                             return nonViewAbleModality.has(el)
-                        }) ) || nonViewAbleModality.has(row['Modality']) )   {
-                            let tooltip = (
-                                row['Modality'] === "XC" || (Array.isArray(row['Modality']) && row['Modality'].includes("XC"))
-                            ) ? "not-viewable" : "no-viewer-tooltip";
+                        }) ) || nonViewAbleModality.has(row['Modality'])
+                            || (Array.isArray(row['SOPClassUID']) && row['SOPClassUID'].some(function(el){
+                            return nonViewAbleSOPClassUID.has(el)
+                        }) ) ||  nonViewAbleSOPClassUID.has(row['SOPClassUID'])) {
+                            let tooltip = //is_xc ? "not-viewable" :
+                                "no-viewer-tooltip";
                             return `<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash ${tooltip}"></i>`;
-                        } else if (  ( Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                        } else if (  ( Array.isArray(modality) && modality.some(function(el){
                             return slimViewAbleModality.has(el)}
                         ) ) || (slimViewAbleModality.has(row['Modality']))) {
                             return '<a href="' + SLIM_VIEWER_PATH + row['StudyInstanceUID'] + '/series/' + data +
                                 '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                         } else {
-                            let v3_link = '';
-                            if(OHIF_V3_PATH) {
-                                v3_link = ' | <a href="' + OHIF_V3_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' +
-                                data + '" target="_blank" rel="noopener noreferrer">v3'
+                            let v2_link = is_xc ? "" : OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' + data;
+                            let v3_link = OHIF_V3_PATH + "=" + row['StudyInstanceUID'] + '&SeriesInstanceUID=' + data;
+                            let default_viewer = (modality === "XC" || (Array.isArray(modality) && modality.includes("XC"))) ? v3_link : v2_link;
+                            let volView_link = is_xc ? "" : VOLVIEW_PATH + "=[s3://" + row['aws_bucket'] + '/' + row['crdc_series_uuid']+']"';
+                            let v2_element = '<li title="Not available for this modality."><a class="disabled" href="'
+                                + v2_link + '" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
+                            let volView_element = '<li title="VolView is disabled for this Study."><a class="disabled">VolView ' +
+                                        '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
+                                        '</a></li>';
+
+                            if(!is_xc) {
+                                v2_element = '<li><a href="' + v2_link + '" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
+                                volView_element = '<li><a class="external-link" href="" url="' + volView_link + '" ' +
+                                    'data-toggle="modal" data-target="#external-web-warning">VolView ' +
+                                    '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
+                                    '</a></li>';
                             }
-                            return '<a href="' + OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' +
-                                data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
-                                v3_link
+
+                            return '<a href="' + default_viewer + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>' +
+                                '<div class="dropdown viewer-toggle">' +
+                                '<a id="btnGroupDropViewers" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa-solid fa-caret-down"></i></a>' +
+                                '<ul class="dropdown-menu viewer-menu" aria-labelledby="btnGroupDropViewers">' +
+                                v2_element +
+                                '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer">OHIF v3</a></li>' +
+                                volView_element +
+                                '</ul></div>';
                         }
-
                     }
-                },
-                      {
-                          "type":"html",
-                          "orderable": false,
-                          data: 'SeriesInstanceUID', render: function (data){
-                              return '<i class="fa fa-download series-export" data-uid="'+data+'"data-toggle="modal" data-target="#export-manifest-modal"></i>'
-                          }
-
+                }, {
+                      "type":"html",
+                      "orderable": false,
+                      data: 'SeriesInstanceUID', render: function (data){
+                          return '<i class="fa fa-download series-export" data-uid="'+data+'"data-toggle="modal" data-target="#export-manifest-modal"></i>'
                       }
+                  }
             ],
             "processing": true,
             "serverSide": true,
@@ -1658,7 +1724,7 @@ require([
         reformDic[listId] = new Object();
         for (item in progDic){
             if ((item !=='All') && (item !=='None') && (item in window.programs) && (Object.keys(progDic[item]['projects']).length>0)){
-                if ( Object.keys(window.programs[item]['projects']).length===1) {
+                if ( Object.keys(window.programs[item]['projects']).length===-1) {
                     nitem=Object.keys(progDic[item]['projects'])[0];
                     reformDic[listId][nitem]=new Object();
                     reformDic[listId][nitem]['count'] = progDic[item]['val'];
@@ -1692,9 +1758,8 @@ require([
                         if (!('Program.'+program in window.filterObj)){
                            collObj= collObj.concat(window.projSets[program]);
                         }
-                    } else {
-                        collObj.push(program);
                     }
+                   
                 }
             } else if (ckey.startsWith('Program.')){
                  for (ind=0;ind<window.filterObj[ckey].length;ind++){
@@ -1827,100 +1892,78 @@ require([
             beforeSend: function(xhr){xhr.setRequestHeader("X-CSRFToken", csrftoken);},
             success: function (data) {
                 try {
-                    var isFiltered = Boolean($('#search_def p').length > 0);
-                    if (is_cohort) {
-                        if (file_parts_count > display_file_parts_count) {
-                            $('#file-export-option').prop('title', 'Your cohort exceeds the maximum for download.');
-                            $('#file-export-option input').prop('disabled', 'disabled');
-                            $('#file-export-option input').prop('checked', false);
-                            $('#file-manifest').hide();
-                            if (!user_is_social) {
-                                $('#need-social-account').show();
-                            } else {
-                                $('#file-manifest-max-exceeded').show();
-                                $('#bq-export-option input').prop('checked', true).trigger("click");
-                            }
-                        } else {
-                            $('#file-manifest-max-exceeded').hide();
-                            $('#file-manifest').show();
-
-                            var select_box_div = $('#file-part-select-box');
-                            var select_box = select_box_div.find('select');
-                            if (file_parts_count > 1) {
-                                select_box_div.show();
-                                for (let i = 0; i < display_file_parts_count; ++i) {
-                                    select_box.append($('<option/>', {
-                                        value: i,
-                                        text: "File Part " + (i + 1)
-                                    }));
-                                }
-                            } else {
-                                select_box_div.hide();
-                            }
-                        }
-                        $('#search_def_stats').removeClass('notDisp');
-                        $('#search_def_stats').html(data.totals.PatientID.toString() +
-                            " Cases, " + data.totals.StudyInstanceUID.toString() +
-                            " Studies, and " + data.totals.SeriesInstanceUID.toString() +
-                            " Series in this cohort. " +
-                            "Size on disk: " + data.totals.disk_size);
-
-                        if (('filtered_counts' in data) && ('access' in data['filtered_counts']['origin_set']['All']['attributes']) && ('Limited' in data['filtered_counts']['origin_set']['All']['attributes']['access']) && (data['filtered_counts']['origin_set']['All']['attributes']['access']['Limited']['count']>0) ){
-                            $('#search_def_access').removeClass('notDisp');
-                            $('.access_warn').removeClass('notDisp');
-                        }
-                        else {
-                            $('#search_def_access').addClass('notDisp');
-                            $('.access_warn').addClass('notDisp');
-                        }
+                    let file_parts_count = (is_cohort ? cohort_file_parts_count : data.totals.file_parts_count);
+                    let display_file_parts_count = (is_cohort ? cohort_display_file_parts_count : data.totals.display_file_parts_count);
+                    let isFiltered = Boolean($('#search_def p').length > 0);
+                    if(data.totals.SeriesInstanceUID > 65000) {
+                        $('#s5cmd-max-exceeded').show();
+                        $('#download-s5cmd').attr('disabled','disabled');
+                        $('#s5cmd-button-wrapper').addClass('manifest-disabled');
                     } else {
-                        if (isFiltered && data.total > 0) {
-                            $('#save-cohort-btn').prop('disabled', '');
-                            if (user_is_auth) {
-                                $('#save-cohort-btn').prop('title', '');
-                            }
-                            $('#search_def_stats').removeClass('notDisp');
-                            $('#search_def_stats').html(data.totals.PatientID.toString() + " Cases, " +
-                                data.totals.StudyInstanceUID.toString()+" Studies, and " +
-                                data.totals.SeriesInstanceUID.toString()+" Series in this cohort. " +
-                                "Size on disk: " + data.totals.disk_size);
-                            let select_box_div = $('#file-part-select-box');
-                            let select_box = select_box_div.find('select');
-                            if (data.totals.file_parts_count > 1) {
-                                select_box_div.show();
-                                for (let i = 0; i < data.totals.display_file_parts_count; ++i) {
-                                    select_box.append($('<option/>', {
-                                        value: i,
-                                        text : "File Part " + (i + 1)
-                                    }));
-                                }
-                            } else {
-                                select_box_div.hide();
-                            }
-                            if (('filtered_counts' in data) && ('access' in data['filtered_counts']['origin_set']['All']['attributes']) && ('Limited' in data['filtered_counts']['origin_set']['All']['attributes']['access']) && (data['filtered_counts']['origin_set']['All']['attributes']['access']['Limited']['count']>0) ){
-                               $('#search_def_access').removeClass('notDisp');
-                               $('.access_warn').removeClass('notDisp');
-                            } else {
-                                $('#search_def_access').addClass('notDisp');
-                                $('.access_warn').addClass('notDisp');
+                        $('#s5cmd-max-exceeded').hide();
+                        $('#s5cmd-button-wrapper').removeClass('manifest-disabled');
+                        $('#download-s5cmd').removeAttr('disabled');
+                    }
+                    if (file_parts_count > display_file_parts_count) {
+                        $('#file-export-option').prop('title', 'Your cohort exceeds the maximum for download.');
+                        $('#file-manifest-max-exceeded').show();
+                        $('#file-export-option input').prop('disabled', 'disabled');
+                        $('#file-export-option input').prop('checked', false);
+                        $('#file-manifest').hide();
+                        $('#file-part-select-box select').attr('disabled','disabled');
+                        $('.file-manifest-button-wrapper a').attr('disabled','disabled');
+                        $('.file-manifest-button-wrapper').addClass('manifest-disabled');
+                    } else {
+                        $('#file-manifest-max-exceeded').hide();
+                        $('#file-manifest').show();
+                        $('#file-part-select-box select').removeAttr('disabled');
+                        $('.file-manifest-button-wrapper a').removeAttr('disabled');
+                        $('.file-manifest-button-wrapper').removeClass('manifest-disabled');
+                        var select_box_div = $('#file-part-select-box');
+                        var select_box = select_box_div.find('select');
+                        if (file_parts_count > 1) {
+                            select_box_div.show();
+                            for (let i = 0; i < display_file_parts_count; ++i) {
+                                select_box.append($('<option/>', {
+                                    value: i,
+                                    text: "File Part " + (i + 1)
+                                }));
                             }
                         } else {
-                            $('#search_def_access').addClass('notDisp');
-                            $('.access_warn').addClass('notDisp');
-                            $('#save-cohort-btn').prop('disabled', 'disabled');
-                            if (data.total <= 0) {
-                                $('#search_def_stats').removeClass('notDisp');
-                                $('#search_def_stats').html('<span style="color:red">There are no cases matching the selected set of filters</span>');
-                                //window.alert('There are no cases matching the selected set of filters.')
-                            } else {
-                                $('#search_def_stats').addClass('notDisp');
-                                $('#search_def_stats').html("Don't show this!");
-                            }
-                            if (user_is_auth) {
-                                $('#save-cohort-btn').prop('title', data.total > 0 ? 'Please select at least one filter.' : 'There are no cases in this cohort.');
-                            } else {
-                                $('#save-cohort-btn').prop('title', 'Log in to save.');
-                            }
+                            select_box_div.hide();
+                        }
+                    }
+                    if (('filtered_counts' in data) && ('origin_set' in data['filtered_counts']) &&
+                        ('access' in data['filtered_counts']['origin_set']['All']['attributes']) &&
+                        ('Limited' in data['filtered_counts']['origin_set']['All']['attributes']['access']) &&
+                        (data['filtered_counts']['origin_set']['All']['attributes']['access']['Limited']['count']>0) ){
+                        $('#search_def_access').removeClass('notDisp');
+                        $('.access_warn').removeClass('notDisp');
+                    }
+                    else {
+                        $('#search_def_access').addClass('notDisp');
+                        $('.access_warn').addClass('notDisp');
+                    }
+                    if(is_cohort || (isFiltered && data.total > 0)) {
+                        $('#search_def_stats').removeClass('notDisp');
+                        $('#search_def_stats').html(data.totals.PatientID.toString() + " Cases, " +
+                            data.totals.StudyInstanceUID.toString() + " Studies, and " +
+                            data.totals.SeriesInstanceUID.toString() + " Series in this cohort. " +
+                            "Size on disk: " + data.totals.disk_size);
+                    } else if(isFiltered && data.total <= 0) {
+                        $('#search_def_stats').removeClass('notDisp');
+                        $('#search_def_stats').html('<span style="color:red">There are no cases matching the selected set of filters</span>');
+                    } else {
+                        $('#search_def_stats').addClass('notDisp');
+                    }
+                    if (is_cohort) {
+                        ((file_parts_count > display_file_parts_count) && !user_is_social)  && $('#need-social-account').show();
+                    } else {
+                        data.total > 0 && $('#save-cohort-btn').removeAttr('disabled');
+                        if (user_is_auth) {
+                            $('#save-cohort-btn').prop('title', data.total > 0 ? 'Please select at least one filter.' : 'There are no cases in this cohort.');
+                        } else {
+                            $('#save-cohort-btn').prop('title', 'Log in to save.');
                         }
                     }
                     //updateCollectionTotals(data.total, data.origin_set.attributes.collection_id);
@@ -2902,6 +2945,54 @@ require([
     };
 
 
+    $('.collection_info, .analysis_info').on("mouseenter", function(e){
+        $(e.target).addClass('fa-lg');
+        $(e.target).parent().parent().data("clickForInfo",false);;
+    });
+    $('.collection_info, .analysis_info').on("mouseleave", function(e){
+           $(e.target).parent().parent().data("clickForInfo",false);
+           $(e.target).removeClass('fa-lg');
+           //$(e.target).css('style','background:transparent')
+    });
+
+
+
+
+    $('#collection_modal_button').on("click", function(){
+        $('#collection-modal').removeClass('in');
+        $('#collection-modal').css("display","none");
+    });
+
+    var displayInfo = function(targ) {
+
+        let collection_id=$(targ).attr('value');
+        let collectionDisp=$(targ).data('filterDisplayVal')
+
+        let pos =$(targ).parent().find('.collection_info, .analysis_info').offset();
+        let info_icon = $(targ).parent().find('.collection_info, .analysis_info');
+        let tooltip='';
+        if ($(info_icon).hasClass('collection_info')){
+            tooltip = collection_tooltips[collection_id];
+        }
+        else {
+            tooltip = analysis_results_tooltips[collection_id];
+        }
+
+        $('#collection-modal').find('#collecton-modal-title').text(collectionDisp);
+        $('#collection-modal').find('.modal-body').html(tooltip);
+
+        $('#collection-modal').addClass('fade');
+        $('#collection-modal').addClass('in');
+        $('#collection-modal').css("display","block");
+        var width=$('#collection-modal').find('.modal-content').outerWidth();
+        var height =$('#collection-modal').find('.modal-content').outerHeight();
+        $('#collection-modal').height(height);
+            $('#collection-modal').width(width);
+            
+        $('#collection-modal').css({position:"absolute", top: Math.max((pos.top-height),0), left: pos.left })
+    }
+
+
     var filterItemBindings = function (filterId) {
 
         $('#' + filterId).find('.join_val').on('click', function () {
@@ -2913,8 +3004,27 @@ require([
             }
         });
 
-        $('#' + filterId).find('input:checkbox').not('#hide-zeros').on('click', function () {
-            handleFilterSelectionUpdate(this, true, true);
+        $('#' + filterId).find('.collection_info, .analysis_info').on("mouseenter", function(e){
+        $(e.target).addClass('fa-lg');
+         });
+
+       $('#' + filterId).find('.collection_info, .analysis_info').on("mouseleave", function(e){
+           $(e.target).removeClass('fa-lg');
+       });
+
+
+
+         $('#' + filterId).find('input:checkbox').not('#hide-zeros').on('click', function (e) {
+            var targ=e.target;
+
+            if ($(e.target).parent().find('.collection_info.fa-lg, .analysis_info.fa-lg').length>0){
+                $(targ).prop("checked",!$(targ).prop("checked"));
+                displayInfo(targ);
+            }
+            else{
+              handleFilterSelectionUpdate(this, true, true);
+            }
+
         });
 
         $('#' + filterId).find('.show-more').on('click', function () {
@@ -3211,8 +3321,12 @@ require([
                            if ($(selEle).find('input[data-filter-attr-id="' + filter['id'] + '"][value="' + val + '"]').length>0) {
                                attValueFoundInside = true;
                            }
-                           $('input[data-filter-attr-id="' + filter['id'] + '"][value="' + val + '"]').prop("checked", true);
-                           checkFilters($('input[data-filter-attr-id="' + filter['id'] + '"][value="' + val + '"]'));
+                           let value=val;
+                           if ($(selEle).hasClass('isRng')){
+                              value= val.split(',').join(' to ');
+                           }
+                           $('input[data-filter-attr-id="' + filter['id'] + '"][value="' + value + '"]').prop("checked", true);
+                           checkFilters($('input[data-filter-attr-id="' + filter['id'] + '"][value="' + value + '"]'));
                       });
                   }
                 if (attValueFoundInside){
@@ -3426,7 +3540,6 @@ require([
      });
 
     $('.fa-search').on("click",function(){
-         //alert('hi');
          srch=$(this).parent().parent().parent().find('.text-filter, .collection-text-filter, .analysis-text-filter');
 
          if (srch.hasClass('notDisp')) {

@@ -35,8 +35,9 @@ from django.utils.html import escape
 
 from google_helpers.stackdriver import StackDriverLogger
 from cohorts.models import Cohort, Cohort_Perms
-from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips, DataSetType
+from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips, DataSetType, DataVersion
 from idc_collections.collex_metadata_utils import build_explorer_context, get_collex_metadata, create_file_manifest
+from solr_helpers import query_solr_and_format_result
 from allauth.socialaccount.models import SocialAccount
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, JsonResponse
@@ -84,7 +85,8 @@ def landing_page(request):
         "Intraocular",
         "Mesothelium",
         "Chest-Abdomen-Pelvis, Leg, TSpine",
-        "Abdomen, Arm, Bladder, Chest, Head-Neck, Kidney, Leg, Retroperitoneum, Stomach, Uterus"
+        "Abdomen, Arm, Bladder, Chest, Head-Neck, Kidney, Leg, Retroperitoneum, Stomach, Uterus",
+        "Blood, Bone"
     ]
 
     for collection in collex:
@@ -234,6 +236,8 @@ def save_ui_hist(request):
     return JsonResponse({}, status=status)
 
 
+# Method for obtaining the records displayed in the tables on the right-hand side of the explore data page
+# @login_required
 def populate_tables(request):
     response = {}
     status = 200
@@ -245,6 +249,7 @@ def populate_tables(request):
         fields = None
         collapse_on = None
         filters = json.loads(req.get('filters', '{}'))
+
         offset = int(req.get('offset', '0'))
         limit = int(req.get('limit', '500'))
         if limit > settings.MAX_SOLR_RECORD_REQUEST:
@@ -255,11 +260,29 @@ def populate_tables(request):
         checkIds = json.loads(req.get('checkids', '[]'))
         #table_data = get_table_data(filters, table_type)
         diffA = []
+        versions=[]
+        versions = ImagingDataCommonsVersion.objects.filter(
+            version_number__in=versions
+        ).get_data_versions(active=True) if len(versions) else ImagingDataCommonsVersion.objects.filter(
+            active=True
+        ).get_data_versions(active=True)
+
+        aggregate_level = "SeriesInstanceUID" if table_type == 'series' else "StudyInstanceUID"
+
+        data_types = [DataSetType.IMAGE_DATA,DataSetType.ANCILLARY_DATA,DataSetType.DERIVED_DATA]
+        data_sets = DataSetType.objects.filter(data_type__in=data_types)
+        aux_sources = data_sets.get_data_sources().filter(
+            source_type=DataSource.SOLR,
+            aggregate_level__in=["case_barcode", "sample_barcode", aggregate_level],
+            id__in=versions.get_data_sources().filter(source_type=DataSource.SOLR).values_list("id", flat=True)
+        ).distinct()
+
 
         sources = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
             active=True, source_type=DataSource.SOLR,
-            aggregate_level="SeriesInstanceUID" if table_type == 'series' else "StudyInstanceUID"
+            aggregate_level=aggregate_level
         )
+
 
         sortByField = True
         #idsReq=[]
@@ -317,7 +340,7 @@ def populate_tables(request):
                                         "facet": {"unique_series": "unique(SeriesInstanceUID)"}}
                              }
             tableIndex = 'StudyInstanceUID'
-            fields = ['collection_id','PatientID','StudyInstanceUID','StudyDescription','Modality','StudyDate','access']
+            fields = ['collection_id','PatientID','StudyInstanceUID','StudyDescription','Modality','StudyDate','access','crdc_series_uuid','gcs_bucket','aws_bucket']
             facetfields = ['unique_series']
             sort_arg = 'PatientID asc, StudyDate asc'
 
@@ -343,7 +366,7 @@ def populate_tables(request):
             custom_facets = {}
             tableIndex = 'SeriesInstanceUID'
             fields = ['collection_id', 'SeriesInstanceUID', 'StudyInstanceUID', 'SeriesDescription', 'SeriesNumber',
-                      'BodyPartExamined', 'Modality', 'access', 'crdc_series_uuid','gcs_bucket','aws_bucket']
+                      'BodyPartExamined', 'Modality', 'access', 'crdc_series_uuid','gcs_bucket','aws_bucket', 'SOPClassUID']
             facetfields = []
             sortByField = True
 
@@ -365,7 +388,7 @@ def populate_tables(request):
             selFilters[tableIndex] = checkIds
             newCheckIds = get_collex_metadata(
                 selFilters, [tableIndex], record_limit=len(checkIds)+1,sources=sources, records_only=True,
-                collapse_on=tableIndex, counts_only=False, filtered_needed=False, sort=tableIndex+' asc'
+                collapse_on=tableIndex, counts_only=False, filtered_needed=False, aux_sources=aux_sources, sort=tableIndex+' asc'
             )
 
             nset = set([x[tableIndex] for x in newCheckIds['docs']])
@@ -374,7 +397,7 @@ def populate_tables(request):
         if sortByField:
             idsReq = get_collex_metadata(
                 filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=True,
-                collapse_on=tableIndex, counts_only=False, filtered_needed=False, sort=sort_arg
+                collapse_on=tableIndex, counts_only=False, filtered_needed=False, aux_sources=aux_sources, sort=sort_arg
             )
 
             cnt = idsReq['total']
@@ -394,7 +417,7 @@ def populate_tables(request):
             if not table_type == 'series':
                 cntRecs = get_collex_metadata(
                     filters, fields, record_limit=limit, sources=sources, collapse_on=tableIndex, counts_only=True,
-                    records_only=False, filtered_needed=False, custom_facets=custom_facets, raw_format=True
+                    records_only=False, filtered_needed=False, custom_facets=custom_facets, raw_format=True, aux_sources=aux_sources
                 )
 
                 for rec in cntRecs['facets']['per_id']['buckets']:
@@ -409,7 +432,7 @@ def populate_tables(request):
             idsReq = get_collex_metadata(
                 filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=False,
                 collapse_on=tableIndex, counts_only=True, filtered_needed=False, custom_facets=custom_facets_order,
-                raw_format=True
+                raw_format=True, aux_sources=aux_sources
             )
             cnt = idsReq['facets']['tot']
             for rec in idsReq['facets']['per_id']['buckets']:
@@ -427,7 +450,7 @@ def populate_tables(request):
             filters[tableIndex] = idsFilt
             fieldRecs = get_collex_metadata(
                 filters, fields, record_limit=limit, sources=sources, records_only=True, collapse_on=tableIndex,
-                counts_only=False, filtered_needed=False
+                counts_only=False, filtered_needed=False, aux_sources=aux_sources
             )
             for rec in fieldRecs['docs']:
                 id = rec[tableIndex]
@@ -454,8 +477,8 @@ def populate_tables(request):
 
     return JsonResponse(response, status=status)
 
-
 # Data exploration and cohort creation page
+# @login_required
 def explore_data_page(request, filter_path=False, path_filters=None):
     context = {'request': request}
     is_json = False
@@ -521,18 +544,22 @@ def explore_data_page(request, filter_path=False, path_filters=None):
             else:
                 filters_for_load = req.get('filters_for_load', None)
                 if filters_for_load:
-                    blacklist = re.compile(settings.BLACKLIST_RE, re.UNICODE)
-                    if blacklist.search(filters_for_load):
-                        logger.warning("[WARNING] Saw bad filters in filters_for_load:")
-                        logger.warning(filters_for_load)
+                    raw_filters_for_load = filters_for_load
+                    filters_for_load = json.loads(filters_for_load)
+                    denylist = re.compile(settings.DENYLIST_RE, re.UNICODE).search(raw_filters_for_load)
+                    attr_disallow = re.compile(settings.ATTRIBUTE_DISALLOW_RE, re.UNICODE).search("_".join(filters_for_load.keys()))
+                    if denylist or attr_disallow:
+                        if denylist:
+                            logger.error("[ERROR] Saw possible attack in filters_for_load:")
+                        else:
+                            logger.warning("[WARNING] Saw bad filter names in filters_for_load:")
+                        logger.warning(raw_filters_for_load)
                         filters_for_load = {}
                         messages.error(
                             request,
                             "There was a problem with some of your filters - please ensure they're properly formatted."
                         )
                         status = 400
-                    else:
-                        filters_for_load = json.loads(filters_for_load)
                 else:
                     filters_for_load = None
                 context['filters_for_load'] = filters_for_load
@@ -565,7 +592,13 @@ def explore_data_page(request, filter_path=False, path_filters=None):
         # In the case of is_json=True, the 'context' is simply attr_by_source
         return JsonResponse(context, status=status)
 
-    return render(request, 'idc/explore.html', context)
+    try:
+        return render(request, 'idc/explore.html', context)
+    except Exception as e:
+        logger.error("[ERROR] While attempting to render the search page:")
+        logger.exception(e)
+
+    return redirect(reverse('landing_page'))
 
 
 def explorer_manifest(request):
@@ -596,10 +629,14 @@ def parse_explore_filters(request):
         attrs = Attribute.objects.filter(name__in=attr_names)
         attr_map = {x.name: {"id": x.id, "filter": filter_name_map[x.name]} for x in attrs}
         not_found = [x for x in attr_names if x not in attr_map.keys()]
-        blacklist = re.compile(settings.BLACKLIST_RE, re.UNICODE)
-        if blacklist.search(str(filters)):
-            logger.warning("[WARNING] Saw bad filters in filters_for_load:")
-            logger.warning(filters)
+        denylist = re.compile(settings.DENYLIST_RE, re.UNICODE).search(str(filters))
+        attr_disallow = re.compile(settings.ATTRIBUTE_DISALLOW_RE, re.UNICODE).search("_".join(filters.keys()))
+        if denylist or attr_disallow:
+            if denylist:
+                logger.error("[ERROR] Saw possible attack attempt!")
+            else: 
+                logger.warning("[WARNING] Saw bad filters in filters_for_load:")
+            logger.warning(str(filters))
             messages.error(
                 request,
                 "There was a problem with some of your filters - please ensure they're properly formatted."
