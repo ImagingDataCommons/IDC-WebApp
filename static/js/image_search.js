@@ -1449,7 +1449,7 @@ require([
     }
 
     window.updateSeriesTable = function(rowsAdded, rowsRemoved, refreshAfterFilter,seriesID) {
-        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV", "SR"])
+        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV", "SR", "ANN"])
         var nonViewAbleSOPClassUID= new Set(["1.2.840.10008.5.1.4.1.1.66"])
         var slimViewAbleModality=new Set(["SM"])
         $('#series_tab').attr('data-rowsremoved', rowsRemoved);
@@ -1558,7 +1558,7 @@ require([
                                 '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                         } else {
                             let v2_link = is_xc ? "" : OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' + data;
-                            let v3_link = OHIF_V3_PATH + "=" + row['StudyInstanceUID'] + '&SeriesInstanceUID=' + data;
+                            let v3_link = OHIF_V3_PATH + "=" + row['StudyInstanceUID'] + '&SeriesInstanceUIDs=' + data;
                             let default_viewer = (modality === "XC" || (Array.isArray(modality) && modality.includes("XC"))) ? v3_link : v2_link;
                             let volView_link = is_xc ? "" : VOLVIEW_PATH + "=[s3://" + row['aws_bucket'] + '/' + row['crdc_series_uuid']+']"';
                             let v2_element = '<li title="Not available for this modality."><a class="disabled" href="'
@@ -1892,11 +1892,22 @@ require([
             beforeSend: function(xhr){xhr.setRequestHeader("X-CSRFToken", csrftoken);},
             success: function (data) {
                 try {
-                    let file_parts_count = (is_cohort ? cohort_file_parts_count : data.totals.file_parts_count);
-                    let display_file_parts_count = (is_cohort ? cohort_display_file_parts_count : data.totals.display_file_parts_count);
+                    if(data.total <= 0) {
+                        base.showJsMessage(
+                           "warning zero-results",
+                           "Your filters returned zero results!",
+                           true
+                       );
+                        $('#export-manifest, #save-cohort-btn').attr('disabled', 'disabled');
+                    } else {
+                        $('.zero-results').remove();
+                        $('#export-manifest, #save-cohort-btn').removeAttr('disabled');
+                    }
+                    let file_parts_count = (is_cohort ? cohort_file_parts_count : (data.total > 0 ? data.totals.file_parts_count: 0));
+                    let display_file_parts_count = (is_cohort ? cohort_display_file_parts_count : (data.total > 0 ? data.totals.display_file_parts_count : 0));
                     let isFiltered = Boolean($('#search_def p').length > 0);
-                    $('#search_def_stats').attr('filter-series-count',data.totals.SeriesInstanceUID);
-                    if(data.totals.SeriesInstanceUID > 65000) {
+                    $('#search_def_stats').attr('filter-series-count',(data.total > 0 ? data.totals.SeriesInstanceUID: 0));
+                    if(data.total > 0 && data.totals.SeriesInstanceUID > 65000) {
                         $('#s5cmd-max-exceeded').show();
                         $('#download-s5cmd').attr('disabled','disabled');
                         $('#s5cmd-button-wrapper').addClass('manifest-disabled');
@@ -2055,15 +2066,12 @@ require([
                     }
                     updateTablesAfterFilter(collFilt, data.origin_set.All.attributes.collection_id);
 
-                    if ($('.search-configuration').find('#hide-zeros')[0].checked) {
+                    if ($('.search-configuration').find('.hide-zeros')[0].checked) {
                         addSliders('search_orig_set', false, true, '');
                         addSliders('quantitative', false, true, 'quantitative.');
                         addSliders('tcga_clinical', false, true, 'tcga_clinical.');
                     }
-
-                }
-                //changeAjax(false);
-                finally {
+                } finally {
                     deferred.resolve();
                 }
             },
@@ -2427,8 +2435,7 @@ require([
 
         var showZeros = true;
         var searchDomain = $('#'+filterCat).closest('.search-configuration, #program_set, #analysis_set');
-        //var isSearchConf = ($('#'+filterCat).closest('.search-configuration').find('#hide-zeros').length>0);
-        if ((searchDomain.find('#hide-zeros').length>0) && (searchDomain.find('#hide-zeros').prop('checked'))){
+        if ((searchDomain.find('.hide-zeros').length>0) && (searchDomain.find('.hide-zeros').prop('checked'))){
             showZeros = false;
         }
         var textFilt=false;
@@ -3015,7 +3022,7 @@ require([
 
 
 
-         $('#' + filterId).find('input:checkbox').not('#hide-zeros').on('click', function (e) {
+         $('#' + filterId).find('input:checkbox').not('.hide-zeros').on('click', function (e) {
             var targ=e.target;
 
             if ($(e.target).parent().find('.collection_info.fa-lg, .analysis_info.fa-lg').length>0){
@@ -3036,7 +3043,7 @@ require([
             $(this).parent().hide();
             var extras = $(this).closest('.list-group-item__body, .collection-list, .list-group-sub-item__body').children('.search-checkbox-list').children('.extra-values')
 
-            if ( ($('#'+filterId).closest('.search-configuration').find('#hide-zeros').length>0)  && ($('#'+filterId).closest('.search-configuration').find('#hide-zeros').prop('checked'))){
+            if ( ($('#'+filterId).closest('.search-configuration').find('.hide-zeros').length>0)  && ($('#'+filterId).closest('.search-configuration').find('.hide-zeros').prop('checked'))){
                 extras=extras.not('.zeroed');
             }
             extras.removeClass('notDisp');
@@ -3226,7 +3233,7 @@ require([
                 cntrlDiv.append('<div class="sliderset" style="display:block;margin-bottom:8px">Lower: <input type="text" style="display:inline" size="5" class="sl_lower" value="'+ txtLower + '">' +
                     ' Upper: <input class="sl_upper" type="text" style="display:inline" size="5" class="upper" value="' + txtUpper + '">' +
                     '<div class="slider-message notDisp" style="color:red"><br>Please set lower and upper bounds to numeric values with the upper value greater than the lower, then press Return in either text box. </div></div>')
-                cntrlDiv.append(  '<button class="reset" style="display:block;" onclick=\'setSlider("'+ this.id + '_slide", true,0,0,true, true,"'+parStr+'")\'>Clear Slider</button>');
+                cntrlDiv.append(  '<button class="reset" style="display:block;" onclick=\'setSlider("'+ this.id + '_slide", true,'+min+','+max+',true, true,"'+parStr+'")\'>Clear Slider</button>');
                 if (wNone){
                    cntrlDiv.append( '<span class="noneBut"><input type="checkbox"   onchange="addNone(this, \''+parStr+'\', true)"> None </span>');
                    cntrlDiv.find('.noneBut').find(':input')[0].checked = checked;
@@ -3375,7 +3382,8 @@ require([
         // For collection list
         $('.collection-list').each(function() {
             let $group = $(this);
-            let checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val");
+            console.debug($group.find("input:checked"));
+            let checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val").not('.join_val');
             if (checkboxes.length > 0) {
                 let values = [];
                 let my_id = "";
@@ -3398,7 +3406,7 @@ require([
             let my_id = $group.data('filter-attr-id');
             if (my_id != null)
             {
-                let checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val");
+                let checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val").not('.join_val');
                 if (checkboxes.length > 0)
                 {
                     let values = [];
@@ -3424,16 +3432,20 @@ require([
         $('.ui-slider').each(function() {
             let $this = $(this);
             let slider_id = $this[0].id;
-            let left_val = $this.slider("values", 0);
-            let right_val = $this.slider("values", 1);
             let min = $this.slider("option", "min");
             let max = $this.slider("option", "max");
-            if (left_val !== min || right_val !== max) {
-                sliders.push({
-                   'id': slider_id,
-                    'left_val': left_val,
-                    'right_val': right_val,
-                });
+            if(!Number.isNaN(min) && min !== null && !Number.isNaN(max) && max !== null) {
+                let left_val = $this.slider("values", 0);
+                let right_val = $this.slider("values", 1);
+                left_val = (left_val === null || !Number.isNaN(left_val)) ? min : left_val;
+                right_val = (right_val === null || !Number.isNaN(right_val)) ? max : right_val;
+                if (left_val !== min || right_val !== max) {
+                    sliders.push({
+                       'id': slider_id,
+                        'left_val': left_val,
+                        'right_val': right_val,
+                    });
+                }
             }
         });
         let sliderStr = JSON.stringify(sliders);
@@ -3460,15 +3472,11 @@ require([
         });
     };
 
-    $('#save-cohort-btn').on('click', function() {
+    $('#save-cohort-btn, #sign-in-dropdown').on('click', function() {
         if (!user_is_auth) {
             save_anonymous_selection_data();
             location.href=$(this).data('uri');
         }
-    });
-
-    $('#sign-in-dropdown').on('click', function() {
-        save_anonymous_selection_data();
     });
 
     cohort_loaded = false;
@@ -3485,9 +3493,9 @@ require([
                  // Re-enable checkboxes for export manifest dialog, unless not using social login
                  $('#export-manifest-modal input').removeAttr('disabled');
 
-                 $('input#hide-zeros').prop("disabled", "");
-                 $('input#hide-zeros').prop("checked", true);
-                 $('input#hide-zeros').each(function(){$(this).triggerHandler('change')});
+                 $('input.hide-zeros').prop("disabled", "");
+                 $('input.hide-zeros').prop("checked", true);
+                 $('input.hide-zeros').each(function(){$(this).triggerHandler('change')});
                  $('div.ui-slider').siblings('button').prop("disabled", true);
                  $('.noneBut').find('input:checkbox').prop("disabled",true);
              });
@@ -3657,8 +3665,8 @@ require([
         updateProjectTable(window.collectionData);
 
         $('.clear-filters').on('click', function () {
-            $('input:checkbox').not('#hide-zeros').not('.tbl-sel').prop('checked',false);
-            $('input:checkbox').not('#hide-zeros').not('.tbl-sel').prop('indeterminate',false);
+            $('input:checkbox').not('.hide-zeros').not('.tbl-sel').prop('checked',false);
+            $('input:checkbox').not('.hide-zeros').not('.tbl-sel').prop('indeterminate',false);
             $('.ui-slider').each(function(){
                 setSlider(this.id,true,0,0,true, false);
             })
@@ -3705,7 +3713,8 @@ require([
                 ).attr("style","display: none;")
         );
 
-        
+        $('.hide-zeros').prop("checked", true);
+
         $(window).on("beforeunload",function(){
             console.log("beforeunload called");
             let hs = new Object();
@@ -3724,8 +3733,6 @@ require([
                 let sort = $(this).find('input:checked').val()
                 hs['sorter'][pid] = sort;
             });
-
-
 
             let url = encodeURI('/uihist/')
             let nhs = {'his':JSON.stringify(hs)}
