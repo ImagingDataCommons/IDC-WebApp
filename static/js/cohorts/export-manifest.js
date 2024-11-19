@@ -349,13 +349,16 @@ require([
         update_download_manifest_buttons();
     });
 
-    let bq_disabled_message = 'Exporting to BigQuery requires logging in via Google, and to save your filters as a cohort.';
-    if(user_is_auth && !user_is_social) {
+
+    let bq_disabled_message = 'Exporting to BigQuery requires you to be logged in with a linked Google Social Account, and to save your filters as a cohort.';
+    if((!user_is_social) && (typeof(user_id)!=="undefined")){
         bq_disabled_message += ' You can link your account to a Google ID from the '
             +  '<a target="_blank" rel="noopener noreferrer" href="/users/' + user_id + '/">'
             + 'Account Details</a> page.'
     } else if(!user_is_auth) {
-        bq_disabled_message += ' Please log in with a Google account and save these filters as a cohort to enable this feature.'
+        bq_disabled_message += ' Please log in with a Google Social account to enable this feature.'
+    } else if ((typeof(is_cohort)!=="undefined") && (!is_cohort)) {
+        bq_disabled_message += ' Please save these filters as a cohort to enable this feature.'
     }
 
     let s5cmd_disabled_message = 'Your manifest\'s size exceeds the limit for file manifest download (65k entries). Please use'

@@ -1,5 +1,5 @@
 ###
-# Copyright 2015-2021, Institute for Systems Biology
+# Copyright 2015-2024, Institute for Systems Biology
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -603,12 +603,16 @@ def explore_data_page(request, filter_path=False, path_filters=None):
 
 
 def explorer_manifest(request):
-    req = request.GET or request.POST
-    if req.get('manifest-type', 'file-manifest') == 'bq-manifest' :
-        messages.error(request, "BigQuery export requires a cohort! Please save your filters as a cohort.")
-        return JsonResponse({'msg': 'BigQuery export requires a cohort.'}, status=400)
-    return create_file_manifest(request)
-
+    try:
+        req = request.GET or request.POST
+        if req.get('manifest-type', 'file-manifest') == 'bq-manifest' :
+            messages.error(request, "BigQuery export requires a cohort! Please save your filters as a cohort.")
+            return JsonResponse({'msg': 'BigQuery export requires a cohort.'}, status=400)
+        return create_file_manifest(request)
+    except Exception as e:
+        logger.error("[ERROR] While attempt to create a manifest:")
+        logger.exception(e)
+    return redirect(reverse('cart'))
 
 # Given a set of filters in a GET request, parse the filter set out into a filter set recognized
 # by the explore_data_page method and forward it on to that view, returning its response.
