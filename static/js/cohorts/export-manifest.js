@@ -60,6 +60,7 @@ require([
     'assetscore',
     'assetsresponsive',
 ], function($, jqueryui, tippy, base) {
+
     A11y.Core();
 
     var downloadToken = new Date().getTime();
@@ -68,10 +69,47 @@ require([
         var button = $(event.relatedTarget)
         if (button.hasClass('series-export') || button.hasClass('study-export')){
             update_export_modal_for_mini(button);
+        } else if (button.hasClass('cart-export')){
+            updatePartitionsFromScratch();
+            var partitions = new Array();
+            for (var i=0; i< window.partitions.length;i++) {
+                if (!('null'in window.partitions[i]) || !(window.partitions[i]['null'])){
+                    partitions.push(window.partitions[i])
+                }
+            }
+            var filterSets = new Array();
+            for (var i=0; i< window.cartHist.length;i++) {
+               filterSets.push(window.cartHist[i]['filter'])
+            }
+            update_export_modal_for_cart(partitions, filterSets);
+        } else if (button.hasClass('cart-export-from-cp')){
+            update_export_modal_for_cart(window.partitions, window.filtergrp_lst);
         }
     });
 
-    var update_export_modal_for_mini = function(button){
+    var update_export_modal_for_cart = function(partitions, filtergrp_list, mxstudies=0, mxseries=0){
+        is_cohort = false;
+        var name_base='';
+        $('.modal-title').text("Export Cart Manifest");
+        $('#export-manifest-form').append('<input type="hidden" name="from_cart">')
+        $('#export-manifest-form').find('input[name="from_cart"]').val("True");
+        if(filtergrp_list !== null && filtergrp_list !== undefined && filtergrp_list.length > 0) {
+            $('#export-manifest-form').append('<input type="hidden" name="filtergrp_list">')
+            $('#export-manifest-form').find('input[name="filtergrp_list"]').val(JSON.stringify(filtergrp_list));
+        }
+        $('#export-manifest-form').append('<input type="hidden" name="partitions">')
+        $('#export-manifest-form').find('input[name="partitions"]').val(JSON.stringify(partitions));
+        $('#export-manifest-form').append('<input type="hidden" name="mxstudies">')
+        $('#export-manifest-form').find('input[name="mxstudies"]').val(mxstudies);
+        $('#export-manifest-form').append('<input type="hidden" name="mxseries">')
+        $('#export-manifest-form').find('input[name="mxseries"]').val(mxseries);
+        let file_name = $('input[name="file_name"]');
+        file_name.attr("name-base",name_base);
+
+        update_file_names();
+    }
+
+    const update_export_modal_for_mini= function(button){
         var title='';
         var filterNm='';
         var mini_type='';
@@ -135,7 +173,17 @@ require([
         if ($('#export-manifest-modal').find('input[name="mini"]').length>0){
             reset_after_mini();
         }
+        if ($('#export-manifest-modal').find('input[name="from_cart"]').length>0){
+            reset_after_cart()
+        }
     });
+
+    var reset_after_cart = function(){
+        $('#export-manifest-modal').find('input[name="from_cart"]').remove();
+        $('#export-manifest-modal').find('input[name="partitions"]').remove();
+        $('#export-manifest-modal').find('input[name="filtergrp_list"]').remove();
+        $('.modal-title').text('Export Manifest');
+    }
 
     $('#export-manifest-modal').on('hidden.bs.modal', function() {
       $('.manifest-file').show();
@@ -156,7 +204,6 @@ require([
         $('#export-manifest-modal').find('input[name="crdc_uid"]').remove();
         $('#export-manifest-modal').find('input[name="aws"]').remove();
         $('#export-manifest-modal').find('input[name="gcs"]').remove();
-
         var filt_str = $('#export-manifest-form').find('input[name="filters"]').val()
         var filters=JSON.parse(filt_str);
         if ('StudyInstanceUID' in filters){
@@ -168,12 +215,15 @@ require([
     };
 
     $('.get-manifest').on('click', function(e) {
+        if(($(this).attr('data-export-type') === 's5cmd' || $(this).attr('data-export-type') === 'idc_index')
+            &&  $(this).hasClass('iscart')) {
+            update_export_modal_for_cart(window.partitions, window.filtergrp_lst, window.mxstudies, window.mxseries);
+        }
         download_manifest($(this).attr("data-export-type"), $(this), e)
     });
 
     var download_manifest = function(export_type, clicked_button, e) {
         let manifest_type = (export_type === 'bq' ? 'bq-manifest' : 'file-manifest');
-
         $('#unallowed-chars-alert').hide();
         $('#name-too-long-alert-modal').hide();
 
@@ -235,6 +285,7 @@ require([
         }
 
         if(manifest_type == 'file-manifest' && $('input[name="async_download"]').val() !== "True") {
+            console.debug($('#export-manifest-form').find('input[name="partitions"]').val());
             $('#export-manifest-form').trigger('submit');
         } else {
             $('#export-manifest').attr('disabled','disabled');
@@ -414,5 +465,4 @@ require([
         allowHTML: true,
         target: '.version-disabled'
     });
-
 });
