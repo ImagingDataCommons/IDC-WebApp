@@ -133,6 +133,11 @@ require([
             utils.showJsMessage(msg.type,msg.text,true);
         }
         sessionStorage.removeItem("reloadMsg");
+
+        if($('#liveText').siblings()[1].shadowRoot !== null) {
+            $('.main-content').css("margin-top", "0px");
+            $($('#liveText').siblings()[1]).css("margin-top", "56px");
+        }        
     });
 
     // Per https://stackoverflow.com/questions/13550477/twitter-bootstrap-alert-message-close-and-open-again
