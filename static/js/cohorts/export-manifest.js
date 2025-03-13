@@ -122,12 +122,12 @@ require([
         $('#export-manifest-form').append('<input type="hidden" name="mxseries">')
         $('#export-manifest-form').find('input[name="mxseries"]').val(mxseries);
 
-        $('#export-manifest-form').append('<input type="hidden" name="filter_async">')
-        $('#export-manifest-form').find('input[name="filter_async"]').val( $('input[name="async_download"]').val() );
-
         $('input[name="async_download"]').val(
             (parseInt(localStorage.getItem('manifestSeriesCount')) > 65000) ? "True" : "False"
         );
+
+        $('#export-manifest-form').append('<input type="hidden" name="filter_async">')
+        $('#export-manifest-form').find('input[name="filter_async"]').val( $('input[name="async_download"]').val() );
 
         let file_name = $('input[name="file_name"]');
         file_name.attr("name-base",name_base);
@@ -320,6 +320,17 @@ require([
             $('input[name="include_header"]').val(($('#include-header-'
             + (export_type === 's5cmd' ? 's5cmd' : 'file')
                 + '-checkbox').is(':checked')) ? 'true' : 'false');
+        }
+
+        // capture cart state and manifest creation call if in debug mode
+        if (($('#export-manifest-form').find('input[name="from_cart"]').val()=="True") && typeof(window.debug_cart=="boolean") && (window.debug_cart)){
+              if (typeof(window.debugArr) == "undefined"){
+                  window.debugArr= new Array();
+              }
+              var tmp = new Object();
+              tmp['hist'] = JSON.parse(JSON.stringify(window.cartHist));
+              tmp['data'] =$('#export-manifest-form').serialize();
+              window.debugArr.push(tmp);
         }
 
         if(manifest_type == 'file-manifest' && $('input[name="async_download"]').val() !== "True") {
