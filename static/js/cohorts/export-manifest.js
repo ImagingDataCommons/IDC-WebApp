@@ -94,14 +94,14 @@ require([
                mxstudies+= window.selProjects[proj].mxstudies;
             }
             var filterSets = new Array();
-            for (var i=0; i< window.cartHist.length;i++) {
+            for(let i=0; i< window.cartHist.length;i++) {
                filterSets.push(window.cartHist[i]['filter'])
             }
             update_export_modal_for_cart(partitions, filterSets);
         } else if (button.hasClass('cart-export-from-cp')){
             update_export_modal_for_cart(window.partitions, window.filtergrp_list);
-        } else if(button.hasClass('cohort-manifest-export')) {
-            $('input[name="async_download"]').val(parseInt(button.attr('data-series-count').val()) > 65000 ? "True" : "False");
+        } else if(button.hasClass('export-cohort-manifest')) {
+            $('input[name="async_download"]').val(parseInt(button.attr('data-series-count')) > 65000 ? "True" : "False");
         }
     });
 
@@ -336,7 +336,7 @@ require([
               window.debugArr.push(tmp);
         }
 
-        if(manifest_type == 'file-manifest' && $('input[name="async_download"]').val().lower() !== "true") {
+        if(manifest_type == 'file-manifest' && $('input[name="async_download"]').val().toLowerCase() !== "true") {
             console.debug($('#export-manifest-form').find('input[name="partitions"]').val());
             $('#export-manifest-form').trigger('submit');
         } else {
