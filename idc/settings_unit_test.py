@@ -34,9 +34,6 @@ if not exists(join(dirname(__file__), '../{}.env'.format(SECURE_LOCAL_PATH))):
 
 dotenv.read_dotenv(join(dirname(__file__), '../{}.env'.format(SECURE_LOCAL_PATH)))
 
-APP_ENGINE_FLEX = 'aef-'
-APP_ENGINE = 'Google App Engine/'
-
 BASE_DIR                = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)) + os.sep
 
 SHARED_SOURCE_DIRECTORIES = [
@@ -99,12 +96,12 @@ DATABASES = {
 DB_SOCKET = DATABASES['default']['HOST'] if 'cloudsql' in DATABASES['default']['HOST'] else None
 
 IS_DEV = (os.environ.get('IS_DEV', 'False') == 'True')
-IS_APP_ENGINE_FLEX = os.getenv('GAE_INSTANCE', '').startswith(APP_ENGINE_FLEX)
-IS_APP_ENGINE = os.getenv('SERVER_SOFTWARE', '').startswith(APP_ENGINE)
+# AppEngine var is set in the app.yaml so this should be false for CI and local dev apps
+IS_APP_ENGINE = bool(os.getenv('IS_APP_ENGINE', 'False') == 'True')
 
 # If this is a GAE-Flex deployment, we don't need to specify SSL; the proxy will take
 # care of that for us
-if 'DB_SSL_CERT' in os.environ and not IS_APP_ENGINE_FLEX:
+if 'DB_SSL_CERT' in os.environ and not IS_APP_ENGINE:
     DATABASES['default']['OPTIONS'] = {
         'ssl': {
             'ca': os.environ.get('DB_SSL_CA'),
@@ -116,7 +113,7 @@ if 'DB_SSL_CERT' in os.environ and not IS_APP_ENGINE_FLEX:
 # Default to localhost for the site ID
 SITE_ID = 3
 
-if IS_APP_ENGINE_FLEX or IS_APP_ENGINE:
+if IS_APP_ENGINE:
     print("[STATUS] AppEngine Flex detected.", file=sys.stdout)
     SITE_ID = 4
 
