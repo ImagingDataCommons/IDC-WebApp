@@ -64,6 +64,8 @@ FIELD_MAP = {x: i for i, x in enumerate([
             "program", "access", "date_updated", "tcia_wiki_collection_id", "license_short_name", "active"
     ])}
 
+TOKENIZED_FIELDS = ["PatientID", "SeriesInstanceUID", "StudyInstanceUID"]
+
 ranges_needed = {
     'wbc_at_diagnosis': 'by_200',
     'event_free_survival_time_in_days': 'by_500',
@@ -424,7 +426,13 @@ def create_solr_params(schema_src, solr_src):
     schema = BigQuerySupport.get_table_schema(schema_src[0],schema_src[1],schema_src[2])
     solr_schema = []
     solr_index_strings = []
-    SCHEMA_BASE = '{"add-field": %s}'
+    field_types = ''
+    add_copy_field = ''
+    SCHEMA_BASE = '{{field_types}add-field": {fields}{add_copy_field}'
+    if len(TOKENIZED_FIELDS):
+        field_types = '"add-field-type": { "name":"tokenizedText", "class":"solr.TextField", "analyzer" : { "tokenizer": { "name":"nGram" }}}, '
+        copy_fields = ",".join(['{"source":"{field}","dest":"{field{}_tokenized"}'.format(field) for field in TOKENIZED_FIELDS])
+        add_copy_field = ', "add-copy-field": [{copy_fields}]'.format(copy_fields)
     CORE_CREATE_STRING = "sudo -u solr /opt/bitnami/solr/bin/solr create -c {solr_src} -s 2 -rf 2"
     SCHEMA_STRING = "curl -u {solr_user}:{solr_pwd} -X POST -H 'Content-type:application/json' --data-binary '{schema}' https://localhost:8983/solr/{solr_src}/schema --cacert solr-ssl.pem"
     INDEX_STRING = "curl -u {solr_user}:{solr_pwd} -X POST 'https://localhost:8983/solr/{solr_src}/update?commit=yes{params}' --data-binary @{file_name}.csv -H 'Content-type:application/csv' --cacert solr-ssl.pem"
@@ -441,11 +449,22 @@ def create_solr_params(schema_src, solr_src):
                 "stored": True
             }
             solr_schema.append(field_schema)
+            if TOKENIZED_FIELDS and field['name'] in TOKENIZED_FIELDS:
+                solr_schema.append({
+                    "name": "{}_tokenized".format(field["name"]),
+                    "type": "tokenizedText",
+                    "multiValued": False if field['name'] in SOLR_SINGLE_VAL.get(solr_src.aggregate_level,
+                                                                                 {}) else True,
+                    "stored": True
+                })
             if field_schema['multiValued']:
                 solr_index_strings.append("f.{}.split=true&f.{}.separator=|".format(field['name'],field['name']))
 
     with open("{}_solr_cmds.txt".format(solr_src.name), "w") as cmd_outfile:
-        schema_array = SCHEMA_BASE % solr_schema
+        schema_array = SCHEMA_BASE.format(
+            field_types=field_types,
+            add_copy_field=add_copy_field
+        )
         params = "&{}".format("&".join(solr_index_strings))
         cmd_outfile.write(CORE_CREATE_STRING.format(solr_src=solr_src.name))
         cmd_outfile.write("\n\n")
@@ -662,11 +681,16 @@ def update_display_values(attr, updates):
             logger.info("[STATUS] Added {} display values.".format(str(len(new_vals))))
 
 
-def load_tooltips(source_objs, attr_name, source_tooltip, obj_attr=None):
+def load_tooltips(source_objs, attr_name, source_tooltip, obj_id_col=None):
     try:
         attr = Attribute.objects.get(name=attr_name, active=True)
-        if not obj_attr:
-            obj_attr = attr_name
+        # In some cases, the data sourcing the tooltip does not have an ID column with a name which matches
+        # the attribute name (eg. in Collections, analysis results and collections both have a collection_id,
+        # but in Attributes, analysis_result_id and collection_id are distinct attributes).
+        # Used obi_id_col to specify the column in which the ID of the value to associate with the tooltip source in
+        # the case the attribute name is different from the source object's column ID
+        if not obj_id_col:
+            obj_id_col = attr_name
 
         tips = Attribute_Tooltips.objects.select_related('attribute').filter(attribute=attr)
 
@@ -677,7 +701,7 @@ def load_tooltips(source_objs, attr_name, source_tooltip, obj_attr=None):
                 extent_tooltips[tip.attribute.id] = []
             extent_tooltips[tip.attribute.id].append(tip.tooltip_id)
 
-        tooltips_by_val = {x[obj_attr]: {'tip': x[source_tooltip]} for x in source_objs.values() if x[obj_attr] != '' and x[obj_attr] is not None}
+        tooltips_by_val = {x[obj_id_col]: {'tip': x[source_tooltip]} for x in source_objs.values() if x[obj_id_col] != '' and x[obj_id_col] is not None}
 
         new_tooltips = []
         updated_tooltips = []
