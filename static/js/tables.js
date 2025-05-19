@@ -77,35 +77,12 @@ require([
 
 define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils, filterutils, tippy, $, base) {
 
-
-
     $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table').on('preInit.dt', function(){
         window.show_spinner();
     });
-
     $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table').on('draw.dt', function(){
         window.hide_spinner();
     });
-
-     /*
-
-    // TODO: Adjust these to indicate cart update
-    $('#proj_table, #cases_tab, #studies_tab, #series_tab').on('shopping-cart:update-started', '.shopping-cart-holder', function(){
-        window.show_spinner();
-    });
-
-    $('#proj_table, #cases_tab, #studies_tab, #series_tab').on('shopping-cart:update-complete', '.shopping-cart-holder', function(){
-        window.hide_spinner();
-    });
-
-    $(document).on('study-map:update-started', function(){
-        window.show_spinner();
-    });
-    $(document).on('study-map:update-complete', function(){
-        window.hide_spinner();
-    });
-
-   */
 
     // Update the rows in the Projects Table, clear the other tables.
     window.updateTablesAfterFilter = function (collFilt, collectionsData, collectionStats,cartStats){
@@ -583,7 +560,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     // recreates the cases table when a chevron is clicked in the projects table. Defines the chevron and cart selection actions.
     // Updates data structures such as casesCache, which caches case rows to limit calls to the server, and selProjects, which stores information
     // across tables about which items are added to the cart, and which chevrons are selected
-    window.updateCaseTable = function(rowsAdded,caseID) {
+    window.updateCaseTable = function(rowsAdded,caseID, table_search) {
+        let updatePromise = $.Deferred();
         viewedProjects =Object.keys(window.openProjects);
         if ($('#cases_tab_wrapper').find('.dataTables_controls').length>0){
             pageRows = parseInt($('#cases_tab_wrapper').find('.dataTables_length select').val());
@@ -706,7 +684,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 }
 
                             }
-
+                        ndic['table_search'] = table_search;
 
                         var csrftoken = $.getCookie('csrftoken');
                         $.ajax({
@@ -727,17 +705,20 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                     "data": dataset,
                                     "recordsTotal": data["cnt"],
                                     "recordsFiltered": data["cnt"]
-                                  })
+                                  });
+                                updatePromise.resolve();
                                } catch(err){
                                     console.log('error processing data');
                                     alert("There was an error processing the server data. Please alert the systems administrator")
                                    }
+                                   updatePromise.reject();
                                 },
                                 error: function () {
                                     console.log("problem getting data");
                                     alert("There was an error fetching server data. Please alert the systems administrator")
                                     $('#cases_tab').children('thead').children('tr').children('.ckbx').addClass('notVis');
                                     callback({"data": [], "recordsTotal": "0", "recordsFiltered": "0"})
+                                    updatePromise.reject();
                                 }
                             });
                         } else {
@@ -750,13 +731,15 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 "data": dataset,
                                 "recordsTotal": window.casesCache.recordsTotal,
                                 "recordsFiltered": window.casesCache.recordsTotal
-                            })
+                            });
+                            updatePromise.resolve();
                         }
                     }
                 }
             });
         } catch(err){
             alert("The following error occurred trying to update the case table:" +err+". Please alert the systems administrator");
+            updatePromise.reject();
         }
 
         $('#cases_tab').on('draw.dt', function(){
@@ -766,13 +749,21 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             );
         });
         $('#cases_tab').find('tbody').attr('id','cases_table');
-        $('#cases_panel').find('.dataTables_controls').find('.dataTables_length').after('<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" type="number"><button onclick="changePage(\'cases_tab_wrapper\')">Go</button></div>');
-        $('#cases_panel').find('.dataTables_controls').find('.dataTables_paginate').after('<div class="dataTables_filter"><strong>Find by Case ID:</strong><input class="caseID_inp" type="text-box" value="'+caseID+'"><button onclick="filterTable(\'cases_panel\',\'caseID\')">Go</button></div>');
+        $('#cases_panel').find('.dataTables_controls').find('.dataTables_length').after(
+            '<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" '
+            + 'type="number"><button onclick="changePage(\'cases_tab_wrapper\')">Go</button></div>'
+        );
+        $('#cases_panel').find('.dataTables_controls').find('.dataTables_paginate').after(
+            '<div class="dataTables_filter"><strong>Find by Case ID:</strong><input class="caseID_inp '
+            + 'table-search-box" data-search-type="case" type="text-box" value="'+caseID+'" maxlength="256"><button '
+            + 'class="clear"><i class="fa fa-solid fa-circle-xmark"></i></button></div>'
+        );
+        return updatePromise;
     }
 
-
-    window.updateStudyTable = function(rowsAdded, studyID) {
-        let nonViewAbleModality= new Set([""]);
+    window.updateStudyTable = function(rowsAdded, studyID, table_search) {
+        let updatePromise = $.Deferred();
+        let nonViewAbleModality= new Set(["REG"]);
         var viewCases = [];
         for (projid in window.openCases) {
             viewCases = viewCases.concat(Object.keys(window.openCases[projid]));
@@ -1015,7 +1006,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                               return '<i class="fa fa-download study-export export-button" data-series-count="'+row['unique_series']
                                   +'" data-uid="'+data+'"data-toggle="modal" data-target="#export-manifest-modal"></i>'
                           }
-
                       }
                 ],
                 "processing": true,
@@ -1026,10 +1016,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     var cols = ['', '', 'PatientID', 'StudyInstanceUID', 'StudyDate','StudyDescription', 'SeriesInstanceUID'];
                     var ssCallNeeded = true;
 
-
                     if (viewCases.length === 0) {
                         ssCallNeeded = false;
                         callback({"data": [], "recordsTotal": "0", "recordsFiltered": "0"});
+                        updatePromise.resolve();
                     } else {
                         var ret = checkClientCache(request, 'studies');
                         ssCallNeeded = ret[0];
@@ -1058,9 +1048,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                             }
                             ndic['partitions'] = JSON.stringify(window.partitions);
                             ndic['filtergrp_list'] = JSON.stringify(window.filtergrp_list);
+                            ndic['table_search'] = table_search;
+                            let csrftoken = $.getCookie('csrftoken');
 
-
-                            var csrftoken = $.getCookie('csrftoken');
                             $.ajax({
                                 url: url,
                                 dataType: 'json',
@@ -1079,16 +1069,19 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                             "data": dataset,
                                             "recordsTotal": data["cnt"],
                                             "recordsFiltered": data["cnt"]
-                                        })
+                                        });
+                                        updatePromise.resolve();
                                     } catch(err){
                                       console.log('error processing data');
-                                   alert("There was an error processing the server data. Please alert the systems administrator")
+                                      alert("There was an error processing the server data. Please alert the systems administrator");
+                                      updatePromise.reject();
                                    }
                                 },
                                 error: function () {
                                     console.log("problem getting data");
                                     alert("There was an error fetching server data. Please alert the systems administrator");
-                                    callback({"data": [], "recordsTotal": "0", "recordsFiltered": "0"})
+                                    callback({"data": [], "recordsTotal": "0", "recordsFiltered": "0"});
+                                    updatePromise.reject();
                                 }
                             });
                         } else {
@@ -1101,13 +1094,15 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 "data": dataset,
                                 "recordsTotal": window.studiesCache.recordsTotal,
                                 "recordsFiltered": window.studiesCache.recordsTotal
-                            })
+                            });
+                            updatePromise.resolve();
                         }
                     }
                 }
             });
         } catch(err){
-            alert("The following error error was reported when processing server data: "+ err +". Please alert the systems administrator")
+            alert("The following error error was reported when processing server data: "+ err +". Please alert the systems administrator");
+            updatePromise.reject();
         }
 
         $('#studies_tab').on('draw.dt', function(){
@@ -1118,12 +1113,21 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         })
 
         $('#studies_tab').children('tbody').attr('id','studies_table');
-        $('#studies_tab_wrapper').find('.dataTables_controls').find('.dataTables_length').after('<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" type="number"><button onclick="changePage(\'studies_tab_wrapper\')">Go</button></div>');
-        $('#studies_tab_wrapper').find('.dataTables_controls').find('.dataTables_paginate').after('<div class="dataTables_filter"><strong>Find by Study Instance UID:</strong><input class="studyID_inp" type="text-box" value="'+studyID+'"><button onclick="filterTable(\'studies_tab_wrapper\',\'studyID\')">Go</button></div>');
+        $('#studies_tab_wrapper').find('.dataTables_controls').find('.dataTables_length').after(
+            '<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" type="number">'
+            +'<button onclick="changePage(\'studies_tab_wrapper\')">Go</button></div>'
+        );
+        $('#studies_tab_wrapper').find('.dataTables_controls').find('.dataTables_paginate').after(
+            '<div class="dataTables_filter"><strong>Find by Study Instance UID:</strong><input data-search-type="study"'
+            + ' class="studyID_inp table-search-box" type="text-box" value="'+studyID+'" maxlength="256"><button '
+            + 'class="clear"><i class="fa fa-solid fa-circle-xmark"></i></button></div>'
+        );
+        return updatePromise;
     }
 
-    window.updateSeriesTable = function(rowsAdded, seriesID) {
-        var nonViewAbleModality= new Set(["PR","SEG","RTSTRUCT","RTPLAN","RWV", "SR", "ANN"])
+    window.updateSeriesTable = function(rowsAdded, seriesID, table_search) {
+        let updatePromise = $.Deferred();
+        var nonViewAbleModality= new Set(["PR","SEG","REG", "RTSTRUCT","RTPLAN","RWV", "SR", "ANN"])
         var slimViewAbleModality=new Set(["SM"])
         viewStudies = []
         for (caseid in window.openStudies){
@@ -1153,51 +1157,41 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
                     $(row).attr('data-aws',  data['aws_bucket'])
 
-
-
                      if ('cart_series_in_collection' in data){
                        $(row).attr('cart_series_in_collection',  data['cart_series_in_collection']);
-                    }
-                    else{
+                    } else{
                         $(row).attr('cart_series_in_collection','0')
                     }
                     if ('filter_series_in_collection' in data){
                        $(row).attr('filter_series_in_collection',  data['filter_series_in_collection']);
-                    }
-                    else{
+                    } else {
                         $(row).attr('filter_series_in_collection','0')
                     }
                     if ('filter_cart_series_in_collection' in data){
                        $(row).attr('filter_cart_series_in_collection',  data['filter_cart_series_in_collection']);
-                    }
-                    else{
+                    } else {
                         $(row).attr('filter_cart_series_in_collection','0')
                     }
 
-
                     if ('cart_series_in_case' in data){
                        $(row).attr('cart_series_in_case',  data['cart_series_in_case']);
-                    }
-                    else{
+                    } else {
                         $(row).attr('cart_series_in_case','0')
                     }
                     if ('filter_series_in_case' in data){
                        $(row).attr('filter_series_in_case',  data['filter_series_in_case']);
-                    }
-                    else{
+                    } else {
                         $(row).attr('filter_series_in_case','0')
                     }
                     if ('filter_cart_series_in_case' in data){
                        $(row).attr('filter_cart_series_in_case',  data['filter_cart_series_in_case']);
-                    }
-                    else{
+                    } else {
                         $(row).attr('filter_cart_series_in_case','0')
                     }
 
                     if ('cart_series_in_study' in data){
                        $(row).attr('cart_series_in_study',  data['cart_series_in_study']);
-                    }
-                    else{
+                    } else {
                         $(row).attr('cart_series_in_study','0')
                     }
                     if ('filter_series_in_study' in data){
@@ -1377,6 +1371,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     ssCallNeeded = false;
                     $('#series_tab').children('thead').children('tr').children('.ckbx').addClass('notVis');
                     callback({"data": [], "recordsTotal": "0", "recordsFiltered": "0"});
+                    updatePromise.resolve();
                 } else {
                     var ret = checkClientCache(request, 'series');
                     ssCallNeeded = ret[0]
@@ -1408,6 +1403,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         }
                          ndic['partitions'] = JSON.stringify(window.partitions);
                         ndic['filtergrp_list'] = JSON.stringify(window.filtergrp_list);
+                        ndic['table_search'] = table_search;
                         var csrftoken = $.getCookie('csrftoken');
                         $.ajax({
                             url: url,
@@ -1427,18 +1423,21 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                         "data": dataset,
                                         "recordsTotal": data["cnt"],
                                         "recordsFiltered": data["cnt"]
-                                    })
+                                    });
+                                    updatePromise.resolve();
                                 }
                                 catch(err){
-                                      console.log('error processing data');
-                                   alert("There was an error processing the server data. Please alert the systems administrator")
+                                  console.log('error processing data');
+                                   alert("There was an error processing the server data. Please alert the systems administrator");
+                                   updatePromise.reject();
                                 }
                             },
                             error: function () {
                                 console.log("problem getting data");
                                 alert("There was an error fetching server data. Please alert the systems administrator")
                                 $('#series_tab').children('thead').children('tr').children('.ckbx').addClass('notVis');
-                                callback({"data": [], "recordsTotal": "0", "recordsFiltered": "0"})
+                                callback({"data": [], "recordsTotal": "0", "recordsFiltered": "0"});
+                                updatePromise.reject();
                             }
                         });
                     } else {
@@ -1451,7 +1450,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                             "data": dataset,
                             "recordsTotal": window.seriesCache.recordsTotal,
                             "recordsFiltered": window.seriesCache.recordsTotal
-                        })
+                        });
+                        updatePromise.resolve();
                     }
                 }
               }
@@ -1459,6 +1459,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         }
         catch(err){
             alert("The following nerror was reported when processing server data: "+ err +". Please alert the systems administrator");
+            updatePromise.reject();
         }
 
         $('#series_tab').on('draw.dt', function(){
@@ -1467,9 +1468,92 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             });
         });
         $('#series_tab').children('tbody').attr('id','series_table');
-        $('#series_tab_wrapper').find('.dataTables_controls').find('.dataTables_length').after('<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" type="number"><button onclick="changePage(\'series_tab_wrapper\')">Go</button></div>');
-        $('#series_tab_wrapper').find('.dataTables_controls').find('.dataTables_paginate').after('<div class="dataTables_filter"><strong>Find by Series Instance UID:</strong><input class="seriesID_inp" type="text-box" value="'+seriesID+'"><button onclick="filterTable(\'series_tab_wrapper\',\'seriesID\')">Go</button></div>');
+        $('#series_tab_wrapper').find('.dataTables_controls').find('.dataTables_length').after(
+            '<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" type="number">'
+            +'<button onclick="changePage(\'series_tab_wrapper\')">Go</button></div>'
+        );
+        $('#series_tab_wrapper').find('.dataTables_controls').find('.dataTables_paginate').after(
+            '<div class="dataTables_filter"><strong>Find by Series Instance UID:</strong><input '
+            +'class="seriesID_inp table-search-box" type="text-box" data-search-type="series" value="'
+            +seriesID+'" maxlength="256"><button class="clear"><i class="fa fa-solid fa-circle-xmark"></i></button></div>'
+        );
+        return updatePromise;
     }
+
+    let SEARCH_QUEUE = [];
+    let SEARCH_PENDING = false;
+    let update_search_thread = null;
+    let SUBSEQUENT_DELAY = 400;
+    let update_methods = {
+        'caseID': window.updateCaseTable,
+        'seriesID': window.updateSeriesTable,
+        'studyID': window.updateStudyTable
+    };
+    let Last_searches = {
+        'caseID': null,
+        'studyID': null,
+        'seriesID': null
+    };
+
+    function enqueueSearch(panel, id, input){
+        SEARCH_QUEUE.push(function(){
+            filterTable(panel, id, input)
+        });
+    }
+
+    function dequeueSearch(){
+        if(SEARCH_QUEUE.length > 0) {
+            SEARCH_QUEUE.shift()();
+        }
+    }
+
+    // Filter a table based on the case/series/study ID search
+    // A call to this method will result in a SUBSEQUENT_DELAY pause before execution begins. Subsequent calls will
+    // clear this timeout if they arrive before SUBSEQUENT_DELAY has run down, thus waiting until the triggering event
+    // stops long enough for the callback to begin. Any calls sent in after the callback fires will see one call
+    // queued and the others ignored, so that only a single call fires once the first one is completed.
+    function filterTable(wrapper, type, input){
+        if(SEARCH_PENDING) {
+            if(SEARCH_QUEUE.length <= 0) {
+                enqueueSearch(wrapper, type, input);
+            }
+            return;
+        }
+
+        (update_search_thread !== null) && clearTimeout(update_search_thread);
+
+        update_search_thread = setTimeout(function(){
+            SEARCH_PENDING = true;
+            let varStr = input.val();
+            // Don't search again if no change was made (this squelches any non-change)
+            if(Last_searches[type] !== varStr) {
+                Last_searches[type] = varStr;
+                update_methods[type](false,  varStr, true)
+                    .then(function(){
+                        SEARCH_PENDING = false;
+                        dequeueSearch();
+                    })
+                    .fail(function(){
+                        SEARCH_PENDING = false;
+                        dequeueSearch();
+                    });
+            } else {
+                SEARCH_PENDING = false;
+                dequeueSearch();
+            }
+        }, SUBSEQUENT_DELAY);
+    }
+
+    $('#rh_panel').on('change keyup', '.table-search-box', function(event){
+        let type = $(this).attr("data-search-type");
+        filterTable(`${type}_panel`, `${type}ID`, $(this));
+    });
+
+    $('#rh_panel').on('click', '.dataTables_filter button.clear', function(){
+        let search_box = $(this).siblings('.table-search-box');
+        search_box.val('');
+        search_box.trigger("change");
+    });
 
     window.resetCartInTables = function(projArr){
          for (var i =0; i< projArr.length;i++){
@@ -1477,7 +1561,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
         }
          clearCartSelectionsInCaches();
-
     }
 
      const propagateCartTableStatChanges = function(ids, itemChng, addingToCart,purge){
@@ -2113,21 +2196,21 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             if ($('#cases_tab').find('.caseID-inp').length > 0) {
                 caseID = $('#studies_tab').find('.caseID-inp').val();
             }
-            updateCaseTable(rowsAdded, caseID);
+            updateCaseTable(rowsAdded, caseID, false);
         }
         if (studyTableUpdate) {
             var studyID = "";
             if ($('#studies_tab').find('.studyID-inp').length > 0) {
                 studyID = $('#studies_tab').find('.studyID-inp').val();
             }
-            updateStudyTable(rowsAdded, studyID);
+            updateStudyTable(rowsAdded, studyID, false);
         }
         if (seriesTableUpdate) {
             var seriesID = "";
             if ($('#series_tab').find('.seriesID-inp').length > 0) {
                 seriesID = $('#series_tab').find('.seriesID-inp').val();
             }
-            updateSeriesTable(rowsAdded, seriesID);
+            updateSeriesTable(rowsAdded, seriesID, false);
 
         }
 
@@ -2197,22 +2280,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         }
 
     }
-    //filter table based on 'Search' text
-    window.filterTable = function(wrapper, type){
-        var elem=$('#'+wrapper);
-        var varStr=elem.find('.dataTables_controls').find('.'+type+'_inp').val();
-        if (type ==="seriesID") {
-            window.updateSeriesTable(false,varStr)
-        }
-
-        else if (type ==="studyID") {
-            window.updateStudyTable(false,  varStr)
-        }
-        else if (type==="caseID"){
-            window.updateCaseTable(false,varStr)
-        }
-    }
-
 
     const pretty_print_id = function (id) {
         var newId = id.slice(0, 8) + '...' + id.slice(id.length - 8, id.length);
