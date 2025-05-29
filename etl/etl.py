@@ -54,12 +54,17 @@ ATTR_SET = {}
 DISPLAY_VALS = {}
 SEPARATOR = "[]"
 
+ERRORS_SEEN = []
+
 COLLECTION_HEADER_CHK = "collection_uuid"
 
-FIELD_MAP = {x: i for i, x in enumerate(['collection_id','collection_uuid','name','collections','image_types','supporting_data',
-                            'subject_count','doi','source_url','cancer_type','species','location','analysis_artifacts',
-                            'description','collection_type','program','access','date_updated','tcia_wiki_collection_id',
-                            'active'])}
+FIELD_MAP = {x: i for i, x in enumerate([
+            "collection_id", "collection_uuid", "name", "collections", "image_types", "supporting_data", "subject_count", "doi",
+            "source_url", "cancer_type", "species", "location", "analysis_artifacts", "description", "collection_type",
+            "program", "access", "date_updated", "tcia_wiki_collection_id", "license_short_name", "active"
+    ])}
+
+TOKENIZED_FIELDS = ["PatientID", "SeriesInstanceUID", "StudyInstanceUID"]
 
 ranges_needed = {
     'wbc_at_diagnosis': 'by_200',
@@ -168,10 +173,12 @@ def add_data_sets(sets_set):
         try:
             obj, created = DataSetType.objects.update_or_create(name=dss['name'], data_type=dss['data_type'], set_type=dss['set_type'])
 
-            print("Data Set Type created:")
+            print("[STATUS] Data Set Type created:")
             print(obj)
         except Exception as e:
-            logger.error("[ERROR] Data Version {} may not have been added!".format(dss['name']))
+            msg = "Data Version {} may not have been added!".format(dss['name'])
+            ERRORS_SEEN.append(msg)
+            logger.error("[ERROR] {}".format(msg))
             logger.exception(e)
 
 
@@ -198,7 +205,9 @@ def add_data_versions(idc_version, create_set, associate_set):
         logger.info("[STATUS] Current Active data versions:")
         logger.info("{}".format(DataVersion.objects.filter(active=True)))
     except Exception as e:
-        logger.error("[ERROR] Data Versions may not have been added!")
+        msg = "Data Versions may not have been added!"
+        ERRORS_SEEN.append(msg)
+        logger.error("[ERROR] {}".format(msg))
         logger.exception(e)
 
 
@@ -216,7 +225,9 @@ def add_programs(program_set):
             results[obj.short_name] = obj
 
         except Exception as e:
-            logger.error("[ERROR] Program {} may not have been added!".format(prog['short_name']))
+            msg = "Program {} may not have been added!".format(prog['short_name'])
+            ERRORS_SEEN.append(msg)
+            logger.error("[ERROR] {}".format(msg))
             logger.exception(e)
     return results
 
@@ -270,9 +281,11 @@ def add_data_source(name, count_col, source_type, versions, programs, aggregate_
             )
         copy_attrs([attr_from], [name], attr_exclude)
 
-        print("DataSource entry created: {}".format(obj.name))
+        print("[STATUS] DataSource entry created for: {}".format(obj.name))
     except Exception as e:
-        logger.error("[ERROR] DataSource {} may not have been added!".format(obj.name if obj else 'Unknown'))
+        msg = "DataSource {} may not have been added!".format(obj.name if obj else 'Unknown')
+        ERRORS_SEEN.append(msg)
+        logger.error("[ERROR] {}".format(msg))
         logger.exception(e)
 
 
@@ -344,7 +357,9 @@ def load_collections(filename, data_version="8.0"):
                         line[field_map['program']], line[field_map['name']]
                     ))
                 except Exception as e:
-                    logger.error("[ERROR] While attempting to look up program {}:".format(line[field_map['program']]))
+                    msg = "While attempting to look up program {}:".format(line[field_map['program']])
+                    ERRORS_SEEN.append(msg)
+                    logger.error("[ERROR] {}".format(msg))
                     logger.exception(e)
             try:
                 Collection.objects.get(collection_uuid=line[field_map['collection_uuid']])
@@ -359,6 +374,7 @@ def load_collections(filename, data_version="8.0"):
         load_tooltips(Collection.objects.filter(owner=idc_superuser, active=True, collection_type=Collection.ORIGINAL_COLLEX), "collection_id", "description")
         load_tooltips(Collection.objects.filter(owner=idc_superuser, active=True, collection_type=Collection.ANALYSIS_COLLEX), "analysis_results_id", "description", "collection_id")
     except Exception as e:
+        ERRORS_SEEN.append("Error seen while processing the collections file, check logs for line.")
         logger.error("[ERROR] While processing collections file {}:".format(filename))
         logger.exception(e)
         logger.error("Line: {}".format(line))
@@ -399,6 +415,7 @@ def add_collections(new, update):
             Collection.objects.bulk_update(updated_collex, fields)
 
     except Exception as e:
+        ERRORS_SEEN.append("Error seen while adding/updating collections, check logs.")
         logger.error("[ERROR] While adding/updating collections:")
         logger.exception(e)
 
@@ -409,7 +426,13 @@ def create_solr_params(schema_src, solr_src):
     schema = BigQuerySupport.get_table_schema(schema_src[0],schema_src[1],schema_src[2])
     solr_schema = []
     solr_index_strings = []
-    SCHEMA_BASE = '{"add-field": %s}'
+    field_types = ''
+    add_copy_field = ''
+    SCHEMA_BASE = '{{field_types}add-field": {fields}{add_copy_field}'
+    if len(TOKENIZED_FIELDS):
+        field_types = '"add-field-type": { "name":"tokenizedText", "class":"solr.TextField", "analyzer" : { "tokenizer": { "name":"nGram" }}}, '
+        copy_fields = ",".join(['{"source":"{field}","dest":"{field{}_tokenized"}'.format(field) for field in TOKENIZED_FIELDS])
+        add_copy_field = ', "add-copy-field": [{copy_fields}]'.format(copy_fields)
     CORE_CREATE_STRING = "sudo -u solr /opt/bitnami/solr/bin/solr create -c {solr_src} -s 2 -rf 2"
     SCHEMA_STRING = "curl -u {solr_user}:{solr_pwd} -X POST -H 'Content-type:application/json' --data-binary '{schema}' https://localhost:8983/solr/{solr_src}/schema --cacert solr-ssl.pem"
     INDEX_STRING = "curl -u {solr_user}:{solr_pwd} -X POST 'https://localhost:8983/solr/{solr_src}/update?commit=yes{params}' --data-binary @{file_name}.csv -H 'Content-type:application/csv' --cacert solr-ssl.pem"
@@ -426,11 +449,22 @@ def create_solr_params(schema_src, solr_src):
                 "stored": True
             }
             solr_schema.append(field_schema)
+            if TOKENIZED_FIELDS and field['name'] in TOKENIZED_FIELDS:
+                solr_schema.append({
+                    "name": "{}_tokenized".format(field["name"]),
+                    "type": "tokenizedText",
+                    "multiValued": False if field['name'] in SOLR_SINGLE_VAL.get(solr_src.aggregate_level,
+                                                                                 {}) else True,
+                    "stored": True
+                })
             if field_schema['multiValued']:
                 solr_index_strings.append("f.{}.split=true&f.{}.separator=|".format(field['name'],field['name']))
 
     with open("{}_solr_cmds.txt".format(solr_src.name), "w") as cmd_outfile:
-        schema_array = SCHEMA_BASE % solr_schema
+        schema_array = SCHEMA_BASE.format(
+            field_types=field_types,
+            add_copy_field=add_copy_field
+        )
         params = "&{}".format("&".join(solr_index_strings))
         cmd_outfile.write(CORE_CREATE_STRING.format(solr_src=solr_src.name))
         cmd_outfile.write("\n\n")
@@ -533,13 +567,17 @@ def add_attributes(attr_set):
                     )
 
         except Exception as e:
-            logger.error("[ERROR] Attribute {} may not have been added!".format(attr['name']))
+            msg = "Attribute {} may not have been added!".format(attr['name'])
+            ERRORS_SEEN.append(msg)
+            logger.error("[ERROR] {}".format(msg))
             logger.exception(e)
 
 
 def copy_attrs(from_data_sources, to_data_sources, attr_excludes):
     to_sources = DataSource.objects.filter(name__in=to_data_sources)
     from_sources = DataSource.objects.filter(name__in=from_data_sources)
+    if not len(from_sources):
+        raise Exception("[ERROR] Data source '{}' to copy attributes from was not found!".format(from_data_sources))
     to_sources_attrs = to_sources.get_source_attrs()
     bulk_add = []
 
@@ -554,6 +592,9 @@ def copy_attrs(from_data_sources, to_data_sources, attr_excludes):
         for attr in from_source_attrs:
             for ds in to_sources:
                 bulk_add.append(Attribute.data_sources.through(attribute_id=attr.id, datasource_id=ds.id))
+
+    if not len(bulk_add):
+        raise Exception("[ERROR] Attributes from '{}' were not found for copying!".format(from_data_sources))
 
     Attribute.data_sources.through.objects.bulk_create(bulk_add)
 
@@ -601,6 +642,7 @@ def deactivate_data_versions(versions, idc_version):
             dv.active=False
             dv.save()
     except Exception as e:
+        ERRORS_SEEN.append("Error seen while attempting to deactivate tooltips, check logs.")
         logger.error("[ERROR] While deactivating versions:")
         logger.exception(e)
 
@@ -613,10 +655,11 @@ def load_programs(filename):
                 Program.objects.get(short_name=line[0])
                 logger.info("[STATUS] Program {} already exists: skipping.".format(line[0]))
             except ObjectDoesNotExist as e:
-                obj = Program.objects.update_or_create(short_name=line[0],name=line[1],is_public=True,active=True,owner=idc_superuser)
+                obj = Program.objects.update_or_create(short_name=line[0],display_name=line[1],is_public=True,active=True,owner=idc_superuser)
                 logger.info("[STATUS] Program {} added.".format(obj))
 
     except Exception as e:
+        ERRORS_SEEN.append("Error seen while attempting to add a program, check logs.")
         logger.error("[ERROR] While adding programs:")
         logger.exception(e)
 
@@ -638,11 +681,16 @@ def update_display_values(attr, updates):
             logger.info("[STATUS] Added {} display values.".format(str(len(new_vals))))
 
 
-def load_tooltips(source_objs, attr_name, source_tooltip, obj_attr=None):
+def load_tooltips(source_objs, attr_name, source_tooltip, obj_id_col=None):
     try:
         attr = Attribute.objects.get(name=attr_name, active=True)
-        if not obj_attr:
-            obj_attr = attr_name
+        # In some cases, the data sourcing the tooltip does not have an ID column with a name which matches
+        # the attribute name (eg. in Collections, analysis results and collections both have a collection_id,
+        # but in Attributes, analysis_result_id and collection_id are distinct attributes).
+        # Used obi_id_col to specify the column in which the ID of the value to associate with the tooltip source in
+        # the case the attribute name is different from the source object's column ID
+        if not obj_id_col:
+            obj_id_col = attr_name
 
         tips = Attribute_Tooltips.objects.select_related('attribute').filter(attribute=attr)
 
@@ -653,7 +701,7 @@ def load_tooltips(source_objs, attr_name, source_tooltip, obj_attr=None):
                 extent_tooltips[tip.attribute.id] = []
             extent_tooltips[tip.attribute.id].append(tip.tooltip_id)
 
-        tooltips_by_val = {x[obj_attr]: {'tip': x[source_tooltip]} for x in source_objs.values() if x[obj_attr] != '' and x[obj_attr] is not None}
+        tooltips_by_val = {x[obj_id_col]: {'tip': x[source_tooltip]} for x in source_objs.values() if x[obj_id_col] != '' and x[obj_id_col] is not None}
 
         new_tooltips = []
         updated_tooltips = []
@@ -680,6 +728,7 @@ def load_tooltips(source_objs, attr_name, source_tooltip, obj_attr=None):
         if not len(new_tooltips) and not len(updated_tooltips):
             logger.info("[STATUS] No new or changed tooltips found.")
     except Exception as e:
+        ERRORS_SEEN.append("Error seen while attempting to load tooltips, check logs.")
         logger.error("[ERROR] While attempting to load tooltips:")
         logger.exception(e)
 
@@ -690,7 +739,7 @@ def load_display_vals(filename):
         attr_vals_file = open(filename, "r")
 
         for line in csv_reader(attr_vals_file):
-            if 'display_value' in line:
+            if 'Raw' in line:
                 continue
             if line[0] not in display_vals:
                 display_vals[line[0]] = {
@@ -703,6 +752,7 @@ def load_display_vals(filename):
 
         attr_vals_file.close()
     except Exception as e:
+        ERRORS_SEEN.append("Error seen while attempting to load display values, check logs.")
         logger.error("[ERROR] While attempting to load display values:")
         logger.exception(e)
     return display_vals
@@ -749,6 +799,9 @@ def main():
 
         # Load the configuration file into ETL_CONFIG and run data version and data source creation
         # This will copy over any attributes from prior versions indicated in the JSON config
+        # Note that the config file is only required for 'full ETL' i.e. creation of new versions and
+        # deprecation of prior ones; it can be omitted to perform piecemeal updates eg. to collections
+        # metadata
         len(args.config_file) and update_data_versions(args.config_file)
 
         # If there are new attributes, prep them for addition
@@ -771,7 +824,11 @@ def main():
         if len(args.display_vals):
             dvals = load_display_vals(args.display_vals)
             for attr in dvals:
-                update_display_values(Attribute.objects.get(name=attr), dvals[attr]['vals'])
+                try:
+                    attr_obj = Attribute.objects.get(name=attr)
+                    update_display_values(attr_obj, dvals[attr]['vals'])
+                except ObjectDoesNotExist as e:
+                    print("[WARNING] Attr {} not found - display values will not be updated! Rerun ETL if this is not expected.".format(attr))
 
         # Solr commands are automatically output for full ETL; the step below is for outside-of-ETL executions
         if len(ETL_CONFIG):
@@ -789,9 +846,15 @@ def main():
             for src in make_solr:
                 create_solr_params(src[0], src[1])
 
+        if len(ERRORS_SEEN):
+            raise Exception("Captured errors while parsing ETL.")
+
     except Exception as e:
-        logger.error("[ERROR] While parsing ETL:")
+        logger.error("[ERROR] During ETL run:")
         logger.exception(e)
+        if len(ERRORS_SEEN):
+            for err in ERRORS_SEEN:
+                print("-> {}".format(err))
 
 
 if __name__ == "__main__":

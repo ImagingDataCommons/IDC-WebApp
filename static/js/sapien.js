@@ -75,11 +75,12 @@ require([
 
     var variantNames = {
         'Colorectal': ['Colon','Rectum'],
-        "Blood": ["Marrow, Blood"],
+        "Blood": ["Marrow, Blood", "Marrow and Blood", "Blood"],
         "Bile-Duct": ["Bile Duct"],
         "Adrenal-Gland": ["Adrenal Glands", "Adrenal"],
         "Testis": ["Testicles"],
-        "Head-and-Neck": ["Head", "Head-Neck"]
+        "Head-and-Neck": ["Head", "Head-Neck"],
+        "Lymph-Nodes": ["Lymph Node", "Lymph Nodes"]
     };
 
     let data = case_counts.sort(function(a,b){
