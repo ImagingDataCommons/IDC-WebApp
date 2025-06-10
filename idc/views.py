@@ -1,5 +1,5 @@
 ###
-# Copyright 2015-2024, Institute for Systems Biology
+# Copyright 2015-2025, Institute for Systems Biology
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import copy
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
+from django.views.decorators.cache import never_cache, cache_page
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -48,7 +48,7 @@ from idc.models import User_Data
 
 
 debug = settings.DEBUG
-logger = logging.getLogger('main_logger')
+logger = logging.getLogger(__name__)
 
 BQ_ATTEMPT_MAX = 10
 WEBAPP_LOGIN_LOG_NAME = settings.WEBAPP_LOGIN_LOG_NAME
@@ -57,7 +57,7 @@ WEBAPP_LOGIN_LOG_NAME = settings.WEBAPP_LOGIN_LOG_NAME
 
 
 # The site's homepage
-@never_cache
+@cache_page(60 * 5)
 def landing_page(request):
     collex = Collection.objects.filter(active=True, subject_count__gt=6,
                                        collection_type=Collection.ORIGINAL_COLLEX, species='Human',
@@ -399,6 +399,7 @@ def populate_tables(request):
         sortdir = req.get('sortdir', 'asc')
 
         [cnt, tableRes]=get_table_data_with_cart_data(table_type, sort, sortdir, filters, filtergrp_list, partitions, limit, offset, table_search)
+
         response["res"] = tableRes
         response["cnt"] = cnt
         response["diff"] = []
@@ -812,7 +813,6 @@ def explore_data_page(request, filter_path=False, path_filters=None):
         fields = json.loads(req.get('fields', '[]'))
         order_docs = json.loads(req.get('order_docs', '[]'))
         counts_only = (req.get('counts_only', "true").lower() == "true")
-        print("Explore data page call, counts only: {}".format(counts_only))
         with_related = (req.get('with_clinical', "True").lower() == "true")
         with_derived = (req.get('with_derived', "True").lower() == "true")
         collapse_on = req.get('collapse_on', 'SeriesInstanceUID')
@@ -1007,6 +1007,7 @@ def warn_page(request):
 
 
 # About page
+@cache_page(60 * 15)
 def about_page(request):
     return render(request, 'idc/about.html', {'request': request})
 

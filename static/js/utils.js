@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 2020, Institute for Systems Biology
+ * Copyright 2020-2025, Institute for Systems Biology
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,13 +133,14 @@ define(['jquery'], function($) {
         return uuid;
     };
 
-    const MAX_ELAPSED = 120000;
+    const MAX_ELAPSED = 240000;
     function _checkManifestReady(file_name, check_start) {
         if(!check_start) {
             check_start = Date.now();
         }
         let check_now = Date.now();
-        if((check_now-check_start) > MAX_ELAPSED) {
+        let elapsed_millis = check_now-check_start;
+        if((elapsed_millis) > MAX_ELAPSED) {
             _showJsMessage("error",
                 "There was an error generating your manifest. Please contact the administrator."
                 , true);
@@ -152,16 +153,17 @@ define(['jquery'], function($) {
             success: function (data) {
                 if(data.manifest_ready) {
                     let fetch_manifest_url = FETCH_MANIFEST_URL + file_name;
+                    let export_manifest = $('#export-manifest');
                     _showJsMessage("warning",
                         "Your manifest is ready for download! " +
                         '<a class="btn btn-special manifest-download-link" href="'+fetch_manifest_url+'" role="button">Download Manifest</a>'
                         , true, null,'manifest-download-box');
-                    $('#export-manifest').removeAttr('data-pending-manifest');
-                    if(!$('#export-manifest').attr('data-no-filters')) {
-                        $('#export-manifest').removeAttr('disabled');
-                        $('#export-manifest').attr('title','Export these search results as a manifest for downloading.');
+                    export_manifest.removeAttr('data-pending-manifest');
+                    if(!export_manifest.attr('data-no-filters')) {
+                        export_manifest.removeAttr('disabled');
+                        export_manifest.attr('title','Export these search results as a manifest for downloading.');
                     } else {
-                        $('#export-manifest').attr("title","Select a filter to enable this feature.");
+                        export_manifest.attr("title","Select a filter to enable this feature.");
                     }
                 } else {
                     setTimeout(_checkManifestReady, 15000, file_name, check_start);
@@ -182,10 +184,11 @@ define(['jquery'], function($) {
 
     function _checkForManifest() {
         let pending_manifest_request = sessionStorage.getItem("user-manifest");
+        let export_manifest = $('#export-manifest');
         if(pending_manifest_request) {
-            $('#export-manifest').attr('disabled','disabled');
-            $('#export-manifest').attr('data-pending-manifest', 'true');
-            $('#export-manifest').attr('title','A manifest is currently being built.');
+            export_manifest.attr('disabled','disabled');
+            export_manifest.attr('data-pending-manifest', 'true');
+            export_manifest.attr('title','A manifest is currently being built.');
             _showJsMessage("info",
                 "Your manifest is being prepared. Once it is ready, this space will make it available for download. <i class=\"fa-solid fa-arrows-rotate fa-spin\"></i>"
                 ,true);
@@ -203,7 +206,7 @@ define(['jquery'], function($) {
         blockResubmit: function(callback,downloadToken,expectedCookie) {
             downloadTimer = window.setInterval( function() {
                 var token = _getCookie(expectedCookie);
-                if((token == downloadToken) || (attempts == 0)) {
+                if((token === downloadToken) || (attempts === 0)) {
                     unblockSubmit(callback,expectedCookie);
                 }
                 attempts--;
