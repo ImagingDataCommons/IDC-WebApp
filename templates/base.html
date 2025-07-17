@@ -91,19 +91,17 @@
                     {% endautoescape %}
                 {% endif %}
                 <div id="js-messages">
-                    {% if request.user.is_authenticated %}
-                        <div class="alert alert-warning alert-dismissible">
-                            <button type="button" class="close" data-dismiss="alert">
-                                <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
-                            </button>
-                            We have removed user accounts from our system. If you would like to provide feedback on this
-                            decision or need help accessing your previously saved cohorts, please visit us at our
-                            <a class="external-link" href="" url="https://discourse.canceridc.dev/"
-                                 title="IDC Discourse Forum" data-toggle="modal" data-target="#external-web-warning">
-                                Discourse Forum <i class="fa-solid fa-external-link external-link-icon" aria-hidden="true"></i>
-                            </a>.
-                        </div>
-                    {% endif %}
+                    <div class="alert alert-warning alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                        </button>
+                        We have removed user accounts from our system. If you would like to provide feedback on this
+                        decision or need help accessing your previously saved cohorts, please visit us at our
+                        <a class="external-link" href="" url="https://discourse.canceridc.dev/t/idc-portal-sign-in-feature-deprecation/723"
+                             title="IDC Discourse Forum" data-toggle="modal" data-target="#external-web-warning">
+                            Discourse topic <i class="fa-solid fa-external-link external-link-icon" aria-hidden="true"></i>
+                        </a>.
+                    </div>
                 </div>
             </div>
         </div>
