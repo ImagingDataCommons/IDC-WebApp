@@ -56,19 +56,17 @@
                 </div>
             </div>
             <h3 class="pull-left" role="heading" aria-level="1">Explore Image Data </h3>
-        
-
-            {% if request.user.is_authenticated %}
-            <button id="save-cohort-btn" class="btn btn-special pull-right" data-toggle="modal"
-                data-target="#save-cohort-modal"
-                title="Select at least one filter." disabled="disabled"
-            > Save As New Cohort
-            </button>
-            {% else %}
-            <button id="save-cohort-btn" class="btn btn-special pull-right login-first" title="Select at least one filter."
-                 data-uri="{% url 'account_login' %}" disabled="disabled"> Log in to Save Cohort
-            </button>
-            {% endif %}
+{#            {% if request.user.is_authenticated %}#}
+{#            <button id="save-cohort-btn" class="btn btn-special pull-right" data-toggle="modal"#}
+{#                data-target="#save-cohort-modal"#}
+{#                title="Select at least one filter." disabled="disabled"#}
+{#            > Save As New Cohort#}
+{#            </button>#}
+{#            {% else %}#}
+{#            <button id="save-cohort-btn" class="btn btn-special pull-right login-first" title="Select at least one filter."#}
+{#                 data-uri="{% url 'account_login' %}" disabled="disabled"> Log in to Save Cohort#}
+{#            </button>#}
+{#            {% endif %}#}
         </div>
     </div>
 {% endblock %}
