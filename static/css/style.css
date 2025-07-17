@@ -4509,3 +4509,8 @@ d-topics-list iframe {
 .collapse-all, .open-all {
   cursor: pointer;
 }
+
+.special-announcement {
+  margin-bottom: 0px;
+  text-align: center;
+}
