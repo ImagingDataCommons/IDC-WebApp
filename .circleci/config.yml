@@ -119,7 +119,7 @@ jobs:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     working_directory: ~/IDC-WebApp
     docker:
-      - image: cimg/python:3.9.2
+      - image: cimg/python:3.11
       - image: cimg/mysql:8.0
         environment:
           MYSQL_ROOT_HOST: "%"
@@ -195,7 +195,7 @@ jobs:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     working_directory: ~/IDC-WebApp
     docker:
-      - image: cimg/python:3.9.2
+      - image: cimg/python:3.11
     steps:
       - restore_cache:
           keys:
@@ -209,7 +209,7 @@ jobs:
             sudo -E rm -rf ./lib
             sudo -E /bin/bash ./shell/unpack_for_deployment.sh
             sudo -E gcloud config set app/cloud_build_timeout 1600
-            sudo -E gcloud app deploy --verbosity=debug ./app.yaml --quiet
+            sudo -E gcloud app deploy --verbosity=debug ./app.yaml --service-account=${WEBAPP_RUNTIME_SA_NAME} --quiet
 workflows:
   version: 2
   build_and_deploy:

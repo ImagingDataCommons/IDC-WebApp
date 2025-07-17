@@ -1,6 +1,6 @@
 ###
 #
-# Copyright 2017, Institute for Systems Biology
+# Copyright 2025, Institute for Systems Biology
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 # Dockerfile extending the Python Community image from Dockerhub with application files for a
 # single application.
-FROM python:3.9-bullseye
+FROM python:3.11-bookworm
 
 SHELL ["/bin/bash", "-c"]
 
@@ -29,12 +29,12 @@ RUN apt-get update
 RUN apt-get install -y wget
 # TODO: we need to start using the keyring instead
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv A8D3785C
-RUN wget "http://repo.mysql.com/mysql-apt-config_0.8.29-1_all.deb" -P /tmp
+RUN wget "http://repo.mysql.com/mysql-apt-config_0.8.30-1_all.deb" -P /tmp
 
 # install lsb-release (a dependency of mysql-apt-config), since dpkg doesn't
 # do dependency resolution
 RUN apt-get install -y lsb-release
-RUN dpkg --install /tmp/mysql-apt-config_0.8.29-1_all.deb
+RUN dpkg --install /tmp/mysql-apt-config_0.8.30-1_all.deb
 
 # fetch the updated package metadata (in particular, mysql-server)
 RUN apt-get update
@@ -44,10 +44,10 @@ RUN apt-get install -y mysql-server
 
 RUN apt-get -y install build-essential
 RUN apt-get -y install --reinstall python3-m2crypto python3-cryptography
-RUN apt-get -y install libxml2-dev libxmlsec1-dev swig
+RUN apt-get -y install libxml2-dev libxmlsec1-dev swig pkg-config
 RUN pip install pexpect
 
-RUN apt-get -y install unzip libffi-dev libssl-dev libmysqlclient-dev python3-mysqldb python3-dev libpython3-dev git ruby g++ curl
+RUN apt-get -y install unzip libffi-dev libssl-dev libmysqlclient-dev python3-mysqldb python3-dev libpython3-dev git g++ curl
 
 ADD . /app
 
