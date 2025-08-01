@@ -1,5 +1,5 @@
 ###
-# Copyright 2015-2023, Institute for Systems Biology
+# Copyright 2015-2025, Institute for Systems Biology
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -285,9 +285,10 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'idc.checkreqsize_middleware.CheckReqSize',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'adminrestrict.middleware.AdminPagesRestrictMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
     'idc.team_only_middleware.TeamOnly',
     # Uncomment the next line for simple clickjacking protection:
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -312,7 +313,6 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     'anymail',
     'idc',
-    'data_upload',
     'sharing',
     'cohorts',
     'idc_collections',
@@ -591,19 +591,28 @@ EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 DEFAULT_FROM_EMAIL = NOTIFICATION_EMAIL_FROM_ADDRESS
 SERVER_EMAIL = "info@canceridc.dev"
 
-GOOGLE_APPLICATION_CREDENTIALS  = join(dirname(__file__), '../{}{}'.format(SECURE_LOCAL_PATH,os.environ.get('GOOGLE_APPLICATION_CREDENTIALS', '')))
 OAUTH2_CLIENT_ID                = os.environ.get('OAUTH2_CLIENT_ID', '')
 OAUTH2_CLIENT_SECRET            = os.environ.get('OAUTH2_CLIENT_SECRET', '')
 
-if not exists(GOOGLE_APPLICATION_CREDENTIALS):
-    print("[ERROR] Google application credentials file wasn't found! Provided path: {}".format(GOOGLE_APPLICATION_CREDENTIALS))
-    exit(1)
+# WJRL 5/21/25: Pulling in the GAC test code now in use on ISB-CGC to support keyless deployment:
+#
+# Deployed systems retrieve credentials from the metadata server, but a local VM build must provide a credentials file
+# for some actions. CircleCI needs SA access but can make use of the deployment SA's key.
+GOOGLE_APPLICATION_CREDENTIALS = None
 
-#################################
-#   For NIH/eRA Commons login   #
-#################################
-GOOGLE_GROUP_ADMIN                      = os.environ.get('GOOGLE_GROUP_ADMIN', '')
-SUPERADMIN_FOR_REPORTS                  = os.environ.get('SUPERADMIN_FOR_REPORTS', '')
+if IS_DEV:
+    GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS', '')
+elif IS_CI:
+    GOOGLE_APPLICATION_CREDENTIALS = "deployment.key.json"
+
+if not IS_APP_ENGINE:
+    if GOOGLE_APPLICATION_CREDENTIALS is not None and not exists(GOOGLE_APPLICATION_CREDENTIALS):
+        print("[ERROR] Google application credentials file wasn't found! Provided path: {}".format(GOOGLE_APPLICATION_CREDENTIALS))
+        exit(1)
+    print("[STATUS] GOOGLE_APPLICATION_CREDENTIALS: {}".format(GOOGLE_APPLICATION_CREDENTIALS))
+else:
+    print("[STATUS] AppEngine Flex detected--default credentials will be used.")
+
 
 
 ##############################
@@ -669,7 +678,7 @@ DEFAULT_FETCH_COUNT = os.environ.get('DEFAULT_FETCH_COUNT', 10)
 
 
 # Explicitly check for known problems in descriptions and names provided by users
-DENYLIST_RE = r'((?i)<script>|(?i)</script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|(?i)<iframe>|(?i)</iframe>)'
+DENYLIST_RE = r'(<script>|</script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|<iframe>|</iframe>)'
 ATTRIBUTE_DISALLOW_RE = r'([^a-zA-Z0-9_])'
 
 if DEBUG and DEBUG_TOOLBAR and not IS_APP_ENGINE:

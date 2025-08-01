@@ -37,9 +37,9 @@ apt-get update -qq
 # Install and update apt-get info
 echo "Preparing System..."
 apt-get -y --force-yes install software-properties-common ca-certificates gnupg
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv A8D3785C
-wget "https://repo.mysql.com/mysql-apt-config_0.8.29-1_all.deb" -P /tmp
-dpkg --install /tmp/mysql-apt-config_0.8.29-1_all.deb
+apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv B7B3B788A8D3785C
+wget "https://repo.mysql.com/mysql-apt-config_0.8.30-1_all.deb" -P /tmp
+dpkg --install /tmp/mysql-apt-config_0.8.30-1_all.deb
 
 apt-get update -qq
 
@@ -47,7 +47,7 @@ apt-get install mysql-client
 
 # Install apt-get dependencies
 echo "Installing Dependencies..."
-apt-get install -y --force-yes unzip libffi-dev libssl-dev git ruby g++ curl dos2unix
+apt-get install -y --force-yes unzip libffi-dev libssl-dev git g++ curl dos2unix pkg-config
 apt-get install -y --force-yes python3-distutils python3-mysqldb libmysqlclient-dev libpython3-dev build-essential
 apt-get install -y --force-yes python3-pip
 
@@ -62,6 +62,10 @@ if [ -z "${CI}" ]; then
     echo "Confirming clearance of lib:"
     ls ${HOMEROOT}/lib/
 fi
+
+# Install PIP + Dependencies
+echo "Installing pip3..."
+curl --silent https://bootstrap.pypa.io/get-pip.py | python3
 
 # Install our primary python libraries
 # If we're not on CircleCI, or we are but the lib directory isn't there (cache miss), install lib
