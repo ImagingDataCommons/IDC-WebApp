@@ -46,7 +46,7 @@ require([
         while(log_level%byte_count >= log_level) {
             byte_count-=3;
         }
-        let bytes = (Math.round((size/(Math.pow(10,log_level)))*100)/100).toFixed(2);
+        let bytes = (Math.round((size/(Math.pow(10,log_level)))*100)/100).toFixed(3);
         return `${bytes} ${byte_level[(byte_count/3)]}` ;
     }
 
@@ -583,7 +583,10 @@ require([
         downloader_manager.cancel();
     });
 
-    $('.container-fluid').on('click', '.download-all-instances', async function () {
+    $('.container-fluid').on('click', '.download-all-instances', async function (event) {
+        // Don't let the row handler do anything from here on out or the FileSystem Access API will get ornery
+        event.preventDefault();
+        event.stopImmediatePropagation();
         const clicked = $(this);
         let directoryHandle = await window.showDirectoryPicker({
             id: 'idc-downloads',

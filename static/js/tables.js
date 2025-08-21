@@ -852,6 +852,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     $(row).on('click', function(event) {
                         handleRowClick("studies", row, event, ids);
                     });
+                    let row_id = $(row).attr("id");
+                    $(`[id="${row_id}"] .download-all-instances`).on('click',async function(){
+
+                    });
                 },
                 "columnDefs": [
                     {className: "ckbx seriesview", "targets": [0]},
@@ -1142,8 +1146,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         } else {
             pageRows = 10;
         }
-        console.debug($('#series_tab'));
-        console.debug($('#series_tab').DataTable());
         $('#series_tab').DataTable().destroy();
         try {
             $('#series_tab').DataTable({
@@ -2172,6 +2174,15 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         }
       }
 
+      async function bob() {
+            let directoryHandle = await window.showDirectoryPicker({
+                id: 'idc-downloads',
+                startIn: 'downloads',
+                mode: 'readwrite',
+            });
+            return directorHandle;
+      }
+
     const handleRowClick =  function(tabletype, row, event, ids){
         let elem = event.target;
         if ($(elem).hasClass('collection_info')) {
@@ -2182,7 +2193,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             //do nothing here. opening the viewer
         } else if ($(elem).hasClass('download-col') || $(elem).hasClass('manifest-col') || $(elem).parentsUntil('tr').hasClass('download-col')
         || $(elem).parentsUntil('tr').hasClass('manifest-col')) {
-            //do nothing here. downloading a manifest or instances
+            bob();
         } else if ($(elem).hasClass('shopping-cart') || $(elem).hasClass('shopping-cart-holder')) {
              handleCartClick(tabletype, row, elem, ids);
          }
