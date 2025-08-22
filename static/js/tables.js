@@ -852,10 +852,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     $(row).on('click', function(event) {
                         handleRowClick("studies", row, event, ids);
                     });
-                    let row_id = $(row).attr("id");
-                    $(`[id="${row_id}"] .download-all-instances`).on('click',async function(){
-
-                    });
                 },
                 "columnDefs": [
                     {className: "ckbx seriesview", "targets": [0]},
@@ -2174,26 +2170,17 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         }
       }
 
-      async function bob() {
-            let directoryHandle = await window.showDirectoryPicker({
-                id: 'idc-downloads',
-                startIn: 'downloads',
-                mode: 'readwrite',
-            });
-            return directorHandle;
-      }
-
     const handleRowClick =  function(tabletype, row, event, ids){
         let elem = event.target;
         if ($(elem).hasClass('collection_info')) {
             displayInfo($(elem));
         } else if ($(elem).hasClass('copy-this') || $(elem).hasClass('fa-copy')) {
-                            //do nothing. handled by triggers in base.js and explore.js to copy to clipboard and show a copy tooltip
+            //do nothing. handled by triggers in base.js and explore.js to copy to clipboard and show a copy tooltip
         } else if ($(elem).hasClass('ohif') || $(elem).parentsUntil('tr').hasClass('ohif')) {
             //do nothing here. opening the viewer
         } else if ($(elem).hasClass('download-col') || $(elem).hasClass('manifest-col') || $(elem).parentsUntil('tr').hasClass('download-col')
         || $(elem).parentsUntil('tr').hasClass('manifest-col')) {
-            bob();
+            // Handled by delegates
         } else if ($(elem).hasClass('shopping-cart') || $(elem).hasClass('shopping-cart-holder')) {
              handleCartClick(tabletype, row, elem, ids);
          }
