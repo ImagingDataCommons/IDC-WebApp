@@ -546,6 +546,97 @@ require([
         maxWidth: 85
     });
 
+
+    tippy.delegate('.filter-display-panel', {
+        content: 'Get the citation list for this cohort.',
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.citations-button',
+        maxWidth: 200
+    });
+
+    tippy.delegate('.cases-table', {
+        content: 'Download all of the image instances in this case.',
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.download-all-instances',
+        maxWidth: 200
+    });
+
+    tippy.delegate('.cases-table', {
+        content: 'Direct download is only available in Chromium browsers.',
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.download-all-disabled',
+        maxWidth: 200
+    });
+
+    tippy.delegate('.studies-table', {
+        content: 'Download all of the image instances in this study.',
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.download-all-instances',
+        maxWidth: 200
+    });
+
+    tippy.delegate('.studies-table', {
+        content: 'Download a manifest file for this study.',
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.export-button',
+        maxWidth: 200
+    });
+
+    tippy.delegate('.studies-table', {
+        content: 'Direct download is only available in Chromium browsers.',
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.download-all-disabled',
+        maxWidth: 200
+    });
+
+    tippy.delegate('.series-table', {
+        content: 'Download all of the image instances in this series.',
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.download-all-instances',
+        maxWidth: 200
+    });
+
+    tippy.delegate('.series-table', {
+        content: 'Download a manifest file for this series.',
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.export-button',
+        maxWidth: 200
+    });
+
+    tippy.delegate('.series-table', {
+        content: 'Direct download is only available in Chromium browsers.',
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.download-all-disabled',
+        maxWidth: 200
+    });
+
     tippy.delegate('.series-table', {
         content: 'Some or all of the images in this collection are not publicly available.',
         theme: 'dark',

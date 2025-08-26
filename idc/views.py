@@ -44,6 +44,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.signals import user_login_failed
 from django.dispatch import receiver
 from idc.models import User_Data
+from solr_helpers import build_solr_query, query_solr_and_format_result
 
 
 
@@ -52,8 +53,6 @@ logger = logging.getLogger(__name__)
 
 BQ_ATTEMPT_MAX = 10
 WEBAPP_LOGIN_LOG_NAME = settings.WEBAPP_LOGIN_LOG_NAME
-
-
 
 
 # The site's homepage
@@ -183,7 +182,6 @@ def user_login_failed_callback(sender, credentials, **kwargs):
             log_name,
             '[WEBAPP LOGIN] Login FAILED for: {credentials}'.format(credentials=credentials)
         )
-
     except Exception as e:
         logger.exception(e)
 
@@ -241,60 +239,10 @@ def save_ui_hist(request):
 
     return JsonResponse({}, status=status)
 
-# @login_required
-# def getCartData(request):
-#     response = {}
-#     status = 200
-#     sources = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
-#         active=True, source_type=DataSource.SOLR,
-#         aggregate_level="StudyInstanceUID"
-#     )
-
-#def compcartsets(carthist, sel):
-
-# def cartsets(carthist):
-#     cartsets = []
-#
-#     for cartfiltset in carhist:
-#         for selection in cartfiltset:
-#             sel = selection['sel']
-
-
-def cart(request):
-    response={}
-    status=200
-    field_list=['collection_id', 'PatientID', 'StudyInstanceUID', 'SeriesInstanceUID']
-    try:
-       req = request.GET if request.GET else request.POST
-       partitions = json.loads(req.get('partitions', '{}'))
-       filtlist = json.loads(req.get('filtlist', '{}'))
-       limit = json.loads(req.get(limit, 1000))
-       offset = json.loads(req.get(offset, 0))
-
-       get_cart_data(filtlist,partitions,limit, offset)
-       i=1
-
-    except Exception as e:
-        logger.error("[ERROR] While attempting to populate the table:")
-        logger.exception(e)
-        messages.error(
-           request,
-           "Encountered an error when attempting to populate the page - please contact the administrator."
-        )
-        status = 400
-
-    return JsonResponse(response, status=status)
-
-
-# Calculate the size and counts of a cart based on its current partitions
-def calculate_cart(request):
-    pass
-
 
 # returns various metadata mappings for selected projects used in calculating cart selection
 # counts 'on the fly' client side
 def studymp(request):
-
     response = {}
     status = 200
     sources = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
@@ -415,382 +363,7 @@ def populate_tables(request):
     return JsonResponse(response, status=status)
 
 
-def populate_tables_old(request):
-    response = {}
-    status = 200
-    tableRes = []
-    studymp={}
-
-    try:
-        req = request.GET if request.GET else request.POST
-        path_arr = [nstr for nstr in request.path.split('/') if nstr]
-        table_type = path_arr[len(path_arr)-1]
-        fields = None
-        collapse_on = None
-        filters = json.loads(req.get('filters', '{}'))
-
-        offset = int(req.get('offset', '0'))
-        limit = int(req.get('limit', '500'))
-        serieslimit = int(req.get('serieslimit', '500'))
-        studylimit = int(req.get('studylimit', '500'))
-        if limit > settings.MAX_SOLR_RECORD_REQUEST:
-            logger.warning("[WARNING] Attempt to request more than MAX_SOLR_RECORD_REQUEST! ({})".format(limit))
-            limit = settings.MAX_SOLR_RECORD_REQUEST
-        sort = req.get('sort', 'PatientID')
-        sortdir = req.get('sortdir', 'asc')
-        checkIds = json.loads(req.get('checkids', '[]'))
-
-        diffA = []
-        versions=[]
-        versions = ImagingDataCommonsVersion.objects.filter(
-            version_number__in=versions
-        ).get_data_versions(active=True) if len(versions) else ImagingDataCommonsVersion.objects.filter(
-            active=True
-        ).get_data_versions(active=True)
-
-        aggregate_level = "SeriesInstanceUID" if table_type == 'series' else "StudyInstanceUID"
-
-        data_types = [DataSetType.IMAGE_DATA,DataSetType.ANCILLARY_DATA,DataSetType.DERIVED_DATA]
-        data_sets = DataSetType.objects.filter(data_type__in=data_types)
-        aux_sources = data_sets.get_data_sources().filter(
-            source_type=DataSource.SOLR,
-            aggregate_level__in=["case_barcode", "sample_barcode", aggregate_level],
-            id__in=versions.get_data_sources().filter(source_type=DataSource.SOLR).values_list("id", flat=True)
-        ).distinct()
-
-        sources = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
-            active=True, source_type=DataSource.SOLR,
-            aggregate_level=aggregate_level
-        )
-
-        sortByField = True
-        custom_facets = None
-        custom_facets_order = None
-
-        custom_facets_ex = {"tot_series": {"type": "terms", "field": "PatientID", "limit": limit,
-                                        "facet": {"unique_series": "unique(SeriesInstanceUID)"}, "domain": {"query": "*.*"}}}
-
-        if table_type =="collections":
-            custom_facets = {"per_id": {"type": "terms", "field": "collection_id", "limit": limit,
-                                        "facet": {"unique_patient":"unique(PatientID)", "unique_study": "unique(StudyInstanceUID)",
-                                                  "unique_series": "unique(SeriesInstanceUID)"}},
-                             "tot_series":{"type": "terms", "field": "collection_id", "limit": limit,
-                                        "facet": {"unique_series": "unique(SeriesInstanceUID)"}, "domain": {"query": "*.*"} }
-                             }
-            tableIndex = 'PatientID'
-            fields = ['collection_id', 'access']
-            facetfields = ['unique_patient','unique_study', 'unique_series']
-            sort_arg = 'collection_id asc'
-            sortByField= True
-            sort = "collection_id"
-
-        if table_type == 'cases':
-            custom_facets = {"per_id": {"type": "terms", "field": "PatientID", "limit": limit,
-                                "facet": {"unique_study": "unique(StudyInstanceUID)",
-                                          "unique_series": "unique(SeriesInstanceUID)",
-                                          "sz":"sum(instance_size)"}},
-                             "per_id2": {"type": "terms", "field": "collection_id", "limit": limit,
-                                        "facet": {"unique_study": "unique(StudyInstanceUID)",
-                                                  "unique_series": "unique(SeriesInstanceUID)",
-                                                  "sz": "sum(instance_size)"}},
-                             "per_study": {"type": "terms", "field": "StudyInstanceUID", "limit": studylimit,
-                                         "facet": {
-                                                   "unique_series": "unique(SeriesInstanceUID)",
-                                                   "sz": "sum(instance_size)", "id": {"type":"terms", "field":"PatientID", "limit":4}}
-                                           },
-
-                             "tot_series": {"type": "terms", "field": "PatientID", "limit": limit,
-                                        "facet": {"unique_series": "unique(SeriesInstanceUID)"}, "domain": {"query": "*.*"}}
-
-                            }
-            custom_facets_ex = {
-                "per_study": {"type": "terms", "field": "StudyInstanceUID", "limit": studylimit,
-                              "facet": {
-                                  "unique_series": "unique(SeriesInstanceUID)",
-                                  "sz": "sum(instance_size)", "id": {"type": "terms", "field": "PatientID", "limit": 4}}
-                              },
-                "tot_series": {"type": "terms", "field": "PatientID", "limit": limit,
-                               "facet": {"unique_series": "unique(SeriesInstanceUID)"}, "domain": {"query": "*.*"}}
-            }
-            tableIndex = 'PatientID'
-            fields = ['collection_id', 'PatientID','access']
-            facetfields=['unique_study', 'unique_series']
-
-            if sort == 'collection_id':
-                sortByField = True
-                sort_arg = 'collection_id '+sortdir
-
-            elif sort == 'PatientID':
-                sort_arg = 'PatientID ' + sortdir
-
-            elif sort == 'StudyInstanceUID':
-                sortByField = False
-                sort_arg = 'unique_study ' + sortdir
-                custom_facets_order = {
-                    "tot": "unique(PatientID)",
-                    "per_id": {
-                        "type": "terms",
-                        "field": "PatientID",
-                        "sort": sort_arg,
-                        "offset": offset,
-                        "limit": limit,
-                        "facet": {
-                            "unique_study": "unique(StudyInstanceUID)",
-                            "unique_series": "unique(SeriesInstanceUID)"
-                        }
-                    }
-                }
-            elif sort == 'SeriesInstanceUID':
-                sortByField=False
-                sort_arg = 'unique_series '+sortdir
-                custom_facets_order = {
-                    "tot": "unique(PatientID)",
-                    "per_id": {
-                        "type": "terms", "field": "PatientID", "sort": sort_arg, "offset": offset, "limit": limit,
-                        "facet": {
-                            "unique_study": "unique(StudyInstanceUID)",
-                            "unique_series": "unique(SeriesInstanceUID)"
-                        }
-                    }
-                }
-
-        if table_type == 'studies':
-            custom_facets = {"per_id": {"type": "terms", "field": "StudyInstanceUID", "limit": limit,
-                                        "facet": {"unique_series": "unique(SeriesInstanceUID)"}},
-                             "tot_series": {"type": "terms", "field": "PatientID", "limit": limit,
-                                            "facet": {"unique_series": "unique(SeriesInstanceUID)"},
-                                            "domain": {"query": "*.*"}}
-                             }
-            custom_facets_ex = {
-                "tot_series": {"type": "terms", "field": "PatientID", "limit": limit,
-                               "facet": {"unique_series": "unique(SeriesInstanceUID)"}, "domain": {"query": "*.*"}}
-            }
-
-            tableIndex = 'StudyInstanceUID'
-            fields = ['collection_id','PatientID','StudyInstanceUID','StudyDescription','Modality','StudyDate','access','crdc_series_uuid','gcs_bucket','aws_bucket']
-            facetfields = ['unique_series']
-            sort_arg = 'PatientID asc, StudyDate asc'
-
-            if sort in ['PatientID','StudyInstanceUID', 'StudyDescription', 'StudyDate']:
-                sortByField = True
-                sort_arg = "{} {}".format(sort, sortdir)
-                if sort == 'PatientID':
-                    sort_arg = sort_arg+', StudyDate asc'
-
-            elif sort == 'SeriesInstanceUID':
-                sortByField = False
-                sort_arg = 'unique_series '+sortdir
-
-                custom_facets_order = {"tot": "unique(SeriesInstanceUID)",
-                                       "per_id": {"type": "terms", "field": "StudyInstanceUID",
-                                                  "sort": sort_arg,"offset": offset, "limit": limit,
-                                                  "facet": {"unique_series": "unique(SeriesInstanceUID)"}
-                                                  }
-                                       }
-
-        if table_type == 'series':
-            custom_facets = {}
-            tableIndex = 'SeriesInstanceUID'
-
-            fields = ['collection_id', 'PatientID', 'SeriesInstanceUID', 'StudyInstanceUID', 'SeriesDescription', 'SeriesNumber',
-                      'BodyPartExamined', 'Modality', 'access', 'crdc_series_uuid','gcs_bucket','aws_bucket', 'SOPClassUID']
-            facetfields = []
-            sortByField = True
-            sort_arg = 'StudyInstanceUID asc, SeriesNumber asc' if not sort else "{} {}, SeriesNumber asc".format(
-                sort, sortdir
-            )
-            if sort == 'SeriesDescription':
-                custom_facets_order = {}
-
-        order = {}
-        curInd = 0
-        idsFilt = []
-
-        # check that any selected ids are still valid after the filter is updated. ids that are no longer valid are
-        # then deselected on the front end
-        if len(checkIds)>0:
-            selFilters=copy.deepcopy(filters)
-            selFilters[tableIndex] = checkIds
-            newCheckIds = get_collex_metadata(
-                selFilters, [tableIndex], record_limit=len(checkIds)+1,sources=sources, records_only=True,
-                collapse_on=tableIndex, counts_only=False, filtered_needed=False, aux_sources=aux_sources, sort=tableIndex+' asc', default_facets=False
-            )
-
-            nset = set([x[tableIndex] for x in newCheckIds['docs']])
-            diffA = [x for x in checkIds if x not in nset]
-
-        if sortByField:
-            idsReq = get_collex_metadata(
-                filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=True, raw_format = True,
-                collapse_on=tableIndex, counts_only=False, filtered_needed=False, aux_sources=aux_sources, sort=sort_arg, default_facets=False
-
-            )
-
-            cntTotal = idsReq['total']
-            for rec in idsReq['docs']:
-                id = rec[tableIndex]
-                idsFilt.append(id)
-                order[id] = curInd
-                newRow = {}
-                for field in fields:
-                    if field in rec:
-                        newRow[field] = rec[field]
-                    else:
-                        newRow[field] = ''
-                tableRes.append(newRow)
-                curInd = curInd + 1
-            filters[tableIndex]=idsFilt
-
-            if not table_type == 'series':
-                #custom_facets["tot_series"]["domain"]["query"] = tableIndex + ": (" + " ".join(idsFilt) + ")"
-
-                cntRecs = get_collex_metadata(
-                    filters, fields, record_limit=limit, sources=sources, collapse_on=tableIndex, counts_only=True,
-                    records_only=False, filtered_needed=False, custom_facets=custom_facets, raw_format=True, aux_sources=aux_sources, default_facets = False
-                )
-
-
-                if table_type =='cases':
-                    for rec in cntRecs['facets']['tot_series']['buckets']:
-                        id = rec['val']
-                        tableRow = tableRes[order[id]]
-                        totser = rec['unique_series']
-                        tableRow['maxseries'] = totser
-
-
-                for rec in cntRecs['facets']['per_id']['buckets']:
-                    id = rec['val']
-                    tableRow = tableRes[order[id]]
-                    for facet in facetfields:
-                        if facet in rec:
-                            tableRow[facet] = rec[facet]
-                        else:
-                            tableRow[facet] = 0
-
-        else:
-            idsReq = get_collex_metadata(
-                filters, fields, record_limit=limit, sources=sources, offset=offset, records_only=False,
-                collapse_on=tableIndex, counts_only=True, filtered_needed=False, custom_facets=custom_facets_order,
-                raw_format=True, aux_sources=aux_sources, default_facets=False
-
-            )
-            cntTotal = idsReq['facets']['tot']
-            for rec in idsReq['facets']['per_id']['buckets']:
-                id = rec['val']
-                idsFilt.append(id)
-                order[id] = curInd
-                newRow = {tableIndex: id}
-                for facet in facetfields:
-                    if facet in rec:
-                        newRow[facet]=rec[facet]
-                    else:
-                        newRow[facet] = 0
-                tableRes.append(newRow)
-                curInd = curInd + 1
-            filters[tableIndex] = idsFilt
-            custom_facets_ex["tot_series"]["domain"]["query"] = tableIndex + ": (" + " ".join(idsFilt) + ")"
-
-            fieldRecs = get_collex_metadata(
-                filters, fields, record_limit=limit, sources=sources, records_only=False, collapse_on=tableIndex, raw_format = True,
-                counts_only=False, custom_facets=custom_facets_ex, filtered_needed=False, aux_sources=aux_sources, default_facets=False
-            )
-
-            if table_type == 'cases':
-                for rec in fieldRecs['facets']['tot_series']['buckets']:
-                    id = rec['val']
-                    tableRow = tableRes[order[id]]
-                    totser = rec['unique_series']
-                    tableRow['maxseries'] = totser
-
-            for rec in fieldRecs['docs']:
-                id = rec[tableIndex]
-                tableRow = tableRes[order[id]]
-                for field in fields:
-                    if not field == tableIndex:
-                        if field in rec:
-                            tableRow[field] = rec[field]
-                        else:
-                            tableRow[field] = ''
-
-
-
-        if (table_type == 'cases'):
-            if sortByField:
-                extbl = cntRecs
-            else:
-                extbl = fieldRecs
-            for rec in extbl['facets']['per_study']['buckets']:
-                PatientID = rec['id']['buckets'][0]['val']
-                tableRow = tableRes[order[PatientID]]
-                collection_id = tableRow['collection_id'][0]
-                studyid = rec['val']
-                cnt = rec['unique_series']
-                studymp[studyid] = {}
-                studymp[studyid]['val'] = []
-                studymp[studyid]['proj'] = collection_id
-                studymp[studyid]['PatientID'] = PatientID
-                studymp[studyid]['cnt'] = cnt
-                if not 'studymp' in tableRow:
-                    tableRow['studymp'] = {}
-                tableRow['studymp'][studyid] = cnt
-
-        elif (table_type == 'studies'):
-            osources = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
-                active=True, source_type=DataSource.SOLR,
-                aggregate_level="SeriesInstanceUID"
-            )
-
-            clist = [x['StudyInstanceUID'] for x in tableRes]
-            sfilters={}
-            sfilters['StudyInstanceUID'] = clist
-            idsEx = get_collex_metadata(
-                sfilters, ['collection_id', 'PatientID', 'SeriesInstanceUID', 'StudyInstanceUID'],
-                record_limit=serieslimit, sources=osources, offset=0,
-                records_only=True,
-                collapse_on='SeriesInstanceUID', counts_only=False, filtered_needed=False,
-                raw_format=True, default_facets=False
-            )
-
-            for res in idsEx['docs']:
-                collection_id = res['collection_id']
-                patientid = res['PatientID']
-                studyid = res['StudyInstanceUID']
-                seriesid = res['SeriesInstanceUID']
-                if not (studyid in studymp):
-                    studymp[studyid] = {}
-                    studymp[studyid]['val'] = []
-                    studymp[studyid]['proj'] = collection_id[0]
-                    studymp[studyid]['PatientID'] = patientid
-                studymp[studyid]['val'].append(seriesid)
-
-            for row in tableRes:
-                id = row['StudyInstanceUID']
-                if id in studymp:
-                    row['studymp'] = {}
-                    row['studymp'][id] =studymp[id]
-
-
-        response["res"] = tableRes
-        response["cnt"] = cntTotal
-        response["diff"] = diffA
-
-        if (table_type == 'cases') or (table_type == 'studies'):
-            response["studymp"]=studymp
-
-
-    except Exception as e:
-        logger.error("[ERROR] While attempting to populate the table:")
-        logger.exception(e)
-        messages.error(
-           request,
-           "Encountered an error when attempting to populate the page - please contact the administrator."
-        )
-        status = 400
-
-    return JsonResponse(response, status=status)
-
 # Data exploration and cohort creation page
-#@login_required
 def explore_data_page(request, filter_path=False, path_filters=None):
     context = {'request': request}
     is_json = False
@@ -946,6 +519,7 @@ def explorer_manifest(request):
         logger.exception(e)
     return redirect(reverse('cart'))
 
+
 # Given a set of filters in a GET request, parse the filter set out into a filter set recognized
 # by the explore_data_page method and forward it on to that view, returning its response.
 def parse_explore_filters(request):
@@ -1098,9 +672,51 @@ def cart_data(request):
     return JsonResponse(response, status=status)
 
 
-def test_page(request, mtch):
-    pg=request.path[:-1]+'.html'
-    return render(request, 'idc'+pg)
+def get_series(request, patient_id, study_uid=None):
+    try:
+        status = 200
+        response = { "result": [] }
+        source = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
+            active=True, source_type=DataSource.SOLR,
+            aggregate_level="SeriesInstanceUID"
+        ).first()
+        filters = {
+            "PatientID": [patient_id]
+        }
+        if study_uid:
+            filters["StudyInstanceUID"] = [study_uid]
+        filter_query = build_solr_query(
+            filters,
+            with_tags_for_ex=False,
+            search_child_records_by=None, solr_default_op='AND'
+        )
+        result = query_solr_and_format_result(
+            {
+                "collection": source.name,
+                "fields": ["PatientID", "StudyInstanceUID", "Modality", "crdc_series_uuid", "SeriesInstanceUID", "aws_bucket", "instance_size"],
+                "query_string": None,
+                "fqs": [filter_query['full_query_str']],
+                "facets": None, "sort": None, "counts_only": False, "limit": 2000
+            }
+        )
+        for doc in result['docs']:
+            response['result'].append({
+                "series_id": doc['SeriesInstanceUID'],
+                "crdc_series_id": doc['crdc_series_uuid'],
+                "bucket": doc['aws_bucket'][0],
+                "series_size": doc['instance_size'][0],
+                "modality": doc['Modality'][0],
+                "study_id": doc['StudyInstanceUID'],
+                "case": doc["PatientID"]
+            })
+
+    except Exception as e:
+        logger.error("[ERROR] While fetching series per study ID:")
+        logger.exception(e)
+        response['message'] = "Error while retrieving series IDs"
+        status = 400
+
+    return JsonResponse(response, status=status)
 
 
 # User dashboard, where saved cohorts (and, in the future, uploaded/indexed data) are listed
