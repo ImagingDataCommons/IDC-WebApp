@@ -40,7 +40,7 @@ require.config({
 });
 
 // Return an object for consts/methods used by most views
-define(['jquery'], function($) {
+define(['jquery', 'jqueryui'], function($, jqueryui) {
 
     // Download block poll with cookie via StackOverflow:
     // https://stackoverflow.com/questions/1106377/detect-when-browser-receives-file-download
@@ -109,7 +109,7 @@ define(['jquery'], function($) {
     function _showJsMessage(type,text,withEmpty,rootSelector, add_classes) {
         rootSelector = rootSelector || '#js-messages';
         withEmpty && $(rootSelector).empty();
-        var msg = "";
+        let msg = "";
         if (text instanceof Array) {
             for (var i = 0; i < text.length; i++) {
                 msg += text[i] + '<br />';
@@ -131,7 +131,16 @@ define(['jquery'], function($) {
                 )
         );
         return uuid;
-    };
+    }
+
+    function _hideFloatingMessage(withEmpty) {
+        withEmpty && $('.floating-messages').empty();
+        $('#floating-message').hide();
+    }
+
+    $('body').on('click', '#floating-message .close-msg-box', function(){
+        _hideFloatingMessage(true);
+    });
 
     const MAX_ELAPSED = 240000;
     function _checkManifestReady(file_name, check_start) {
@@ -198,6 +207,7 @@ define(['jquery'], function($) {
 
     return {
         showJsMessage: _showJsMessage,
+        hideFloatingMessage: _hideFloatingMessage,
         // Block re-requests of requests which can't be handled via AJAX (eg. file downloads)
         // Uses cookie polling
         // Request provides a parameter with a key of expectedCookie and a value of downloadToken
