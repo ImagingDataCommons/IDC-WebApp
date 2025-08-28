@@ -41,13 +41,14 @@ require([
         if(size <= 0) {
             return "0 MB";
         }
-        let log_level = Math.floor(Math.log10(size));
-        let byte_count = 12;
-        while(log_level%byte_count >= log_level) {
-            byte_count-=3;
+        let byte_count = 0;
+        let converted_size = size;
+        while(converted_size > 1024) {
+            byte_count += 1;
+            converted_size /= 1024;
         }
-        let bytes = (Math.round((size/(Math.pow(10,byte_count)))*1000)/1000).toFixed(3);
-        return `${bytes} ${byte_level[(byte_count/3)]}` ;
+        let bytes = (Math.round(converted_size*1000)/1000).toFixed(3);
+        return `${bytes} ${byte_level[byte_count]}` ;
     }
 
     class DownloadProgressDisplay {
@@ -188,6 +189,7 @@ require([
         queue_byte_size = 0;
         bytes_downloaded = 0;
         series_count = 0;
+        start_time = -1;
         collections = new Set([]);
         cases = new Set([]);
         studies = new Set([]);
@@ -212,6 +214,14 @@ require([
             return size_display_string(this.bytes_downloaded);
         }
 
+        get total_duration_estimate() {
+            if(this.start_time < 0 || this.bytes_downloaded <=0)
+                return "Calculating..."
+            let rate = this.bytes_downloaded/((Date.now()-this.start_time)/1000);
+            let sec_remaining = Math.round((this.queue_byte_size-this.bytes_downloaded)/rate).toFixed(0);
+            return `~${((sec_remaining-(sec_remaining%60))/60)}m${(sec_remaining%60) > 9 ? ':' : ':0'}${sec_remaining%60}s remaining @ ${size_display_string(rate)}ps`;
+        }
+
         reset_queue_manager() {
             this.queue_byte_size = 0;
             this.bytes_downloaded = 0;
@@ -220,10 +230,15 @@ require([
             this.cases = new Set([]);
             this.studies = new Set([]);
             this.cancellation_underway = false;
+            this.start_time = -1;
         }
 
         get active_requests() {
             return (this.working_queue.length > 0);
+        }
+
+        set_start_time() {
+            if(this.start_time < 0) this.start_time = Date.now();
         }
 
         cancel() {
@@ -263,6 +278,7 @@ require([
         }
 
         async get_download_item() {
+            this.set_start_time();
             await this._update_queue();
             if(this.working_queue.length > 0 && !this.cancellation_underway) {
                 return this.working_queue.pop();
@@ -279,6 +295,9 @@ require([
     function workerOnMessage(event) {
         if(event.data.message === 'update') {
             downloader_manager.add_to_done(parseFloat(event.data.size));
+            let msg = `Download status: ${downloader_manager.in_progress} file(s) downloading${downloader_manager.pending_msg}...`;
+            let progType = "download";
+            downloader_manager.progressUpdate(msg, progType);
             return;
         }
         let thisWorker = event.target;
@@ -385,14 +404,16 @@ require([
                         }
                         return;
                     }
-                    let counts = 0;
                     let read = 0;
+                    let lastReportTime = -1;
+                    let thisChunkTime = -1;
                     for await(const chunk of response.body) {
-                        if(abort_controller.signal.aborted) break;
+                        if(abort_controller.signal.aborted) break;               
                         outputStream.write(chunk);
-                        counts += 1;
+                        thisChunkTime = Date.now();
                         read += chunk.length;
-                        if(counts%20 === 0) {
+                        if(lastReportTime < 0 || ((thisChunkTime-lastReportTime) > 2000)) {
+                            lastReportTime = Date.now();
                             self.postMessage({message: "update", size: read});
                             read = 0;
                          }
@@ -424,13 +445,15 @@ require([
         workerObjectURL = null;
         workerLimit = navigator.hardwareConcurrency;
 
+        lastProgressUpdate = -1;
+
         constructor() {
             this.queues = new DownloadQueueManager();
             this.workerCodeBlob = new Blob([this.workerCode], {type: 'application/javascript'});
         }
 
         get overall_progress() {
-            return `${this.queues.total_bytes_downloaded} / ${this.queues.total_downloads_requested} downloaded `;
+            return `${this.queues.total_bytes_downloaded} / ${this.queues.total_downloads_requested} downloaded (${this.queues.total_duration_estimate})`;
         }
 
         get all_requested() {
@@ -469,7 +492,11 @@ require([
         }
 
         // Updates the current floating message contents and display class
+        // Will abort out of an update if there isn't a pending cancellation and the last update time was < 2 seconds
+        // ago
         progressUpdate(message, progType) {
+            if(this.lastProgressUpdate > 0 && Date.now()-this.lastProgressUpdate < 1000 && !this.pending_cancellation)
+                return;
             progType = progType || "download";
             let type = "info";
             let icon = progType || true;
@@ -496,6 +523,7 @@ require([
             if(!this.pending_cancellation && this.in_progress > 0) {
                 messages['header'] = this.all_requested;
             }
+            this.lastProgressUpdate = Date.now();
             this.progressDisplay.update(type, messages, icon);
         }
 
