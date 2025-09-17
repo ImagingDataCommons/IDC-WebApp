@@ -656,9 +656,9 @@ require([
     });
 
     $('.container-fluid').on('click', '.download-all-instances', async function (event) {
-        // Don't let the row handler do anything from here on out or the FileSystem Access API will get ornery
-        event.preventDefault();
+        // Stop propagation to the other handlers or the showDirectoryPicker will complain.
         event.stopImmediatePropagation();
+        event.preventDefault();
         const clicked = $(this);
         let directoryHandle = await window.showDirectoryPicker({
             id: 'idc-downloads',

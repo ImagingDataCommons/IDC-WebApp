@@ -32,11 +32,12 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
 from django.utils.html import escape
+from django.utils.encoding import uri_to_iri
 
 from google_helpers.stackdriver import StackDriverLogger
 from cohorts.models import Cohort, Cohort_Perms
 
-from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips, DataSetType
+from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips, DataSetType, Citation
 from idc_collections.collex_metadata_utils import build_explorer_context, get_collex_metadata, create_file_manifest, get_cart_data_serieslvl, get_cart_data_studylvl, get_table_data_with_cart_data
 from allauth.socialaccount.models import SocialAccount
 from django.core.exceptions import ObjectDoesNotExist
@@ -76,7 +77,8 @@ def landing_page(request):
         "Testicles": "Testis",
         "Adrenal Glands": "Adrenal Gland",
         "Adrenal": "Adrenal Gland",
-        "Lymph Node": "Lymph Nodes"
+        "Lymph Node": "Lymph Nodes",
+        "Bone Marrow": "Blood"
     }
 
     skip = [
@@ -91,7 +93,9 @@ def landing_page(request):
         "Chest-Abdomen-Pelvis, Leg, TSpine",
         "Abdomen, Arm, Bladder, Chest, Head-Neck, Kidney, Leg, Retroperitoneum, Stomach, Uterus",
         "Blood, Bone",
-        "Esophagus, Lung, Pancreas, Thymus"
+        "Esophagus, Lung, Pancreas, Thymus",
+        "Esophagus, Head-Neck, Lung, Pancreas, Rectum, Thymus",
+        "Arm, Bladder, Buttock, Colon, Liver, Myometrium, Pancreas, Rectum, Shoulder, Scapula"
     ]
 
     for collection in collex:
@@ -363,6 +367,27 @@ def populate_tables(request):
     return JsonResponse(response, status=status)
 
 
+def get_citations(request):
+    resp = { 'message': 'error', 'citations': None}
+    try:
+        req = request.GET if request.method == 'GET' else request.POST
+        if request.method == 'GET':
+            dois = [uri_to_iri(x) for x in req.getlist("doi", [])]
+        else:
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            dois = body.get("doi", [])
+        cites = Citation.objects.filter(doi__in=dois)
+        resp['citations'] = {x.doi: x.cite for x in cites}
+        code = 200
+    except Exception as e:
+        logger.error("[ERROR] While fetching citations: ")
+        logger.exception(e)
+        resp['message'] = "There was an error while attempting to fetch these citations."
+        code = 500
+    return JsonResponse(resp, status=code)
+
+
 # Data exploration and cohort creation page
 def explore_data_page(request, filter_path=False, path_filters=None):
     context = {'request': request}
@@ -374,8 +399,7 @@ def explore_data_page(request, filter_path=False, path_filters=None):
         request.session.create()
 
     try:
-        req = request.GET or request.POST
-
+        req = request.GET if request.method == 'GET' else request.POST
         is_dicofdic = (req.get('is_dicofdic', "False").lower() == "true")
         source = req.get('data_source_type', DataSource.SOLR)
         versions = json.loads(req.get('versions', '[]'))
@@ -425,6 +449,7 @@ def explore_data_page(request, filter_path=False, path_filters=None):
             collapse_on, is_json, uniques=uniques, totals=totals, with_stats=with_stats, disk_size=disk_size
         )
 
+        print(context.keys())
         if not('totals' in context):
           context['totals']={}
         if not('PatientID' in context['totals']):
@@ -611,39 +636,10 @@ def cart_page(request):
     return render(request, 'collections/cart_list.html', context)
 
 
-def cart_data_stats(request):
-    status = 200
-    response = {}
-    field_list = ['collection_id', 'PatientID', 'StudyInstanceUID', 'SeriesInstanceUID', 'aws_bucket']
-    try:
-
-        req = request.GET if request.GET else request.POST
-        current_filters = json.loads(req.get('filters', '{}'))
-        filtergrp_list = json.loads(req.get('filtergrp_list', '{}'))
-        aggregate_level = req.get('aggregate_level', 'StudyInstanceUID')
-        results_level = req.get('results_level', 'StudyInstanceUID')
-
-        partitions = json.loads(req.get('partitions', '{}'))
-
-        limit = int(req.get('limit', 1000))
-        offset = int(req.get('offset', 0))
-        length = int(req.get('length', 100))
-        mxseries = int(req.get('mxseries',1000))
-
-        response = get_cart_and_filterset_stats(current_filters,filtergrp_list, partitions, limit, offset, length, mxseries, results_lvl=results_level)
-
-    except Exception as e:
-        logger.error("[ERROR] While loading cart:")
-        logger.exception(e)
-        status = 400
-
-    return JsonResponse(response, status=status)
-
-
 def cart_data(request):
     status = 200
     response = {}
-    field_list = ['collection_id', 'PatientID', 'StudyInstanceUID', 'SeriesInstanceUID', 'aws_bucket']
+    field_list = ['collection_id', 'PatientID', 'StudyInstanceUID', 'SeriesInstanceUID', 'aws_bucket', "source_DOI"]
     try:
         req = request.GET if request.GET else request.POST
         filtergrp_list = json.loads(req.get('filtergrp_list', '{}'))

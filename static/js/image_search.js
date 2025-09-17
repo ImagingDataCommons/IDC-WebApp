@@ -176,6 +176,11 @@ require([
                     $('input[name="async_download"]').val(
                         async_download ? "True" : "False"
                     );
+                    if('dois' in data) {
+                        $('.citations-button').attr("data-dois", Object.keys(data['dois']).join("||"));
+                    } else {
+                        $('.citations-button').attr("data-dois", "");
+                    }
                     if (('filtered_counts' in data) && ('origin_set' in data['filtered_counts']) &&
                         ('access' in data['filtered_counts']['origin_set']['All']['attributes']) &&
                         ('Limited' in data['filtered_counts']['origin_set']['All']['attributes']['access']) &&
@@ -624,7 +629,7 @@ require([
         }
     }
 
-     $(document).ready(function () {
+     $(document).ready(async function () {
 
         tables.initializeTableCacheData();
         tables.initializeTableViewedItemsData();
@@ -694,7 +699,7 @@ require([
         window.cartHist.push(cartSel);
         window.proj_in_cart = new Object();
 
-        filterutils.load_preset_filters();
+        await filterutils.load_preset_filters();
         $('.hide-filter-uri').on('click',function() {
             $(this).hide();
             $('.get-filter-uri').show();

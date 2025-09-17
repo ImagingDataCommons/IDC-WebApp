@@ -42,7 +42,7 @@ django.setup()
 
 from idc_collections.models import Program, Collection, Attribute, Attribute_Ranges, \
     Attribute_Display_Values, DataSource, DataSourceJoin, DataVersion, DataSetType, \
-    Attribute_Set_Type, Attribute_Display_Category, ImagingDataCommonsVersion, Attribute_Tooltips
+    Attribute_Set_Type, Attribute_Display_Category, ImagingDataCommonsVersion, Attribute_Tooltips, Citation
 from google_helpers.bigquery.bq_support import BigQuerySupport
 
 from django.contrib.auth.models import User
@@ -319,6 +319,35 @@ def add_source_joins(froms, from_col, tos=None, to_col=None):
         DataSourceJoin.objects.bulk_create(src_joins)
 
 
+def load_citations(filename):
+    try:
+        cites_file = open(filename,"r")
+        current_cites = [x.doi for x in Citation.objects.all()]
+        new_cites = []
+        updated_cites = {}
+        for line in csv_reader(cites_file):
+            if "doi, citation" in line:
+                print("[STATUS] Saw header line during citation load - skipping!")
+                continue
+            if line[0] in current_cites:
+                updated_cites[line[0]] = line[1]
+            else:
+                new_cites.append(Citation(doi=line[0], cite=line[1]))
+        if len(new_cites):
+            Citation.objects.bulk_create(new_cites)
+            print("[STATUS] The following {} DOI citations were added: {}".format(len(new_cites), "  ".join([x.doi for x in new_cites])))
+        if len(updated_cites):
+            to_update = Citation.objects.filter(doi__in=updated_cites.keys())
+            for upd in to_update:
+                upd.cite = updated_cites[upd.doi]
+            Citation.objects.bulk_update(to_update, ["cite"])
+            print("[STATUS] {} DOI citations were updated.".format(len(updated_cites)))
+    except Exception as e:
+        ERRORS_SEEN.append("Error seen while loading citations, check the logs!")
+        logger.error("[ERROR] While trying to load citations: ")
+        logger.exception(e)
+
+
 def load_collections(filename, data_version="8.0"):
     try:
         collection_file = open(filename, "r")
@@ -428,12 +457,12 @@ def create_solr_params(schema_src, solr_src):
     solr_index_strings = []
     field_types = ''
     add_copy_field = ''
-    SCHEMA_BASE = '{{field_types}add-field": {fields}{add_copy_field}'
+    SCHEMA_BASE = '{{{field_types}"add-field": {fields}{add_copy_field}}}'
     if len(TOKENIZED_FIELDS):
         field_types = '"add-field-type": { "name":"tokenizedText", "class":"solr.TextField", "analyzer" : { "tokenizer": { "name":"nGram" }}}, '
-        copy_fields = ",".join(['{"source":"{field}","dest":"{field{}_tokenized"}'.format(field) for field in TOKENIZED_FIELDS])
-        add_copy_field = ', "add-copy-field": [{copy_fields}]'.format(copy_fields)
-    CORE_CREATE_STRING = "sudo -u solr /opt/bitnami/solr/bin/solr create -c {solr_src} -s 2 -rf 2"
+        copy_fields = ",".join(['{{"source":"{field}","dest":"{field}_tokenized"}}'.format(field=field) for field in TOKENIZED_FIELDS])
+        add_copy_field = ', "add-copy-field": [{copy_fields}]'.format(copy_fields=copy_fields)
+    CORE_CREATE_STRING = "sudo -u solr /opt/bitnami/solr/bin/solr create -c {solr_src}"
     SCHEMA_STRING = "curl -u {solr_user}:{solr_pwd} -X POST -H 'Content-type:application/json' --data-binary '{schema}' https://localhost:8983/solr/{solr_src}/schema --cacert solr-ssl.pem"
     INDEX_STRING = "curl -u {solr_user}:{solr_pwd} -X POST 'https://localhost:8983/solr/{solr_src}/update?commit=yes{params}' --data-binary @{file_name}.csv -H 'Content-type:application/csv' --cacert solr-ssl.pem"
     for field in schema:
@@ -463,7 +492,8 @@ def create_solr_params(schema_src, solr_src):
     with open("{}_solr_cmds.txt".format(solr_src.name), "w") as cmd_outfile:
         schema_array = SCHEMA_BASE.format(
             field_types=field_types,
-            add_copy_field=add_copy_field
+            add_copy_field=add_copy_field,
+            fields=solr_schema
         )
         params = "&{}".format("&".join(solr_index_strings))
         cmd_outfile.write(CORE_CREATE_STRING.format(solr_src=solr_src.name))
@@ -780,7 +810,8 @@ def parse_args():
 
     parser = ArgumentParser()
     parser.add_argument('-j', '--config-file', type=str, default='', help='JSON file of version data to update')
-    parser.add_argument('-c', '--collex-file', type=str, default='', help='CSV data of collections to update/create')
+    parser.add_argument('-c', '--collex-file', type=str, default='', help='CSV data of citations to update/create')
+    parser.add_argument('-i', '--cites-file', type=str, default='', help='CSV data of collections to update/create')
     parser.add_argument('-d', '--display-vals', type=str, default='', help='CSV data of display values to add/update')
     parser.add_argument('-p', '--programs-file', type=str, default='', help='CSV data of programs to add/update')
     parser.add_argument('-a', '--attributes-file', type=str, default='', help='CSV data of attributes to add/update')
@@ -820,6 +851,8 @@ def main():
         len(args.programs_file) and load_programs(args.programs_file)
         # Add/update collections - any new programs must be added first
         len(args.collex_file) and load_collections(args.collex_file)
+        # Add/update any citations
+        len(args.cites_file) and load_citations(args.cites_file)
         # Add/update display values for attributes
         if len(args.display_vals):
             dvals = load_display_vals(args.display_vals)
