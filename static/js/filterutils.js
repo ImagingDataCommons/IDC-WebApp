@@ -58,62 +58,44 @@ require([
 
 // Return an object for consts/methods used by most views
 define(['jquery', 'base'], function($, base) {
-
-
     var ANONYMOUS_FILTERS = {};
     var showFilters = [];
     var first_filter_load = true;
 
-    const update_bq_filters = function() {
-        let filters = parseFilterObj();
-        if (Object.keys(filters).length <= 0) {
-            $('#export-manifest').attr("disabled", "disabled");
-            $('.bq-string-copy').attr("disabled","disabled");
-            $('.bq-string-display').attr("disabled","disabled");
-            $('.bq-string-display').attr("title","Select a filter to enable this feature.");
-            $('.bq-string').html("");
-            $('#export-manifest-form input[name="filters"]').val("");
-        } else {
-            $('#export-manifest').removeAttr("disabled");
-            $('.bq-string-copy').removeAttr("disabled");
-            $('.bq-string-display').removeAttr("disabled");
-            $('.bq-string-display').attr("title","Click to display this filter as a BQ string.");
-            $('.bq-string-display').attr('filter-params', JSON.stringify(filters));
-            $('.bq-string-copy').attr('filter-params', JSON.stringify(filters));
-            $('#export-manifest-form input[name="filters"]').val(JSON.stringify(filters));
-        }
-    };
-
-    var update_filter_url = function() {
+    const update_filter_controls = function() {
         let filters = parseFilterObj();
         if (Object.keys(filters).length <= 0) {
             $('.filter-placeholder').show();
-            $('.get-filter-uri').attr("disabled","disabled");
-            $('#export-manifest').attr("disabled","disabled");
-            $('#export-manifest').attr("data-no-filters", "true");
-            if(!$('#export-manifest').attr('data-pending-manifest')) {
-                $('#export-manifest').attr("title", "Select a filter to enable this feature.");
-            }
-            $('.get-filter-uri').attr("title","Select a filter to enable this feature.");
-            $('.filter-url').html("");
-            $('.copy-url').removeAttr("content");
-            $('.copy-url').attr("disabled","disabled");
+            $('.filter-activated-controls').each(function(){
+                if(!$(this).attr('data-pending-manifest')) {
+                    $(this).attr("disabled","disabled");
+                    $(this).attr("title","Select a filter to enable this feature.");
+                }
+            })
+            $('.bq-string, .citations-list').html("");
+            $('.bq-string-copy').attr('filter-params', "");
+            $('.citations-button').attr('data-dois', "");
             $('.hide-filter-uri').triggerHandler('click');
             $('.url-too-long').hide();
             $('#export-manifest-form').attr(
                 'action',
                 $('#export-manifest-form').data('uri-base')
             );
+            $('.filter-url').html("");
+            $('.copy-url').removeAttr("content");
+            $('#export-manifest').attr("data-no-filters", "true");
+            $('#export-manifest-form input[name="filters"]').val("");
         } else {
             $('.filter-placeholder').hide();
-            $('.get-filter-uri').removeAttr("disabled");
+            $('.filter-activated-controls').each((function(){
+                if(!$(this).attr('data-pending-manifest')) {
+                    $(this).attr("title", $(this).attr("data-default-title"));
+                    $(this).removeAttr("disabled");
+                }
+            }));
+            $('.bq-string-display, .bq-string-copy').attr('filter-params', JSON.stringify(filters));
+            $('#export-manifest-form input[name="filters"]').val(JSON.stringify(filters));
             $('#export-manifest').removeAttr("data-no-filters");
-            if(!$('#export-manifest').attr('data-pending-manifest')) {
-                $('#export-manifest').removeAttr("disabled");
-                $('#export-manifest').attr("title", "Export these search results as a manifest for downloading.");
-            }
-            $('.copy-url').removeAttr("disabled");
-            $('.get-filter-uri').attr("title","Click to display this filter set's query URL.");
             let url = BASE_URL+"/explore/filters/?";
             let encoded_filters = []
             for (let i in filters) {
@@ -214,7 +196,6 @@ define(['jquery', 'base'], function($, base) {
         if (sliders.length > 0) {
             load_sliders(sliders, false);
         }
-
         //mkFiltText();
         //return updateFacetsData(true).promise();
         return handleFilterSelectionUpdate(null, true, true)
@@ -651,7 +632,6 @@ define(['jquery', 'base'], function($, base) {
         }
     };
 
-
     window.resetFilters = function(){
         $('input:checkbox').not('.hide-zeros').not('.tbl-sel').prop('checked',false);
         $('input:checkbox').not('.hide-zeros').not('.tbl-sel').prop('indeterminate',false);
@@ -675,42 +655,29 @@ define(['jquery', 'base'], function($, base) {
 
         if (mkFilt) {
             isFiltered = mkFiltText();
-            update_filter_url();
-            update_bq_filters();
+            update_filter_controls();
           if (window.location.href.search(/\/filters\//g) >= 0) {
              if (!first_filter_load) {
                 window.history.pushState({}, '', window.location.origin + "/explore/")
             } else {
                 first_filter_load = false;
             }
-        }
+          }
         }
 
         if (doUpdate){
             var mxstudies = 0;
             var mxseries = 0;
-
             var projArr=[];
             var serverdata = [updateFacetsData(true)];
             projArr = Object.keys(window.proj_in_cart);
-            /*
-            $('#projects_table').find('tr').each(function(){
-                if ($(this).hasClass('someInCart')){
-                   var projid = $(this).attr('data-projectid');
-                   projArr.push(projid)
-                }
-
-            });*/
-
-             if (projArr.length>0)
-            {
+            if (projArr.length>0) {
                 serverdata.push(getProjectCartStats(projArr));
             }
 
             $('.spinner').show();
             //$.when.apply(undefined, serverdata).then(function(ret)
-            promise = Promise.all(serverdata).then(function(ret)
-            {
+            promise = Promise.all(serverdata).then(function(ret) {
 
                 var collFilt = ret[0][0];
                 var collectionData = ret[0][1];
@@ -730,22 +697,18 @@ define(['jquery', 'base'], function($, base) {
                     cartStats={}
                 }
                 //var numStudiesRet = totals.StudyInstanceUID;
-
-
-
                 createPlots('search_orig_set');
-               createPlots('search_derived_set');
-               createPlots('tcga_clinical');
+                createPlots('search_derived_set');
+                createPlots('tcga_clinical');
 
                 if ($('.search-configuration').find('.hide-zeros')[0].checked) {
-                        addSliders('search_orig_set', false, true, '');
-                        addSliders('quantitative', false, true, 'quantitative.');
-                        addSliders('tcga_clinical', false, true, 'tcga_clinical.');
-                    }
+                    addSliders('search_orig_set', false, true, '');
+                    addSliders('quantitative', false, true, 'quantitative.');
+                    addSliders('tcga_clinical', false, true, 'tcga_clinical.');
+                }
 
                 updateTablesAfterFilter(collFilt, collectionData, collectionStats,cartStats);
                 $('.spinner').hide();
-                //updateTableCounts(1)
             });
 
 
@@ -1230,8 +1193,7 @@ define(['jquery', 'base'], function($, base) {
 
 
     return {
-        update_bq_filters: update_bq_filters,
-        update_filter_url: update_filter_url,
+        update_filter_controls: update_filter_controls,
         updateCollectionTotals: updateCollectionTotals,
         parseFilterObj: parseFilterObj,
         findFilterCats: findFilterCats,

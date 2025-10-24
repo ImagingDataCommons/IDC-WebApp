@@ -395,16 +395,14 @@ tr {
     background-color: #b7cfe5;
 }
 
-.export-button:hover, .btnGroupDropViewers:hover {
+.export-button:hover, .citations-button:hover, .btnGroupDropViewers:hover {
     cursor: pointer;
 }
 
 #projects_table td.cartnumholder, #projects_table_head th.cartnumholder,
 #cases_table td.cartnumholder, #cases_table_head th.cartnumholder,
-#studies_table td.cartnumholder, #studies_table_head th.cartnumholder
-{
+#studies_table td.cartnumholder, #studies_table_head th.cartnumholder {
     width: 10%;
-
 }
 
 #projects_table td.ckbx:not(.cartnumholder), #projects_table_head th.ckbx:not(.cartnumholder),
@@ -412,7 +410,7 @@ tr {
 #studies_table_head th.ckbx:not(.cartnumholder), #studies_table td.ckbx:not(.cartnumholder),
 #series_table_head th.ckbx, #series_table td.ckbx {
     width: 5%;
-     }
+}
 
 #search_def_stats {
     padding-top: 8px; }
@@ -423,6 +421,14 @@ tr {
 
 #cases_table td, #cases_table_head th {
     width: 23.75%;
+    word-wrap: break-word; }
+
+#cases_table td.narrow, #cases_table_head th.narrow {
+    width: 15%;
+    word-wrap: break-word; }
+
+#cases_table td.wide, #cases_table_head th.wide {
+    width: 28%;
     word-wrap: break-word; }
 
 #studies_table_head th, #studies_table td {
@@ -456,12 +462,20 @@ tr {
 #studies_table td.open-viewer {
     width:4%;
     /* This is necessary to make sure the 2 icons remain together, lined up. */
+    min-width: 80px;
+}
+
+#studies_table td.open-viewer {
+    /* This is necessary to make sure the 2 icons remain together, lined up. */
     min-width: 70px;
 }
 
 #studies_table_head th.download-col,
-#studies_table td.download-col {
+#studies_table td.download-col, #cases_table_head th.download-col,
+#cases_table td.download-col, #series_table_head th.download-col,
+#series_table td.download-col {
     width:6%;
+    min-width: 80px;
 }
 
 #series_table_head th, #series_table td {
