@@ -21,13 +21,19 @@ require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
     paths: {
         jquery: 'libs/jquery-3.7.1.min',
-        base: 'base'
+        base: 'base',
+        cartutils: 'cartutils',
+        filterutils: 'filterutils'
+    },
+    shim: {
+        'cartutils': ['jquery'],
+        'filterutils': ['jquery']
     }
 });
 
 require([
-    'base', 'jquery'
-], function (base, $) {
+    'base', 'jquery', 'cartutils', 'filterutils',
+], function (base, $, cartutils, filterutils) {
 
     const byte_level = Object.freeze({
         1: "KB",
@@ -50,9 +56,9 @@ require([
         }
         let byte_count = 0;
         let converted_size = size;
-        while(converted_size > 1024) {
+        while(converted_size > 1000) {
             byte_count += 1;
-            converted_size /= 1024;
+            converted_size /= 1000;
         }
         let bytes = (Math.round(converted_size*1000)/1000).toFixed(3);
         return `${bytes} ${byte_level[byte_count]}` ;
@@ -213,10 +219,14 @@ require([
         queue_byte_size = 0;
         bytes_downloaded = 0;
         series_count = 0;
+        study_count = 0;
+        case_count = 0;
+        collection_count = 0;
         start_time = -1;
         collections = new Set([]);
         cases = new Set([]);
         studies = new Set([]);
+        preset_totals = false;
 
         cancellation_underway = false;
 
@@ -251,10 +261,22 @@ require([
             this.bytes_downloaded = 0;
             this.series_count = 0;
             this.collections = new Set([]);
+            this.collection_count = 0;
             this.cases = new Set([]);
+            this.case_count = 0;
             this.studies = new Set([]);
+            this.study_count = 0;
             this.cancellation_underway = false;
             this.start_time = -1;
+        }
+
+        set_download_totals(queue_byte_size, collection_count, case_count, study_count, series_count) {
+            this.queue_byte_size = queue_byte_size;
+            this.collection_count = collection_count;
+            this.case_count = case_count;
+            this.study_count = study_count;
+            this.series_count = series_count;
+            this.preset_totals = true;
         }
 
         get active_requests() {
@@ -288,11 +310,16 @@ require([
             let request_success = false;
             if(this.hopper.length < this.HOPPER_LIMIT && !this.cancellation_underway) {
                 this.hopper.push(new DownloadRequest(request));
-                this.queue_byte_size += parseFloat(request['series_size']);
-                this.series_count += 1;
                 this.studies.add(request['study_id']);
                 this.collections.add(request['collection_id']);
                 this.cases.add(request['patient_id']);
+                if(!this.preset_totals) {
+                    this.queue_byte_size += parseFloat(request['series_size']);
+                    this.series_count += 1;
+                    this.collection_count = this.collections.size;
+                    this.study_count = this.studies.size;
+                    this.case_count = this.cases.size;
+                }
                 request_success = true;
             }
             return request_success;
@@ -329,7 +356,8 @@ require([
         let true_error = event.data.message === 'error' && event.data.error.name !== "AbortError";
         let cancellation = downloader_manager.pending_cancellation || (event.data.message === 'error' && event.data.error.name === "AbortError");
         if (true_error) {
-            console.error(`Worker Error: ${JSON.stringify(event)}`);
+            console.error("Saw worker Error: ",event.data['error']);
+            console.error(event.data['text']);
             downloader_manager.statusMessage(`Encountered an error while downloading these files.`, 'error', "error", true, false);
         }
         if (event.data.message === 'done' || cancellation) {
@@ -410,19 +438,22 @@ require([
                 const studyInstanceUID = metadata['study'];
                 const seriesInstanceUID = metadata['series'];
                 const fileName = metadata['instance'];
+                let response = null;
+                let fileHandle = null;
+                const seriesDirectory = modality + "_" + seriesInstanceUID;
+                const filePath = [collection_id, patientID, studyInstanceUID, seriesDirectory].join("/");
                 try {
                     const directoryHandle = event.data['directoryHandle'];
-                    const seriesDirectory = modality + "_" + seriesInstanceUID;
-                    const filePath = [collection_id, patientID, studyInstanceUID, seriesDirectory].join("/");
                     const subDirectoryHandle = await createNestedDirectories(directoryHandle, filePath);
-                    const fileHandle = await subDirectoryHandle.getFileHandle(fileName, {create: true});
+                    fileHandle = await subDirectoryHandle.getFileHandle(fileName, {create: true});
                     const outputStream = await fileHandle.createWritable();
-                    let response = await fetch(s3_url, {
+                    response = await fetch(s3_url, {
                         signal: abort_controller.signal
                     });
                     if (!response.ok) {
+                        console.error("[Worker] Saw !ok response of ",response.status);
                         if(pending_abort) {
-                            console.log('User aborted downloads');
+                            console.log('[Worker] User aborted downloads!');
                         } else {
                             console.error('[Worker] Failed to fetch URL: '+s3_url, response.statusText);
                             self.postMessage({message: "error", error: "Failed to fetch URL"});
@@ -451,14 +482,11 @@ require([
                     if(error.name === "AbortError" || (error.name === undefined && pending_abort)) {
                         msg = "Fetch was aborted. The user may have cancelled their downloads.";
                     } else {
-                        console.error("[Worker Error]", error.name);
-                        console.error("[Worker Error]", error.message);
-                        if(error.message.indexOf("getFileHandle") >= 0) {
-                            console.error("[Worker Error] File name attempted: ",fileName);
+                        if((!fileHandle && error.name === "NotFoundError") || error.message.indexOf("getFileHandle") >= 0) {
+                            msg = "Encountered an error while trying to create the file '"+filePath+"/"+fileName+"'";
                         }
-                        console.error("[Worker Error] on S3 target ", s3_url);
                     }
-                    self.postMessage({message: 'error', path: s3_url, error: error, 'text': msg});
+                    self.postMessage({'message': 'error', 'path': s3_url, 'error': error, 'text': msg});
                 }
             }    
         `;
@@ -487,9 +515,9 @@ require([
 
         get all_requested() {
             return `${this.queues.total_downloads_requested} requested in ` +
-                `${this.queues.collections.size} collection(s) / ` +
-                `${this.queues.cases.size} case(s) / ` +
-                `${this.queues.studies.size} ${this.queues.studies.size <= 1 ? "study" : "studies"} / ` +
+                `${this.queues.collection_count} collection(s) / ` +
+                `${this.queues.case_count} case(s) / ` +
+                `${this.queues.study_count} ${this.queues.study_count <= 1 ? "study" : "studies"} / ` +
                 `${this.queues.series_count} series`;
         }
 
@@ -507,6 +535,17 @@ require([
 
         add_to_done(downloaded_amount) {
             this.queues.bytes_downloaded += downloaded_amount;
+        }
+
+        pendingFetchMessage(fetch_type) {
+            // Don't display if we already have pending downloads
+            if(this.in_progress > 0) {
+                return;
+            }
+            let messages = {
+                'content': `Fetching series IDs for ${fetch_type}...`
+            };
+            this.progressDisplay.show(null, messages, "seek", true, false);
         }
 
         // Replaces the current floating message contents with a new message, including a new icon if provided
@@ -635,6 +674,20 @@ require([
             this.downloadWorkers.forEach(worker => {
                 worker.postMessage({'abort': true, 'reason': 'User cancelled download.'});
             });
+            // Sometimes worker latency can cause a race condition between final cleanup and resetting the download
+            // manager's state. Run trigger a final time after waiting a couple of seconds to be totally sure
+            // we've cleaned up after ourselves.
+            setTimeout(2000, function(){
+                if(downloader_manager.pending_cancellation) {
+                    downloader_manager.triggerWorkerDownloads();
+                }
+            });
+        }
+
+        set_download_stats(stats) {
+            this.queues.set_download_totals(
+                stats.queue_byte_size, stats.collection_count, stats.case_count, stats.study_count, stats.series_count
+            );
         }
 
         beginDownloads() {
@@ -651,11 +704,70 @@ require([
 
     let downloader_manager = new DownloadManager();
 
+
+    async function handleLargeDownload(filter_and_cart) {
+        let series_job = await fetch(
+        `${SERIES_MANIFEST_URI}/`, {
+                method: "POST",
+                body: JSON.stringify(filter_and_cart),
+                headers: {
+                    "X-CSRFToken": csrftoken,
+                    "content-type": "application/json"
+                }
+            }
+        );
+        if(!series_job.ok) {
+            console.error("Unable to retrieve series IDs!");
+            return;
+        }
+        let job_result = await series_job.json();
+        downloader_manager.pendingFetchMessage("collection");
+
+        const MAX_ELAPSED_SERIES_IDS = 8000;
+        let polling = async function(file_name, check_start){
+            if(!check_start) {
+                check_start = Date.now();
+            }
+            let check_now = Date.now();
+            let elapsed_millis = check_now-check_start;
+            if((elapsed_millis) > MAX_ELAPSED_SERIES_IDS) {
+                console.error("Unable to retrieve series IDs!");
+                return;
+            }
+            let check_res = await fetch(`${CHECK_MANIFEST_URL}${file_name}/`);
+            if(!check_res.ok) {
+                console.error("Unable to retrieve series IDs!");
+                return;
+            }
+            let result = await check_res.json();
+            if(result.manifest_ready) {
+                let results = await(`${FETCH_MANIFEST_URL}${file_name}`);
+                if(!results.ok) {
+                    console.error("Unable to retrieve series IDs!");
+                    return;
+                }
+                const series_data = await response.json();
+                series.push(...series_data['result']);
+            } else {
+                setTimeout(polling,2000, file_name, check_start);
+            }
+        };
+        await polling(job_result.file_name);
+    }
+
+    $('.container-fluid').on('click', '.download-size-warning', function(){
+        const clicked = $(this);
+        let warning_button = $('#download-warning .download-all-instances');
+        warning_button.attr("data-collection", clicked.attr("data-collection"));
+        warning_button.attr("data-study", clicked.attr("data-study"));
+        warning_button.attr('data-patient', clicked.attr('data-patient'));
+    });
+
     $('.container-fluid').on('click', '.cancel-download', function () {
         downloader_manager.cancel();
     });
 
-    $('.container-fluid').on('click', '.download-all-instances', async function (event) {
+    $('body').on('click', '.download-all-instances', async function (event) {
         // Stop propagation to the other handlers or the showDirectoryPicker will complain.
         event.stopImmediatePropagation();
         event.preventDefault();
@@ -668,17 +780,59 @@ require([
         const collection_id = clicked.attr('data-collection');
         const study_id = clicked.attr('data-study');
         const patient_id = clicked.attr('data-patient');
+        const download_type = clicked.attr("data-download-type");
+        let csrftoken = $.getCookie('csrftoken');
 
         let series = [];
-        if(clicked.hasClass('download-study') || clicked.hasClass('download-case')) {
-            let study_uri = (study_id !== undefined && study_id !== null) ? `${study_id}/` : "";
-            let response = await fetch(`${BASE_URL}/series_ids/${patient_id}/${study_uri}`);
-            if (!response.ok) {
-                console.error(`[ERROR] Failed to retrieve series IDs for study ${study_id}: ${response.status}`);
-                return;
+        if(download_type !== "series") {
+            if(parseInt(clicked.attr('data-total-series')) > 65000) {
+
+            } else {
+                let response = null;
+                if(["cohort", "cart"].includes(download_type)) {
+                    downloader_manager.pendingFetchMessage(download_type);
+                    let filter_and_cart = {};
+                    if (download_type === "cohort") {
+                        let filtergrp_list = [];
+                        for(const [attr, vals] of Object.entries(filterutils.parseFilterObj())) {
+                            filtergrp_list.push({[attr]: vals});
+                        }
+                        filter_and_cart["filtergrp_list"] = filtergrp_list;
+                    } else {
+                         window.updatePartitionsFromScratch();
+                         let ret = cartutils.formcartdata();
+                         window.partitions = ret[0];
+                         window.filtergrp_lst = ret[1];
+                        let filterSets = [];
+                        for(let i=0; i< window.cartHist.length;i++) {
+                           filterSets.push(window.cartHist[i]['filter']);
+                        }
+                        filter_and_cart['partitions'] = window.partitions;
+                        filter_and_cart['filtergrp_list'] = filterSets;
+                    }
+                    response = await fetch(`${BASE_URL}${SERIES_IDS_FILTER_URL}`, {
+                            method: "POST",
+                            body: JSON.stringify(filter_and_cart),
+                            headers: {
+                                "X-CSRFToken": csrftoken,
+                                "content-type": "application/json"
+                            }
+                        });
+                } else {
+                    let study_uri = (study_id !== undefined && study_id !== null) ? `${study_id}/` : "";
+                    let patient_uri = (patient_id !== undefined && patient_id !== null) ? `${patient_id}/` : "";
+                    response = await fetch(`${BASE_URL}${SERIES_IDS_URL}${collection_id}/${patient_uri}${study_uri}`);
+                }
+                if (!response.ok) {
+                    console.error(`[ERROR] Failed to retrieve series IDs: ${response.status}`);
+                    return;
+                }
+                const series_data = await response.json();
+                series.push(...series_data['result']);
+                if('download_stats' in series_data){
+                    downloader_manager.set_download_stats(series_data['download_stats']);
+                }
             }
-            const series_data = await response.json();
-            series.push(...series_data['result']);
         } else {
             series.push({
                 "bucket": clicked.attr('data-bucket'),
@@ -686,21 +840,14 @@ require([
                 "series_id": clicked.attr('data-series-id'),
                 "modality": clicked.attr('data-modality'),
                 "series_size": clicked.attr('data-series-size'),
-                "study_id": study_id
+                "study_id": study_id,
+                "patient_id": patient_id,
+                "collection_id": collection_id
             });
         }
         series.forEach(series_request => {
-            downloader_manager.addRequest({
-                'directory': directoryHandle,
-                'bucket': series_request['bucket'],
-                'crdc_series_id': series_request['crdc_series_id'],
-                'series_id': series_request['series_id'],
-                'collection_id': collection_id,
-                'study_id': series_request['study_id'],
-                'modality': series_request['modality'],
-                'patient_id': patient_id,
-                'series_size': series_request['series_size']
-            });
+            series_request['directory'] = directoryHandle;
+            downloader_manager.addRequest(series_request);
         });
         downloader_manager.beginDownloads();
     });

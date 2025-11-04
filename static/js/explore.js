@@ -73,9 +73,6 @@ require([
     //sesssionStorage.setItem("cartHist",JSON.stringify(window.cartHist));
     window.partitions = new Array();
 
-    window.studymp=new Object();
-    window.projstudymp = new Object();
-    window.casestudymp = new Object();
     window.collection = JSON.parse(document.getElementById('collections').textContent);
     var lst = Object.keys(window.collection).sort();
     window.collectionData = new Array();
@@ -84,10 +81,10 @@ require([
 
     for (program in window.programs) {
         for (project in window.programs[program]['projects']) {
-            var col = project;
-            var disp = window.programs[program]['projects'][project]['display'];
-            var val = window.programs[program]['projects'][project]['val'];
-            window.collectionData.push([col, disp, val, val]);
+            let id = project;
+            let disp = window.programs[program]['projects'][project]['display'];
+            let val = window.programs[program]['projects'][project]['val'];;
+            window.collectionData.push([id, disp, val, val]);
             window.selProjects[project]=new Object();
         }
     }
@@ -399,7 +396,7 @@ require([
         maxWidth: 130
     });
 
-    tippy('.bq-string-copy',{
+    const copy_tip = {
         content: 'Copied!',
         theme: 'blue',
         placement: 'right',
@@ -412,57 +409,17 @@ require([
             }, 1000);
         },
         maxWidth: 85
-    });
+    };
 
-    tippy.delegate('.series-table', {
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        target: '.copy-this',
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        trigger: "click",
-        maxWidth: 85
-    });
+    tippy('.bq-string-copy', copy_tip);
 
-    tippy.delegate('.studies-table', {
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        target: '.copy-this',
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        trigger: "click",
-        maxWidth: 85
-    });
+    tippy.delegate('.series-table', copy_tip);
 
-    tippy.delegate('.projects-table', {
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        target: '.copy-this',
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        trigger: "click",
-        maxWidth: 85
-    });
+    tippy.delegate('.studies-table', copy_tip);
 
-    const dynamicCartTip = {
+    tippy.delegate('.projects-table', copy_tip);
+
+    const dynamicTipFunc = {
         fn: (instance) => ({
             onShow() {
                 instance.setContent(instance.props.dynamicTip(instance.reference));
@@ -470,22 +427,25 @@ require([
         })
     };
 
-    tippy.delegate('.projects-table', {
+    const chromium_only = "Direct download is only available in Chromium browsers.";
+    const disabled_download_tooltip = {
+        plugins: [dynamicTipFunc],
         dynamicTip: function(ref){
-            if($(ref).parentsUntil('tbody').filter('tr').hasClass('extraInFilter') || !($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart'))) {
-                return "add series to cart"
+            if($(ref).hasClass('download-size-disabled')) {
+                return "This set of images is over 3TB in size. Please use manifest download to obtain these images.";
             }
-            return "remove series from cart"
+            return chromium_only;
         },
-        interactive: true,
-        allowHTML: true,
-        placement: 'right',
-        content: 'add series to cart', // placeholder text
-        target: '.shopping-cart-holder',
-        plugins: [dynamicCartTip]
-    });
+        content: chromium_only,
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.download-all-disabled',
+        maxWidth: 200
+    };
 
-    tippy.delegate('.cases-table', {
+    const cart_tooltip = {
         dynamicTip: function(ref){
             if($(ref).parentsUntil('tbody').filter('tr').hasClass('extraInFilter') || !($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart'))) {
                 return "add series to cart"
@@ -497,8 +457,54 @@ require([
         placement: 'right',
         content: 'add series to cart', // placeholder text
         target: '.shopping-cart-holder',
-        plugins: [dynamicCartTip]
-    });
+        plugins: [dynamicTipFunc]
+    };
+
+    const manifest_tooltip = {
+        dynamicTip: function(ref){
+            let table_type = $(ref).parents('table').attr('data-table-type');
+            if(table_type === 'series') {
+                return 'Download a manifest file for this series.'
+            }
+            return `Download a manifest file for all the series in this ${table_type}.`;
+        },
+        content: 'Download a manifest file.', // placeholder text
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.export-button',
+        maxWidth: 200,
+        plugins: [dynamicTipFunc]
+    };
+
+    let disabled_messages = {
+        'download-all-disabled': chromium_only,
+        'download-size-disabled': "This set of images is over 3TB in size. Please use manifest download to obtain these images.",
+        'download-cart-disabled': "Add items to the cart to enable this feature.",
+        'download-cohort-disabled': "Select a filter to enable this feature."
+    };
+    const download_tooltip = {
+        dynamicTip: function(ref){
+            if($(ref).hasClass('is-disabled')){
+                return disabled_messages[$(ref).attr('data-disabled-type')];
+            }
+            let download_type = $(ref).attr('data-download-type');
+            return `Download all of the image instances in this ${download_type}.`;
+        },
+        content: 'Download all images.', // placeholder text
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.download-instances',
+        maxWidth: 200,
+        plugins: [dynamicTipFunc]
+    };
+
+    tippy.delegate('.projects-table', cart_tooltip);
+
+    tippy.delegate('.cases-table', cart_tooltip);
 
     tippy.delegate('.series-table', {
         dynamicTip: function(ref){
@@ -512,42 +518,14 @@ require([
         placement: 'right',
         content: 'add series to cart', // placeholder text
         target: '.shopping-cart-holder',
-        plugins: [dynamicCartTip]
+        plugins: [dynamicTipFunc]
     });
 
-    tippy.delegate('.studies-table', {
-        dynamicTip: function(ref){
-            if($(ref).parentsUntil('tbody').filter('tr').hasClass('extraInFilter') || !($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart'))) {
-                return "add series to cart"
-            }
-            return "remove series from cart"
-        },
-        interactive: true,
-        allowHTML: true,
-        placement: 'right',
-        content: 'add series to cart', // placeholder text
-        target: '.shopping-cart-holder',
-        plugins: [dynamicCartTip]
-    });
+    tippy.delegate('.studies-table', cart_tooltip);
 
-    tippy.delegate('.cases-table', {
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        target: '.copy-this',
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        trigger: "click",
-        maxWidth: 85
-    });
+    tippy.delegate('.cases-table', copy_tip);
 
-
-    tippy.delegate('.filter-display-panel', {
+    tippy.delegate('#body', {
         content: 'Get the citation list for this cohort.',
         theme: 'dark',
         placement: 'left',
@@ -557,85 +535,9 @@ require([
         maxWidth: 200
     });
 
-    tippy.delegate('.cases-table', {
-        content: 'Download all of the image instances in this case.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-instances',
-        maxWidth: 200
-    });
+    tippy.delegate('.studies-table', manifest_tooltip);
 
-    tippy.delegate('.cases-table', {
-        content: 'Direct download is only available in Chromium browsers.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-disabled',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.studies-table', {
-        content: 'Download all of the image instances in this study.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-instances',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.studies-table', {
-        content: 'Download a manifest file for this study.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.export-button',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.studies-table', {
-        content: 'Direct download is only available in Chromium browsers.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-disabled',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.series-table', {
-        content: 'Download all of the image instances in this series.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-instances',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.series-table', {
-        content: 'Download a manifest file for this series.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.export-button',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.series-table', {
-        content: 'Direct download is only available in Chromium browsers.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-disabled',
-        maxWidth: 200
-    });
+    tippy.delegate('.series-table', manifest_tooltip);
 
     tippy.delegate('.series-table', {
         content: 'Some or all of the images in this collection are not publicly available.',
@@ -659,6 +561,9 @@ require([
         maxWidth: 800
     });
 
+    tippy.delegate('#body', disabled_download_tooltip);
+    tippy.delegate('#body', download_tooltip);
+
     tippy.delegate('#body', {
         content: function(reference) {
             return "Copied!";
@@ -675,10 +580,6 @@ require([
             }, 1000);
         },
         maxWidth: 85
-    });
-
-    $('.download-link').on('click', function(){
-        $('#download-images').modal("hide");
     });
 
     $('.container-fluid').on('click', '.collapse-all', function(){
