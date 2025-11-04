@@ -23,6 +23,7 @@ import sys
 import datetime
 import re
 import copy
+from xmlrpc.client import boolean
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -38,7 +39,9 @@ from google_helpers.stackdriver import StackDriverLogger
 from cohorts.models import Cohort, Cohort_Perms
 
 from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips, DataSetType, Citation
-from idc_collections.collex_metadata_utils import build_explorer_context, get_collex_metadata, create_file_manifest, get_cart_data_serieslvl, get_cart_data_studylvl, get_table_data_with_cart_data
+from idc_collections.collex_metadata_utils import (build_explorer_context, get_collex_metadata, create_file_manifest,
+                                                   get_cart_data_serieslvl, get_cart_data_studylvl,
+                                                   get_table_data_with_cart_data, cart_manifest)
 from allauth.socialaccount.models import SocialAccount
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, JsonResponse
@@ -47,7 +50,8 @@ from django.dispatch import receiver
 from idc.models import User_Data
 from solr_helpers import build_solr_query, query_solr_and_format_result
 
-
+from idc.settings import MAX_FILE_LIST_REQUEST
+from idc_collections.collex_metadata_utils import convert_disk_size
 
 debug = settings.DEBUG
 logger = logging.getLogger(__name__)
@@ -226,7 +230,7 @@ def quota_page(request):
 def save_ui_hist(request):
     status = 200
     try:
-        req = request.POST or request.GET
+        req = request.GET if request.method == 'GET' else request.POST
         hist = req['his']
         try:
             user_data = User_Data.objects.get(user_id=request.user.id)
@@ -242,86 +246,6 @@ def save_ui_hist(request):
         status = 500
 
     return JsonResponse({}, status=status)
-
-
-# returns various metadata mappings for selected projects used in calculating cart selection
-# counts 'on the fly' client side
-def studymp(request):
-    response = {}
-    status = 200
-    sources = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
-            active=True, source_type=DataSource.SOLR,
-            aggregate_level="StudyInstanceUID"
-        )
-    data_types = [DataSetType.IMAGE_DATA, DataSetType.ANCILLARY_DATA, DataSetType.DERIVED_DATA]
-    data_sets = DataSetType.objects.filter(data_type__in=data_types)
-    aggregate_level='StudyInstanceUID'
-    versions=[]
-    versions = ImagingDataCommonsVersion.objects.filter(
-        version_number__in=versions
-    ).get_data_versions(active=True) if len(versions) else ImagingDataCommonsVersion.objects.filter(
-        active=True
-    ).get_data_versions(active=True)
-    aux_sources = data_sets.get_data_sources().filter(
-        source_type=DataSource.SOLR,
-        aggregate_level__in=["case_barcode", "sample_barcode", aggregate_level],
-        id__in=versions.get_data_sources().filter(source_type=DataSource.SOLR).values_list("id", flat=True)
-    ).distinct()
-
-    try:
-       req = request.GET if request.GET else request.POST
-       filters = json.loads(req.get('filters', '{}'))
-
-       mxSeries = int(req.get('mxseries'))
-       mxStudies= int(req.get('mxstudies'))
-       limit = int(req.get('limit', mxStudies))
-       offset = int(req.get('offset',0))
-
-       casestudymp = dict()
-       studymp = dict()
-       projstudymp = dict()
-
-       idsEx = get_collex_metadata(
-            filters, ['collection_id', 'PatientID','StudyInstanceUID', 'SeriesInstanceUID'], record_limit=limit,
-            sources=sources, offset=offset, records_only=True, custom_facets={}, aux_sources=aux_sources,
-            collapse_on='StudyInstanceUID', counts_only=False, filtered_needed=False,
-            raw_format=True, default_facets=False, sort=None
-        )
-
-       logger.debug("[STATUS] records pulled: {}".format(len(idsEx['docs'])))
-
-       for doc in idsEx['docs']:
-          proj=doc['collection_id'][0]
-          patientid=doc['PatientID']
-          studyid= doc['StudyInstanceUID']
-          cnt = len(doc['SeriesInstanceUID'])
-
-          if not patientid in casestudymp:
-              casestudymp[patientid]={}
-          if not proj in projstudymp:
-              projstudymp[proj] = {}
-          studymp[studyid]={}
-          studymp[studyid]['cnt'] = cnt
-          studymp[studyid]['proj'] = proj
-          studymp[studyid]['PatientID'] = patientid
-          studymp[studyid]['val'] = []
-          projstudymp[proj][studyid] = cnt
-          casestudymp[patientid][studyid] = cnt
-
-       response["studymp"] = studymp
-       response['casestudymp'] = casestudymp
-       response['projstudymp'] = projstudymp
-
-    except Exception as e:
-        logger.error("[ERROR] While attempting to get studymp:")
-        logger.exception(e)
-        messages.error(
-           request,
-           "Encountered an error when attempting to get the studymp - please contact the administrator."
-        )
-        status = 400
-
-    return JsonResponse(response, status=status)
 
 
 def populate_tables(request):
@@ -449,7 +373,6 @@ def explore_data_page(request, filter_path=False, path_filters=None):
             collapse_on, is_json, uniques=uniques, totals=totals, with_stats=with_stats, disk_size=disk_size
         )
 
-        print(context.keys())
         if not('totals' in context):
           context['totals']={}
         if not('PatientID' in context['totals']):
@@ -534,7 +457,7 @@ def explore_data_page(request, filter_path=False, path_filters=None):
 
 def explorer_manifest(request):
     try:
-        req = request.GET or request.POST
+        req = request.GET if request.method == 'GET' else request.POST
         if req.get('manifest-type', 'file-manifest') == 'bq-manifest' :
             messages.error(request, "BigQuery export requires a cohort! Please save your filters as a cohort.")
             return JsonResponse({'msg': 'BigQuery export requires a cohort.'}, status=400)
@@ -549,7 +472,7 @@ def explorer_manifest(request):
 # by the explore_data_page method and forward it on to that view, returning its response.
 def parse_explore_filters(request):
     try:
-        if not request.GET:
+        if not request.GET or request.method != 'GET':
             raise Exception("This call only supports GET!")
         raw_filters = {x: request.GET.getlist(x) for x in request.GET.keys()}
         filters = {}
@@ -618,7 +541,7 @@ def cart_page(request):
         request.session.create()
 
     try:
-        req = request.GET if request.GET else request.POST
+        req = request.GET if request.method == 'GET' else request.POST
         carthist = json.loads(req.get('carthist', '{}'))
         mxseries = req.get('mxseries',0)
         mxstudies = req.get('mxstudies',0)
@@ -641,10 +564,12 @@ def cart_data(request):
     response = {}
     field_list = ['collection_id', 'PatientID', 'StudyInstanceUID', 'SeriesInstanceUID', 'aws_bucket', "source_DOI"]
     try:
-        req = request.GET if request.GET else request.POST
+        req = request.GET if request.method == 'GET' else request.POST
         filtergrp_list = json.loads(req.get('filtergrp_list', '{}'))
         aggregate_level = req.get('aggregate_level', 'StudyInstanceUID')
         results_level = req.get('results_level', 'StudyInstanceUID')
+        dois_only = bool(req.get('dois_only', 'false').lower() == 'true')
+        size_only = bool(req.get('size_only', 'false').lower() == 'true')
 
         partitions = json.loads(req.get('partitions', '{}'))
 
@@ -653,13 +578,29 @@ def cart_data(request):
         length = int(req.get('length', 100))
         mxseries = int(req.get('mxseries',1000))
 
-        if ((len(partitions)>0) and (aggregate_level == 'StudyInstanceUID')):
-            response = get_cart_data_studylvl(filtergrp_list, partitions, limit, offset, length, mxseries, results_lvl=results_level)
-        elif ((len(partitions)>0) and (aggregate_level == 'SeriesInstanceUID')):
-            response = get_cart_data_serieslvl(filtergrp_list, partitions, field_list, limit, offset)
-        else:
+        doi_or_size_only = (dois_only or size_only)
+
+        if len(partitions) <= 0 or aggregate_level not in ['SeriesInstanceUID', 'StudyInstanceUID']:
             response['numFound'] = 0
             response['docs'] = []
+        else:
+            if aggregate_level == 'StudyInstanceUID':
+                response = get_cart_data_studylvl(
+                    filtergrp_list, partitions, limit, offset, length, mxseries, with_records=(not doi_or_size_only),
+                    results_lvl=results_level, dois_only=dois_only, size_only=size_only
+                )
+            elif aggregate_level == 'SeriesInstanceUID':
+                response = get_cart_data_serieslvl(
+                    filtergrp_list, partitions, field_list if (not doi_or_size_only) else None, limit, offset,
+                    with_records=(not doi_or_size_only), dois_only=dois_only, size_only=size_only
+                )
+        if dois_only:
+            response = {'dois': response['dois']}
+        if size_only:
+            response = {
+                "total_size": response['total_size'],
+                "display_size": convert_disk_size(response['total_size'])
+            }
     except Exception as e:
         logger.error("[ERROR] While loading cart:")
         logger.exception(e)
@@ -668,33 +609,70 @@ def cart_data(request):
     return JsonResponse(response, status=status)
 
 
-def get_series(request, patient_id, study_uid=None):
+def get_series(request, collection_id=None, patient_id=None, study_uid=None):
+    status = 200
+    response = {"result": []}
     try:
-        status = 200
-        response = { "result": [] }
-        source = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
-            active=True, source_type=DataSource.SOLR,
-            aggregate_level="SeriesInstanceUID"
-        ).first()
-        filters = {
-            "PatientID": [patient_id]
-        }
-        if study_uid:
-            filters["StudyInstanceUID"] = [study_uid]
-        filter_query = build_solr_query(
-            filters,
-            with_tags_for_ex=False,
-            search_child_records_by=None, solr_default_op='AND'
-        )
-        result = query_solr_and_format_result(
-            {
-                "collection": source.name,
-                "fields": ["PatientID", "StudyInstanceUID", "Modality", "crdc_series_uuid", "SeriesInstanceUID", "aws_bucket", "instance_size"],
-                "query_string": None,
-                "fqs": [filter_query['full_query_str']],
-                "facets": None, "sort": None, "counts_only": False, "limit": 2000
+        fields = ["collection_id", "PatientID", "StudyInstanceUID", "Modality", "crdc_series_uuid", "SeriesInstanceUID", "aws_bucket", "instance_size"]
+        result = {}
+        if not collection_id:
+            # This is a request for filters and/or a cart
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            partitions = body.get("partitions", {})
+            filtergrp_list = body.get("filtergrp_list", {})
+            if not(len(partitions) or len(filtergrp_list)):
+                raise Exception("You can only request series IDs based on a filter, collection ID, Patient ID, or study ID!")
+            if len(partitions):
+                result = cart_manifest(filtergrp_list, partitions, 0, fields, MAX_FILE_LIST_REQUEST)
+            else:
+                source = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
+                    active=True, source_type=DataSource.SOLR,
+                    aggregate_level="SeriesInstanceUID"
+                ).first()
+                filter_query = build_solr_query(
+                    { w: v for x in filtergrp_list for w, v in list(x.items())},
+                    with_tags_for_ex=False,
+                    search_child_records_by={w: "StudyInstanceUID" for x in filtergrp_list for w in x}, solr_default_op='AND'
+                )
+                result = query_solr_and_format_result(
+                    {
+                        "collection": source.name,
+                        "fields": fields,
+                        "query_string": None,
+                        "fqs": [filter_query['full_query_str']],
+                        "facets": {'instance_size': 'sum(instance_size)'}, "sort": None, "counts_only": False, "limit": MAX_FILE_LIST_REQUEST,
+                        "totals": ['SeriesInstanceUID', 'collection_id', 'PatientID', 'StudyInstanceUID']
+                    },
+                    normalize_facets=False
+                )
+        else:
+            source = ImagingDataCommonsVersion.objects.get(active=True).get_data_sources(
+                active=True, source_type=DataSource.SOLR,
+                aggregate_level="SeriesInstanceUID"
+            ).first()
+            filters = {
+                "collection_id": [collection_id]
             }
-        )
+            if patient_id:
+                filters['PatientID'] = [patient_id]
+            if study_uid:
+                filters["StudyInstanceUID"] = [study_uid]
+            filter_query = build_solr_query(
+                filters,
+                with_tags_for_ex=False,
+                search_child_records_by=None, solr_default_op='AND'
+            )
+            result = query_solr_and_format_result(
+                {
+                    "collection": source.name,
+                    "fields": fields,
+                    "query_string": None,
+                    "fqs": [filter_query['full_query_str']],
+                    "facets": None, "sort": None, "counts_only": False, "limit": MAX_FILE_LIST_REQUEST
+                }
+            )
+
         for doc in result['docs']:
             response['result'].append({
                 "series_id": doc['SeriesInstanceUID'],
@@ -703,8 +681,17 @@ def get_series(request, patient_id, study_uid=None):
                 "series_size": doc['instance_size'][0],
                 "modality": doc['Modality'][0],
                 "study_id": doc['StudyInstanceUID'],
-                "case": doc["PatientID"]
+                "patient_id": doc["PatientID"],
+                "collection_id": doc['collection_id'][0]
             })
+        if 'facets' in result:
+            response['download_stats'] = {
+                'series_count': result['facets']['total_SeriesInstanceUID'],
+                'study_count': result['facets']['total_StudyInstanceUID'],
+                'collection_count': result['facets']['total_collection_id'],
+                'case_count': result['facets']['total_PatientID'],
+                'queue_byte_size': result['facets']['instance_size'],
+            }
 
     except Exception as e:
         logger.error("[ERROR] While fetching series per study ID:")
