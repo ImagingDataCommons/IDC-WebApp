@@ -191,12 +191,15 @@ require([
                             data.totals.StudyInstanceUID.toString() + " studies (Size on disk: " +
                             data.totals.disk_size + ")"
                         );
-                        base.updateDownloadBtns("cohort", true, data.totals.disk_size_tb);
+                        base.updateDownloadBtns("cohort", true, data.totals.disk_size_tb, data.totals.SeriesInstanceUID);
                     } else if(isFiltered && data.total <= 0) {
                         $('#search_def_stats').html('<span style="color:red">There are no cases matching the selected set of filters</span>');
+                        base.updateDownloadBtns("cohort", false, 0, 0);
+                        $('.citations-button').attr("disabled","disabled");
+                        $('.citations-button').attr("title", "There are no cases matching the selected set of filters");
                     } else {
                         $('#search_def_stats').html("&nbsp;");
-                        base.updateDownloadBtns("cohort", false, 0);
+                        base.updateDownloadBtns("cohort", false, 0, 0);
                     }
 
                     filterutils.updateCollectionTotals('Program', data.programs);
