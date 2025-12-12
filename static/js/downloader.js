@@ -855,21 +855,30 @@ require([
         });
     }
 
-    async function testFileCreation(test_series, directoryHandle) {
-        let test_name = crypto.randomUUID();
-        let test_path = `testing_${test_series['collection_id']}/${test_series['patient_id']}/${test_series['study_id']}/${test_series['modality']}_${test_series['series_id']}/${test_name}`;
-        try {
-            await createNestedDirectories(directoryHandle, test_path);
-            // If we made it here, we're probably okay to proceed and can delete our test
-            await directoryHandle.removeEntry(`testing_${test_series['collection_id']}`, {recursive: true});
-            return TestResult.SUCCESS;
-        } catch (error) {
-            // A NotFoundError in response to a create attempt likely means we have a Windows path length error
-            if (error.name === 'NotFoundError') {
+    async function testFileCreation(tests, directoryHandle) {
+        let tests_clear = true;
+        let failed_path = null;
+        for(const test_series of tests) {
+            let test_name = crypto.randomUUID();
+            let test_path = `testing_${test_series['collection_id']}/${test_series['patient_id']}/${test_series['study_id']}/${test_series['modality']}_${test_series['series_id']}/${test_name}.dcm`;
+            try {
+                await createNestedDirectories(directoryHandle, test_path);
+                // If we made it here, we're probably okay to proceed and can delete our test
                 await directoryHandle.removeEntry(`testing_${test_series['collection_id']}`, {recursive: true});
-                return await showPathErrorDialog(test_path.length);
+            } catch (error) {
+                // A NotFoundError in response to a create attempt likely means we have a Windows path length error
+                // though it can also be a permissions error. either way we know we can't save this hypothetical file.
+                if (error.name === 'NotFoundError') {
+                    await directoryHandle.removeEntry(`testing_${test_series['collection_id']}`, {recursive: true});
+                    tests_clear = false;
+                    failed_path = test_path;
+                }
             }
         }
+        if(!tests_clear) {
+            return await showPathErrorDialog(failed_path.length);
+        }
+        return TestResult.SUCCESS;
     }
 
     $('body').on('click', '.download-all-instances', async function (event) {
@@ -890,6 +899,7 @@ require([
         let csrftoken = $.getCookie('csrftoken');
 
         let series = [];
+        let test_series = null;
         if(download_type !== "series") {
             let response = null;
             if(["cohort", "cart"].includes(download_type)) {
@@ -932,6 +942,11 @@ require([
             }
             const series_data = await response.json();
             series.push(...series_data['result']);
+            if('test_series' in series_data && series_data['test_series']) {
+                test_series = series_data['test_series'];
+            } else {
+                test_series = [series[0]];
+            }
             if('download_stats' in series_data){
                 downloader_manager.set_download_stats(series_data['download_stats']);
             }
@@ -946,11 +961,13 @@ require([
                 "patient_id": patient_id,
                 "collection_id": collection_id
             });
+            test_series = [series[0]];
         }
         // Before we create the requests, we need to verify the path length isn't going to be an issue for the local
         // system
         let save_flat = false;
-        switch(await testFileCreation(series[0], directoryHandle)){
+        let res = await testFileCreation(test_series, directoryHandle);
+        switch(res){
             case TestResult.CANCEL:
                 series.length = 0;
                 break;
@@ -960,6 +977,7 @@ require([
             default:
                 break;
         }
+
         if(series.length === 0) {
             // For one reason or another, we cancelled
             return;
