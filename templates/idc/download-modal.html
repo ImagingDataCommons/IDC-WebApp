@@ -37,16 +37,19 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">x</span>
                 </button>
-                <h4 class="modal-title" id="download-issue-header">Path Length Exceeded</h4>
+                <h4 class="modal-title" id="download-issue-header">Cannot Save Images</h4>
             </div>
             <div class="modal-body">
                 <p>
-                    We may be unable to create the folders needed to save these image files. If you are on a Windows
-                    system, this could mean the path length needed to save the images in a nested folder structure of
-                    <span class="code">collection > study > series > patient</span> is too long for your file system.
-                    Windows has a maximum file path length of <span class="code">260 characters</span>, and these files will need around
-                    <span class="min-length-path code"></span> characters, not including the path to your chosen destination
-                    folder (which may bring the total path length over the maximum allowed by Windows).
+                    We may be unable to create the folders needed to save these image files.
+                </p>
+                <p>
+                    <b>If you are on a Windows system</b>, this could mean the path length needed to save some of the
+                    images in a nested folder structure of <span class="code">collection > study > series > patient</span>
+                    is too long for your file system. Windows has a maximum file path length of <span class="code">260
+                    characters</span>, and some of these files will need around <span class="min-length-path code"></span>
+                    characters, not including the path to your chosen destination folder (which may bring the total path
+                    length over the maximum allowed by Windows).
                 </p>
                 <p>
                     We can save your files in a flat folder structure under only the collection ID, and provide a manifest
@@ -54,9 +57,9 @@
                     and choose a different destination folder.
                 </p>
                 <p>
-                    If you are not on a Windows system and are still seeing this error message, please double-check that
-                    you have sufficient disk space and are allowing the browser to save the files when prompted for
-                    access.
+                    <b>If you are not on a Windows system</b> and are still seeing this error message, please double-check that
+                    you have sufficient disk space, have chosen a destination folder you are permitted to save in, and are
+                    granting the browser the necessary permissions to save the files when prompted for access.
                 </p>
             </div>
             <div class="modal-footer">
