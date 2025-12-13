@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}Collection Details {{ collection_id }} | IDC{% endblock %}}
+{% block extra_css_libs %}
+    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-5.css' %}" />
+{% endblock %}
+{% block header %}
+
+{% endblock %}
+
+{% block link_page_name %}collection_details{% endblock %}
+{% block page_name %}collection_details{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid">
+    <h3 class="pull-left">{{ collection_name }}</h3>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <div class="card collex-card">
+              <div class="card-body">
+                  <p>
+                      <b>Subject Count: </b>{{ subject_count }}
+                  </p>
+                  <p>
+                      <b>Primary Site: </b>{{ primary_tumor_location }}
+                  </p>
+                  <p>
+                      <b>Image Modalities: </b>{{ image_types }}
+                  </p>
+                  <p>
+                      <b>Cancer Type: </b>{{ cancer_type }}
+                  </p>
+                  <p>
+                      <b>Species: </b>{{ species }}
+                  </p>
+              </div>
+            </div>
+        </div>
+        <div class="col-8">
+                {{ desc|safe }}
+        </div>
+    </div>
+    <nav class="navbar fixed-bottom navbar-fixed-bottom" style="margin-bottom: 76px; position: fixed !important;">
+        <!-- Include footer here instead of base.html so it can be part of height calculation -->
+        {% include 'share/site_footer.html' %}
+    </nav>
+</div>
+{% endblock %}
+
+{% block js_file %}
+	{{ block.super }}
+	<script type="text/javascript" src="{% static 'js/collection_details.js' %}?v={{ APP_VERSION }}"></script>
+{% endblock %}
