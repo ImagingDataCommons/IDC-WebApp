@@ -506,7 +506,6 @@ require([
                 let response = null;
                 let fileHandle = null;
                 const seriesDirectory = modality + "_" + seriesInstanceUID;
-                console.log('save flat is ',metadata['save_flat']);
                 const filePath = metadata['save_flat'] ? collection_id : [collection_id, patientID, studyInstanceUID, seriesDirectory].join("/");
                 try {
                     const directoryHandle = event.data['directoryHandle'];
@@ -745,11 +744,15 @@ require([
             // Sometimes worker latency can cause a race condition between final cleanup and resetting the download
             // manager's state. Run triggerWorkerDownloads a final time after waiting a couple of seconds to be totally sure
             // we've cleaned up after ourselves.
-            setTimeout(2000, function(){
+            setTimeout(function(){
                 if(downloader_manager.pending_cancellation) {
+                    // Make sure all workers are finalized
+                    downloader_manager.downloadWorkers.forEach(worker => {
+                        downloader_manager.finalizeWorker(worker);
+                    });
                     downloader_manager.triggerWorkerDownloads();
                 }
-            });
+            }, 2000);
         }
 
         set_download_stats(stats) {
@@ -856,12 +859,18 @@ require([
     }
 
     async function testFileCreation(tests, directoryHandle) {
-        let tests_clear = true;
-        let failed_path = null;
+        let failed_paths = [];
+        let failed_flats = [];
         for(const test_series of tests) {
             let test_name = crypto.randomUUID();
+            let flat_okay = false;
             let test_path = `testing_${test_series['collection_id']}/${test_series['patient_id']}/${test_series['study_id']}/${test_series['modality']}_${test_series['series_id']}/${test_name}.dcm`;
             try {
+                // First, try the flat option--if it doesn't work, no point to checking the big one
+                await createNestedDirectories(directoryHandle,`testing_${test_series['collection_id']}`);
+                // If we make it here, flat format is okay
+                flat_okay = true;
+                // Now we test the whole path
                 await createNestedDirectories(directoryHandle, test_path);
                 // If we made it here, we're probably okay to proceed and can delete our test
                 await directoryHandle.removeEntry(`testing_${test_series['collection_id']}`, {recursive: true});
@@ -869,14 +878,24 @@ require([
                 // A NotFoundError in response to a create attempt likely means we have a Windows path length error
                 // though it can also be a permissions error. either way we know we can't save this hypothetical file.
                 if (error.name === 'NotFoundError') {
-                    await directoryHandle.removeEntry(`testing_${test_series['collection_id']}`, {recursive: true});
-                    tests_clear = false;
-                    failed_path = test_path;
+                    if(!flat_okay) {
+                        // There's something we can't save at all
+                        // No need to delete the test as no part of it was even made
+                        failed_flats.push(`${test_series['collection_id']}`);
+                    } else {
+                        // At least the top-level directory was made, so recursively clean it out and note the failed path
+                        await directoryHandle.removeEntry(`testing_${test_series['collection_id']}`, {recursive: true});
+                        failed_paths.push(test_path);
+                    }
                 }
             }
         }
-        if(!tests_clear) {
-            return await showPathErrorDialog(failed_path.length);
+        if(failed_flats.length > 0) {
+            $('#download-failed-dialog').modal('show');
+            return TestResult.CANCEL;
+        }
+        if(failed_paths.length > 0) {
+            return await showPathErrorDialog(failed_paths.sort((a,b) => {return b.length - a.length})[0].length);
         }
         return TestResult.SUCCESS;
     }

@@ -122,6 +122,11 @@ def quick_js_bracket_replace(matchobj):
 
 
 @register.filter
+def size_check(collex_size):
+    return 1 < collex_size <= 3
+
+
+@register.filter
 def parse_cooloff(timedelta):
     return str(datetime.utcnow() + timedelta)
 

@@ -28,6 +28,43 @@
     </div>
 </div>
 
+<!-- Warning Modal -->
+<div class="modal fade" id="download-failed-dialog" tabindex="-1" role="dialog" data-backdrop="static"
+     aria-labelledby="download-failed-header" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">x</span>
+                </button>
+                <h4 class="modal-title" id="download-failed-header">Unable to Save</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    We are unable to save at least one of the chosen items for download.
+                </p>
+                <p>
+                    <b>If you are on a Windows system</b>, this could mean the path length needed to save some of the
+                    images (even in a simple, flat format) is too long for your file system. Windows has a maximum file
+                    path length of <span class="code">260 characters</span>, and some of these files may need more than
+                    that based on your chosen destination folder.
+                </p>
+                <p>
+                    <b>If you are not on a Windows system</b> and are still seeing this error message, or are and have confirmed
+                    that your path length wouldn't exceed the limit, please double-check that you have sufficient disk space,
+                    have chosen a destination folder you are permitted to save in, and are granting the browser the
+                    necessary permissions to save the files when prompted for access.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary btn-warn" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Cancel">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Path Length Modal -->
 <div class="modal fade" id="download-issue-dialog" tabindex="-1" role="dialog" data-backdrop="static"
      aria-labelledby="download-issue-header" aria-hidden="true">

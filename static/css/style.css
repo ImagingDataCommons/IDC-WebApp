@@ -4551,9 +4551,13 @@ d-topics-list iframe {
     color: gray;
 }
 
+a.is-disabled {
+  color: gray !important;
+}
+
 #floating-message {
   position: fixed;
-  bottom: 50px;
+  bottom: 120px;
   width: 500px;
   right: 40px;
   z-index: 9999;
