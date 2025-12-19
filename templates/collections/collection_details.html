@@ -4,6 +4,7 @@
 {% block title %}Collection Details {{ collection_id }} | IDC{% endblock %}}
 {% block extra_css_libs %}
     <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-5.css' %}" />
+    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-idc.css' %}" />
 {% endblock %}
 {% block header %}
 
@@ -13,15 +14,36 @@
 {% block page_name %}collection_details{% endblock %}
 
 {% block page_header %}
-<div class="container-fluid">
-    <h3 class="pull-left">{{ collection_name }}</h3>
+<div class="container-fluid collection-header">
+    <h3>{{ collection_type }} <i class="fa fa-solid fa-ellipsis-v collection-spacer"></i> {{ collection_name }}</h3>
+    <p>
+        <hr />
+    </p>
+    <div class="collection-buttons">
+        <div id="collex-download-options" class="dropdown">
+            <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="collex-download-options-link" data-toggle="dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Download
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="collex-download-options-link">
+                <li class="collex-list-item"><a class="dropdown-item" href="#">Direct <i class="fa fa-solid fa-download"></i></a></li>
+                <li class="collex-list-item"><a class="dropdown-item" href="#">idc-index <i class="fa fa-solid fa-list"></i></a></li>
+                <li class="collex-list-item"><a class="dropdown-item" href="#">Manifest <i class="fa fa-solid fa-list"></i></a></li>
+            </ul>
+        </div>
+        <a type="button" role="button" target="_blank" class="btn btn-special explore-images action-button" href="{% url 'parse_explore_filters' %}/?collection_id={{ collection_id }}">
+            Explore Images
+        </a>
+    </div>
 </div>
 {% endblock %}
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid collection-details">
     <div class="row">
         <div class="col">
-            <div class="card collex-card">
+            <div class="card collex-card collex-details-card">
+                <div class="card-header">
+                      <h4>Details</h4>
+                </div>
               <div class="card-body">
                   <p>
                       <b>Subject Count: </b>{{ subject_count }}
@@ -40,9 +62,26 @@
                   </p>
               </div>
             </div>
+            <div class="card collex-card collex-DOI-card">
+                <div class="card-header">
+                      <h4>DOI(s)</h4>
+                </div>
+              <div class="card-body">
+              {% for doi in dois %}
+                  <p><i class="fa fa-solid fa-globe"></i> <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer">{{ doi }}</a></p>
+              {% endfor %}
+                  <p>
+                        <button type="button" role="button" class="btn btn-small btn-primary citations-button for-collection" data-bs-toggle="modal" data-bs-target="#citations-modal" data-toggle="modal" data-target="#citations-modal" aria-expanded="false" data-citations="{{ citations }}"> View Citations
+                        </button>
+                  </p>
+              </div>
+            </div>
         </div>
-        <div class="col-8">
+        <div class="col-9">
+            <h3>Description</h3>
+            <div class="desc">
                 {{ desc|safe }}
+            </div>
         </div>
     </div>
     <nav class="navbar fixed-bottom navbar-fixed-bottom" style="margin-bottom: 76px; position: fixed !important;">
@@ -50,9 +89,13 @@
         {% include 'share/site_footer.html' %}
     </nav>
 </div>
+
+{% include 'idc/citations-modal.html' %}
+
 {% endblock %}
 
 {% block js_file %}
 	{{ block.super }}
 	<script type="text/javascript" src="{% static 'js/collection_details.js' %}?v={{ APP_VERSION }}"></script>
+    <script type="text/javascript" src="{% static 'js/citations_modal.js' %}?v={{ APP_VERSION }}"></script>
 {% endblock %}

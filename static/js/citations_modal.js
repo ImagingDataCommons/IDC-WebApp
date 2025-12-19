@@ -77,6 +77,18 @@ require([
         cites_list.html(`
             Formatting citation(s)... <i class="fa fa-compass fa-spin"></i>
         `);
+
+        if(button.hasClass('for-collection')) {
+            $('.cite-type').html("collection");
+            let citations = JSON.parse(button.attr('data-citations'));
+            dois = Object.keys(citations);
+            for(let doi of dois) {
+                if(!DOI_CACHE[doi]) {
+                    DOI_CACHE[doi] = citations[doi];
+                }
+            }
+        }
+
         if(button.hasClass('for-cart')) {
             let cart_result = await fetch(`${BASE_URL}/cart_data/`, {
                     method: "POST",
