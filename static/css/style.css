@@ -4567,3 +4567,11 @@ a.is-disabled {
   margin-bottom: 0px;
   text-align: center;
 }
+
+.modal.fade .modal-header .btn-close {
+  margin-top: -10px;
+}
+
+.modal.fade .modal-header h4 {
+  display: inline-block;
+}
