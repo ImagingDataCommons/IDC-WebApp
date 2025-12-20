@@ -2,6 +2,10 @@
     font-family: system-ui;
 }
 
+.container-fluid.collection-details {
+    padding-bottom: 125px;
+}
+
 .collex-card {
     font-size: larger;
     border: 2px solid #707e9b;
