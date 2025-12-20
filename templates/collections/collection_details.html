@@ -39,7 +39,7 @@
             {% endwith %}
             </ul>
         </div>
-        <a type="button" role="button" target="_blank" class="btn btn-special explore-images action-button" href="{% url 'parse_explore_filters' %}/?collection_id={{ collection_id }}">
+        <a type="button" role="button" target="_blank" class="btn btn-special explore-images action-button" href="{% if collection_type == "Collection" %}{% url 'parse_explore_filters' %}/?collection_id={{ collection_id }}{% else %}{% url 'parse_explore_filters' %}/?analysis_results_id={{ collection_id }}{% endif %}">
             Explore Images
         </a>
     </div>
