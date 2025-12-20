@@ -4,17 +4,14 @@
 {% load socialaccount %}
 {% load idc_collections_custom_tags %}
 
-<header class="site-header">
+<header class="site-header justify-content-md-start">
     {% is_allowed user as has_access %}
-    <nav class="navbar navbar-default navbar-fixed-top idc-nav navbar-container">
+    <nav class="navbar navbar-expand-xl navbar-default navbar-fixed-top idc-nav navbar-container">
         <div class="container-fluid">
             <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-                        data-target="#main-navbar-collapse" aria-expanded="false">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
+                <button type="button" class="navbar-toggle navbar-toggler" data-toggle="collapse"
+                        data-bs-toggle="collapse" data-bs-target="#main-navbar-collapse" data-target="#main-navbar-collapse" aria-expanded="false" aria-controls="main-navbar-collapse" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
                 </button>
                 <a href="{% url 'landing_page' %}" title="Home Page" >
                     <img class="navbar-brand" src="{% static 'img/NIH_IDC_title.svg' %}" alt="NIH IDC Logo"/>
@@ -63,7 +60,7 @@
                 <ul class="nav navbar-nav navbar-right">
                     <li id="grid-menu" class="navbar-item" title="Additional Menu Items">
                     <div class="dropdown">
-                        <a role="button" class="dropdown-toggle navbar-item__text" id="addtl-menu-dropdown" data-toggle="dropdown" aria-label="Additional Menu Items Dropdown" aria-expanded="true">
+                        <a href="#" role="button" class="navbar-item__text" id="addtl-menu-dropdown" data-bs-toggle="dropdown" data-toggle="dropdown" aria-label="Additional Menu Items Dropdown" aria-expanded="true">
                             <img class="dropdown-icon-sm" src="{% static 'img/Grid-On-Fill--Streamline-Sharp-Fill-Material-Symbols.svg' %}" alt="Menu Icon" />
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" role="menu" aria-label="addtl-menu-dropdown">
