@@ -5,36 +5,44 @@
 
     <footer class="row container-fluid site-footer{% if hide == "True" %} hidden{% endif %}">
         <div class="row">
-            <a href="/">Site Home</a>
-            &nbsp; &nbsp; | &nbsp; &nbsp;
-            <a href="mailto:support@canceridc.dev">Contact Us</a>
-            &nbsp; &nbsp; | &nbsp; &nbsp;
-            <a href="{% url 'privacy' %}" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-            &nbsp; &nbsp; | &nbsp;&nbsp;
-            <a href="https://www.cancer.gov/policies/accessibility" target="_blank" rel="noopener noreferrer">Accessibility</a>
-            &nbsp; &nbsp; | &nbsp; &nbsp;
-            <a href="https://www.cancer.gov/policies/foia" target="_blank" rel="noopener noreferrer">FOIA</a>
-            &nbsp; &nbsp; | &nbsp; &nbsp;
-            <a href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html" target="_blank" rel="noopener noreferrer">HHS Vulnerability Disclosure</a>
-            &nbsp; &nbsp; | &nbsp; &nbsp;
-            <a href="https://www.edi.nih.gov/no-fear-act" target="_blank" rel="noopener noreferrer">No FEAR Act</a>
+            <div class="col">
+                <a href="/">Site Home</a>
+                &nbsp; &nbsp; | &nbsp; &nbsp;
+                <a href="mailto:support@canceridc.dev">Contact Us</a>
+                &nbsp; &nbsp; | &nbsp; &nbsp;
+                <a href="{% url 'privacy' %}" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+                &nbsp; &nbsp; | &nbsp;&nbsp;
+                <a href="https://www.cancer.gov/policies/accessibility" target="_blank" rel="noopener noreferrer">Accessibility</a>
+                &nbsp; &nbsp; | &nbsp; &nbsp;
+                <a href="https://www.cancer.gov/policies/foia" target="_blank" rel="noopener noreferrer">FOIA</a>
+                &nbsp; &nbsp; | &nbsp; &nbsp;
+                <a href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html" target="_blank" rel="noopener noreferrer">HHS Vulnerability Disclosure</a>
+                &nbsp; &nbsp; | &nbsp; &nbsp;
+                <a href="https://www.edi.nih.gov/no-fear-act" target="_blank" rel="noopener noreferrer">No FEAR Act</a>
+            </div>
         </div>
         <div class="row">
-            <a href="https://www.hhs.gov/" target="_blank" rel="noopener noreferrer">U.S. Department of Health and Human Services</a>
-            &nbsp; &nbsp; | &nbsp; &nbsp;
-            <a href="https://www.nih.gov/" target="_blank" rel="noopener noreferrer">National Institutes of Health</a>
-            &nbsp; &nbsp; | &nbsp; &nbsp;
-            <a href="https://www.cancer.gov/" target="_blank" rel="noopener noreferrer">National Cancer Institute</a>
-            &nbsp; &nbsp; | &nbsp; &nbsp;
-            <a href="https://www.usa.gov/" target="_blank" rel="noopener noreferrer">USA.gov</a>
+            <div class="col">
+                <a href="https://www.hhs.gov/" target="_blank" rel="noopener noreferrer">U.S. Department of Health and Human Services</a>
+                &nbsp; &nbsp; | &nbsp; &nbsp;
+                <a href="https://www.nih.gov/" target="_blank" rel="noopener noreferrer">National Institutes of Health</a>
+                &nbsp; &nbsp; | &nbsp; &nbsp;
+                <a href="https://www.cancer.gov/" target="_blank" rel="noopener noreferrer">National Cancer Institute</a>
+                &nbsp; &nbsp; | &nbsp; &nbsp;
+                <a href="https://www.usa.gov/" target="_blank" rel="noopener noreferrer">USA.gov</a>
+            </div>
         </div>
         <div class="row mat-toolbar-row">
-            NIH... Turning Discovery Into Health ®
+            <div class="col">
+                NIH... Turning Discovery Into Health ®
+            </div>
         </div>
         <div class="row">
-            <i><b>Application Version:</b> {{ APP_VERSION }}</i>
-            &nbsp; &nbsp; | &nbsp; &nbsp;
-            {{ idc_info.name }} Version {{ idc_info.version_number }} - {{ idc_info.date_active|date:"F d, Y" }}
+            <div class="col">
+                <i><b>Application Version:</b> {{ APP_VERSION }}</i>
+                &nbsp; &nbsp; | &nbsp; &nbsp;
+                {{ idc_info.name }} Version {{ idc_info.version_number }} - {{ idc_info.date_active|date:"F d, Y" }}
+            </div>
         </div>
     </footer>
 

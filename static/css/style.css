@@ -1055,6 +1055,7 @@ body {
   display: inline-block; }
 
 .navbar-container {
+  padding-top: 0px;
   padding-bottom: 0px;
   box-shadow: 0px 1px 3px #1c4c5a96;
 }
@@ -1099,10 +1100,29 @@ nav, .site-header {
   font-size: 29px;
 }
 
+.site-header .navbar {
+   --bs-navbar-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%2833, 37, 41, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.site-header .navbar .container-fluid {
+  justify-content: start !important;
+}
+
 .user-detail .basic-avatar {
   width: 54px;
   height: 54px;
   font-size: 50px;
+}
+
+.navbar-toggler-icon {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  vertical-align: middle;
+  background-image: var(--bs-navbar-toggler-icon-bg);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100%;
 }
 
 .navbar-right .navbar-item.navbar-login {
@@ -4531,9 +4551,13 @@ d-topics-list iframe {
     color: gray;
 }
 
+a.is-disabled {
+  color: gray !important;
+}
+
 #floating-message {
   position: fixed;
-  bottom: 50px;
+  bottom: 120px;
   width: 500px;
   right: 40px;
   z-index: 9999;
@@ -4542,4 +4566,12 @@ d-topics-list iframe {
 .special-announcement {
   margin-bottom: 0px;
   text-align: center;
+}
+
+.modal.fade .modal-header .btn-close {
+  margin-top: -10px;
+}
+
+.modal.fade .modal-header h4 {
+  display: inline-block;
 }

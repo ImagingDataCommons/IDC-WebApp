@@ -1,0 +1,61 @@
+#collection_details {
+    font-family: system-ui;
+}
+
+.collex-card {
+    font-size: larger;
+    border: 2px solid #707e9b;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.collex-card i {
+    font-size: smaller;
+}
+
+.collex-card .card-body {
+
+}
+
+.collex-card .card-header {
+    background: #cbcbcb;
+}
+
+.collection-details .desc {
+    font-size: larger;
+}
+
+.collection-spacer {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+#collex-download-options-link, #collex-download-options li.collex-list-item {
+    background: #fff;
+    color: #373737;
+}
+
+#collex-download-options {
+    display: inline-block;
+}
+
+#collex-download-options ul {
+    border: 1px solid black;
+}
+
+#collex-download-options a:hover {
+    background: #cbcbcb;
+}
+
+.collection-header a  {
+    font-weight: bold;
+    font-size: medium;
+}
+
+.collection-header .action-button {
+    margin-left: 10px;
+}
+
+.collection-header .collection-buttons {
+    margin-bottom: 20px;
+}

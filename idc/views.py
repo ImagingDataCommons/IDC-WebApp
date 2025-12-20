@@ -673,7 +673,9 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None):
                 }
             )
 
+        test_series = {}
         for doc in result['docs']:
+            collection_id = doc['collection_id'][0] if isinstance(doc['collection_id'], list) else doc['collection_id']
             response['result'].append({
                 "series_id": doc['SeriesInstanceUID'],
                 "crdc_series_id": doc['crdc_series_uuid'],
@@ -682,8 +684,15 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None):
                 "modality": doc['Modality'][0] if isinstance(doc['Modality'], list) else doc['Modality'],
                 "study_id": doc['StudyInstanceUID'],
                 "patient_id": doc["PatientID"],
-                "collection_id": doc['collection_id'][0] if isinstance(doc['collection_id'], list) else doc['collection_id']
+                "collection_id": collection_id
             })
+            if not collection_id in test_series:
+                test_series[collection_id] = {
+                    "series_id": doc['SeriesInstanceUID'],
+                    "study_id": doc['StudyInstanceUID'],
+                    "patient_id": doc["PatientID"],
+                    "collection_id": collection_id
+                }
         if 'facets' in result:
             response['download_stats'] = {
                 'series_count': result['facets']['total_SeriesInstanceUID'],
@@ -692,6 +701,7 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None):
                 'case_count': result['facets']['total_PatientID'],
                 'queue_byte_size': result['facets']['instance_size'],
             }
+        response['test_series'] = list(test_series.values())
 
     except Exception as e:
         logger.error("[ERROR] While fetching series per study ID:")
