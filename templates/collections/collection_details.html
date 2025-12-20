@@ -102,7 +102,7 @@
                   <p><i class="fa fa-solid fa-globe"></i> <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer">{{ doi }}</a></p>
               {% endfor %}
                   <p>
-                        <button type="button" role="button" class="btn btn-small btn-primary citations-button for-collection" data-bs-toggle="modal" data-bs-target="#citations-modal" data-toggle="modal" data-target="#citations-modal" aria-expanded="false" data-citations="{{ citations }}"> View Citations
+                        <button type="button" role="button" class="btn btn-small btn-primary citations-button for-collection" data-bs-toggle="modal" data-bs-target="#citations-modal" data-toggle="modal" data-target="#citations-modal" aria-expanded="false" data-citations=""> View Citations
                         </button>
                   </p>
               </div>
@@ -127,7 +127,11 @@
 {% endblock %}
 
 {% block js_file %}
+    {{ citations|json_script:"collex_citations" }}
 	{{ block.super }}
+    <script>
+        const collex_citations = JSON.parse(document.getElementById('collex_citations').textContent);
+    </script>
 	<script type="text/javascript" src="{% static 'js/collection_details.js' %}?v={{ APP_VERSION }}"></script>
     <script type="text/javascript" src="{% static 'js/citations_modal.js' %}?v={{ APP_VERSION }}"></script>
     <script type="text/javascript" src="{% static 'js/downloader.js' %}?v={{ APP_VERSION }}"></script>
