@@ -8,7 +8,7 @@
 
 .collex-card {
     font-size: larger;
-    border: 2px solid #707e9b;
+    border: 2px solid #b14715;
     border-radius: 5px;
     margin-bottom: 20px;
 }
@@ -22,7 +22,8 @@
 }
 
 .collex-card .card-header {
-    background: #cbcbcb;
+    background: #c97024;
+    color: #fff;
 }
 
 .collection-details .desc {
