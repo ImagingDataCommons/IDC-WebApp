@@ -39,6 +39,7 @@ from google_helpers.stackdriver import StackDriverLogger
 from cohorts.models import Cohort, Cohort_Perms
 
 from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips, DataSetType, Citation
+from idc_collections.views import collection_details
 from idc_collections.collex_metadata_utils import (build_explorer_context, get_collex_metadata, create_file_manifest,
                                                    get_cart_data_serieslvl, get_cart_data_studylvl,
                                                    get_table_data_with_cart_data, cart_manifest)
@@ -290,6 +291,8 @@ def populate_tables(request):
 
     return JsonResponse(response, status=status)
 
+def analysis_results_details(request, analysis_result_id):
+    return collection_details(request, analysis_result_id)
 
 def get_citations(request):
     resp = { 'message': 'error', 'citations': None}
@@ -524,7 +527,7 @@ def parse_explore_filters(request):
 
 # Callback for recording the user's agreement to the warning popup
 def warn_page(request):
-    request.session['seenWarning'] = True;
+    request.session['seenWarning'] = True
     return JsonResponse({'warning_status': 'SEEN'}, status=200)
 
 

@@ -39,7 +39,8 @@
             {% endwith %}
             </ul>
         </div>
-        <a type="button" role="button" target="_blank" class="btn btn-special explore-images action-button" href="{% if collection_type == "Collection" %}{% url 'parse_explore_filters' %}/?collection_id={{ collection_id }}{% else %}{% url 'parse_explore_filters' %}/?analysis_results_id={{ collection_id }}{% endif %}">
+        <a type="button" role="button" target="_blank" class="btn btn-special explore-images action-button"
+           href="{% if collection_type == "Collection" %}{% url 'parse_explore_filters' %}/?collection_id={{ collection_id }}{% else %}{% url 'parse_explore_filters' %}/?analysis_results_id={{ collection_id }}{% endif %}">
             Explore Images
         </a>
     </div>
@@ -91,16 +92,10 @@
                                 {% endfor %}
                         </p>
                     {% endif %}
-              </div>
-            </div>
-            <div class="card collex-card collex-DOI-card">
-                <div class="card-header">
-                      <h4>DOI(s)</h4>
-                </div>
-              <div class="card-body">
-              {% for doi in dois %}
+                <p style="margin-left: 20px; margin-right: 20px; margin-top: 25px; margin-bottom: 25px; border-bottom: 1px solid black;"></p>
+                {% for doi in dois %}
                   <p><i class="fa fa-solid fa-globe"></i> <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer">{{ doi }}</a></p>
-              {% endfor %}
+                {% endfor %}
                   <p>
                         <button type="button" role="button" class="btn btn-small btn-primary citations-button for-collection" data-bs-toggle="modal" data-bs-target="#citations-modal" data-toggle="modal" data-target="#citations-modal" aria-expanded="false" data-citations=""> View Citations
                         </button>
@@ -115,10 +110,6 @@
             </div>
         </div>
     </div>
-    <nav class="navbar fixed-bottom navbar-fixed-bottom" style="margin-bottom: 76px; position: fixed !important;">
-        <!-- Include footer here instead of base.html so it can be part of height calculation -->
-        {% include 'share/site_footer.html' %}
-    </nav>
 </div>
 
 {% include 'idc/citations-modal.html' %}
