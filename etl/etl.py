@@ -357,7 +357,7 @@ def load_collections(filename, data_version="8.0"):
         exact_collection_fields = [
             "collection_id", "collection_uuid", "name", "collections", "image_types", "supporting_data", "subject_count", "doi",
             "source_url", "cancer_type", "species", "location", "analysis_artifacts", "description", "collection_type",
-            "access", "date_updated", "active", "total_size", "total_size_with_ar"]
+            "access", "date_updated", "active","total_size", "total_size_with_ar"]
         field_map = FIELD_MAP
         for line in csv_reader(collection_file):
             if COLLECTION_HEADER_CHK in line:
@@ -372,6 +372,7 @@ def load_collections(filename, data_version="8.0"):
                 'data': { x: line[field_map[x]] for x in exact_collection_fields },
                 "data_versions": [{"ver": data_version, "name": "TCIA Image Data"}]
             }
+            collex['data']['license'] = line[field_map["license_short_name"]]
             collex['data']['nbia_collection_id'] = line[field_map['tcia_wiki_collection_id']]
             collex['data']['tcia_collection_id'] = line[field_map['tcia_wiki_collection_id']]
             collex['data']['active'] = bool((line[field_map['active']]).lower() == "true")
