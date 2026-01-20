@@ -216,9 +216,30 @@ require([
         })
     };
 
+    const appendToAncestor = function(instance) {
+        let appendTo = $(instance.reference).parents('.download-col, .filter-download-menu, .cart-download-menu');
+        appendTo.length > 0 && instance.setProps({"appendTo": appendTo[0]});
+    };
+
+    // Dynamic tippy instance which will append itself to a table cell instead of the parent element of the tip target,
+    // to prevent weird wrapping issues with text
+    const dynamicTipFuncDL = {
+        fn: (instance) => ({
+            onCreate() {
+                appendToAncestor(instance);
+            },
+            onTrigger() {
+                appendToAncestor(instance);
+            },
+            onShow() {
+                instance.setContent(instance.props.dynamicTip(instance.reference));
+            }
+        })
+    };
+
     const chromium_only = "Direct download is only available in Chromium browsers.";
     const disabled_download_tooltip = {
-        plugins: [dynamicTipFunc],
+        plugins: [dynamicTipFuncDL],
         dynamicTip: function(ref){
             if($(ref).hasClass('download-size-disabled')) {
                 return "This set of images is over 3TB in size. Please use manifest download to obtain these images.";
@@ -254,18 +275,18 @@ require([
         dynamicTip: function(ref){
             let table_type = $(ref).parents('table').attr('data-table-type');
             if(table_type === 'series') {
-                return 'Download a manifest file for this series.'
+                return 'Download a manifest file for this series to use with a download tool.'
             }
-            return `Download a manifest file for all the series in this ${table_type}.`;
+            return `Download a manifest file for all the series in this ${table_type} to use with a download tool.`;
         },
         content: 'Download a manifest file.', // placeholder text
         theme: 'dark',
-        placement: 'left',
+        placement: 'right',
         arrow: false,
         interactive:true,
         target: '.export-button',
         maxWidth: 200,
-        plugins: [dynamicTipFunc]
+        plugins: [dynamicTipFuncDL]
     };
 
     let disabled_messages = {
@@ -285,17 +306,31 @@ require([
         },
         content: 'Download all files.', // placeholder text
         theme: 'dark',
-        placement: 'left',
+        placement: 'right',
         arrow: false,
         interactive:true,
         target: '.download-instances',
         maxWidth: 200,
-        plugins: [dynamicTipFunc]
+        plugins: [dynamicTipFuncDL]
+    };
+
+    const download_col_tooltip = {
+        content: 'Download images', // placeholder
+        theme: 'dark',
+        placement: 'left',
+        arrow: false,
+        interactive:true,
+        target: '.download-col',
+        maxWidth: 200
     };
 
     tippy.delegate('.projects-table', cart_tooltip);
 
     tippy.delegate('.cases-table', cart_tooltip);
+
+    tippy.delegate('.series-table', download_col_tooltip);
+
+    tippy.delegate('.studies-table', download_col_tooltip);
 
     tippy.delegate('.series-table', {
         dynamicTip: function(ref){

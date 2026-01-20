@@ -43,7 +43,7 @@ require.config({
 define(['jquery', 'jqueryui'], function($, jqueryui) {
     // Terabyte and record count warning and cutoffs for download button tooltips and enabling
     let DOWNLOAD_SIZE_LIMIT = 3;
-    let DOWNLOAD_SIZE_WARN = 2;
+    let DOWNLOAD_SIZE_WARN = 1;
     let DOWNLOAD_COUNT_LIMIT = 65000;
 
     // Download block poll with cookie via StackOverflow:
@@ -153,28 +153,44 @@ define(['jquery', 'jqueryui'], function($, jqueryui) {
     function _updateDownloadBtns(type, enabled, disk_size, record_count) {
         let btn = $(`#download-${type}-images`);
         let btn_tip = $(`#download-${type}-images-tooltips`);
-        let btn_and_tips = $(`#download-${type}-images-tooltips, #download-${type}-images-tooltips`);
+        let btn_and_tips = $(`#download-${type}-images, #download-${type}-images-tooltips`);
+        btn.attr("data-toggle", "");
+        btn.attr("data-target", "");
         if(!enabled){
+            !btn.hasClass('download-menu-item') && btn.attr("disabled", "disabled");
+            btn.hasClass('download-menu-item') && btn.addClass('disabled');
             btn_tip.addClass('is-disabled');
             btn_tip.attr('data-disabled-type', `download-${type}-disabled`);
-            btn.attr("disabled", "disabled");
             return;
         }
         if ("showDirectoryPicker" in window) {
+            // FileSystemAccess API found
             btn_and_tips.removeClass('is-disabled download-all-instances download-size-warning');
             if (disk_size > DOWNLOAD_SIZE_LIMIT || record_count > DOWNLOAD_COUNT_LIMIT) {
+                // Check for over limits
                 btn_tip.addClass('is-disabled');
-                btn.attr("disabled", "disabled");
+                !btn.hasClass('download-menu-item') && btn.attr("disabled", "disabled");
+                btn.hasClass('download-menu-item') && btn.addClass('disabled');
                 btn_tip.attr('data-disabled-type', (disk_size > DOWNLOAD_SIZE_LIMIT ? "download-size-disabled" : "download-count-disabled"));
             } else {
                 btn.removeAttr("disabled");
+                btn.removeClass("disabled");
                 btn_tip.attr('data-disabled-type', "");
-                (disk_size > DOWNLOAD_SIZE_WARN) ? btn.addClass('download-size-warning') : btn.addClass('download-all-instances');
+                if(disk_size > DOWNLOAD_SIZE_WARN) {
+                    // Check for warning threshold
+                    btn.addClass('download-size-warning');
+                    btn.attr("data-toggle","modal");
+                    btn.attr("data-target", "#download-warning");
+                } else {
+                    btn.addClass('download-all-instances');
+                }
             }
         } else {
+            // The FileSystemAccess API is unavailable
             btn_tip.addClass('is-disabled');
             btn_tip.attr('data-disabled-type', "download-all-disabled");
-            btn.attr("disabled", "disabled");
+            !btn.hasClass('download-menu-item') && btn.attr("disabled", "disabled");
+            btn.hasClass('download-menu-item') && btn.addClass('disabled');
         }
     }
 

@@ -475,17 +475,25 @@ tr {
     min-width: 80px;
 }
 
-#studies_table td.open-viewer {
-    /* This is necessary to make sure the 2 icons remain together, lined up. */
-    min-width: 70px;
-}
-
 #studies_table_head th.download-col,
 #studies_table td.download-col, #cases_table_head th.download-col,
 #cases_table td.download-col, #series_table_head th.download-col,
 #series_table td.download-col, #proj_table th.download-col, #proj_table td.download-col {
-    width:3%;
-    min-width: 40px;
+    width:4%;
+    /* This is necessary to make sure the 2 icons remain together, lined up. */
+    min-width: 70px;
+    padding: 10px 0px 10px 0px;
+}
+
+.download-col a:hover, .filter-activated-controls.download-toggle a:hover {
+    text-decoration: none;
+}
+
+#series_table td.table-interactive,
+#cases_table td.table-interactive,
+#proj_table td.table-interactive,
+#studies_table td.table-interactive {
+    vertical-align: middle;
 }
 
 #series_table_head th, #series_table td {
@@ -503,7 +511,7 @@ tr {
 #series_table_head th.series-number,
 #series_table td.series-number
 {
-    width: 7%;
+    width: 10%;
 }
 
 #series_table_head th.modality,
@@ -520,17 +528,9 @@ tr {
 }
 #series_table_head th.open-viewer,
 #series_table td.open-viewer {
-    width:6%;
-}
-
-#series_table_head th.download,
-#series_table td.download {
-    width:7%;
-}
-
-#series_table td.ohif, #studies_table td.ohif, #series_table td.download, #studies_table td.download{
-  vertical-align: middle;
-  padding: 0 8px 0 8px;
+    width:8%;
+    vertical-align: middle;
+    padding: 0 8px 0 8px;
 }
 
 #series_table td.ohif img, #studies_table td.ohif img {
@@ -632,17 +632,37 @@ svg {
     display: inline;
 }
 
-.viewer-toggle .viewer-menu {
+.viewer-toggle .viewer-menu, .download-toggle .download-menu {
     border: 1px solid lightgray;
     border-radius: 5px;
     min-width: 100px;
 }
 
-.viewer-toggle a.dropdown-toggle {
+.filter-activated-controls.download-toggle a.dropdown-toggle .fa-caret-down,
+.filter-activated-controls.download-toggle a.dropdown-toggle,
+.cart-activated-controls.download-toggle a.dropdown-toggle .fa-caret-down,
+.cart-activated-controls.download-toggle a.dropdown-toggle{
+    padding: 0px;
+    color: #fff;
+}
+
+.filter-download-menu-container[disabled="disabled"], .cart-download-menu-container[disabled="disabled"] {
+    cursor: not-allowed;
+}
+
+.dropdown.filter-download-menu-container, .dropdown.cart-download-menu-container {
+    display: inline-block;
+}
+
+.viewer-toggle a.dropdown-toggle, .download-toggle a.dropdown-toggle {
     padding: 10px;
 }
 
-.viewer-toggle .viewer-menu a:hover {
+.download-toggle a.dropdown-toggle .fa-caret-down {
+     padding: 8px;
+}
+
+.viewer-toggle .viewer-menu a:hover, .download-toggle .download-menu a:hover {
     background-color: #d5d5d5;
 }
 

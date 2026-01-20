@@ -597,12 +597,12 @@ def cart_data(request):
                     filtergrp_list, partitions, field_list if (not doi_or_size_only) else None, limit, offset,
                     with_records=(not doi_or_size_only), dois_only=dois_only, size_only=size_only
                 )
-        print("response: {}".format(response))
         if dois_only:
             response = {'dois': response['dois']}
         if size_only:
             response = {
-                "display_size": convert_disk_size(response['total_size'])
+                "display_size": convert_disk_size(response['total_size']),
+                "total_size": response['total_size']
             }
     except Exception as e:
         logger.error("[ERROR] While loading cart:")

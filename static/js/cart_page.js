@@ -32,7 +32,8 @@ require.config({
         cartutils: 'cartutils',
         tippy: 'libs/tippy-bundle.umd.min',
          '@popperjs/core': 'libs/popper.min',
-        citations_modal: 'citations_modal'
+        citations_modal: 'citations_modal',
+        downloader: 'downloader'
     },
     shim: {
         '@popperjs/core': {
@@ -65,7 +66,8 @@ require([
     'jquerydt',
     'jqueryui',
     'bootstrap',
-    'citations_modal'
+    'citations_modal',
+    'downloader'
 ], function(cartutils, tables, $, tippy, _, base) {
 
     var ajaxtriggered = false;

@@ -1351,12 +1351,12 @@ a.skip-nav {
   border: none;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);
   margin: 0px; }
-  .dropdown .dropdown-menu > li > a {
+  .dropdown .dropdown-menu > li > a, .dropdown .dropdown-menu > li a {
     padding: 3px 10px; }
   .dropdown .dropdown-menu i {
     text-align: center;
     width: 20px; }
-  .dropdown .dropdown-menu.dropdown-menu-right > li > a {
+  .dropdown .dropdown-menu.dropdown-menu-right > li a {
     text-align: right; }
 
 .dropdown-header {
@@ -4539,7 +4539,7 @@ d-topics-list iframe {
   font-size: smaller;
 }
 
-.collapse-all, .open-all, .download-all-instances {
+.collapse-all, .open-all, .download-all-instances, .download-size-warning, .export-filter-manifest, .export-cart-manifest {
   cursor: pointer;
 }
 

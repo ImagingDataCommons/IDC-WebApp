@@ -145,6 +145,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
             $('#cart_stats').removeClass('empty-cart');
             cart_controls.each(function(){
                 $(this).removeAttr('disabled');
+                $(this).removeClass('disabled');
                 !$(this).hasClass('tip-titled') && $(this).attr("title",$(this).attr("data-default-title"));
             });
             let cart_disk_size = 0;
@@ -173,7 +174,8 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
             $('#cart_stats_holder').html('<span id="#cart_stats">Your cart is currently empty</span>');
             $('#cart_stats').addClass('empty-cart');
             cart_controls.each(function(){
-                $(this).attr('disabled', 'disabled');
+                !$(this).hasClass('dropdown-toggle') && $(this).attr('disabled', 'disabled');
+                $(this).hasClass('dropdown-toggle') && $(this).addClass('disabled');
                 !$(this).hasClass('tip-titled') && $(this).attr("title","Add items to the cart to enable this feature.");
             });
         }
