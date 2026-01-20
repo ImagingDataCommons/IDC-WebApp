@@ -413,9 +413,12 @@ tr {
     width: 10%;
 }
 
+td.collex-case-count, th.collex-case-count {
+    width: 16%
+}
 
-td.license, td.collex-case-count, th.collex-case-count, th.license {
-    width: 12%;
+td.license, th.license {
+    width: 20%;
 }
 
 #projects_table td.ckbx:not(.cartnumholder), #projects_table_head th.ckbx:not(.cartnumholder),
@@ -428,7 +431,7 @@ td.license, td.collex-case-count, th.collex-case-count, th.license {
 }
 
 #projects_table td.collex_name, #projects_table_head th.collex_name {
-    width: 45%;
+    width: 50%;
     word-wrap: break-word; }
 
 #cases_table td, #cases_table_head th {
@@ -436,7 +439,7 @@ td.license, td.collex-case-count, th.collex-case-count, th.license {
     word-wrap: break-word; }
 
 #cases_table td.narrow, #cases_table_head th.narrow {
-    width: 15%;
+    width: 8%;
     word-wrap: break-word; }
 
 #cases_table td.wide, #cases_table_head th.wide {

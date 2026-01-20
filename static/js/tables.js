@@ -503,7 +503,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             {className: "col1 project-name wide", "targets": [4]},
             {className: "col1 case-id", "targets": [5]},
             {className: "col1 numrows narrow", "targets": [6]},
-            {className: "col1 numseries narrow", "targets": [7]}
+            {className: "col1 numseries narrow", "targets": [7]},
+            {className: "col1 license", "targets": [8]}
         ];
     };
 
@@ -573,7 +574,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                 }
                 return `<i class="fa fa-download  download-instances is-disabled" data-disabled-type="download-all-disabled"></i>`;
         }};
-        return [caret_col, download_col, cart_col, cartnum_col, collection_col, case_col, study_col, series_col];
+        const license_col =  {"type": "html", "orderable": true, data: 'license_short_name', render: function(data, type,row){
+            return `${row['license_short_name'].sort().join(", ")}`;
+        }};
+        return [caret_col, download_col, cart_col, cartnum_col, collection_col, case_col, study_col, series_col, license_col];
     };
 
     // recreates the cases table when a chevron is clicked in the projects table. Defines the chevron and cart selection actions.
