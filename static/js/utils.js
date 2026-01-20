@@ -147,8 +147,9 @@ define(['jquery', 'jqueryui'], function($, jqueryui) {
     });
 
     // type - string, ID selector subtype for the buttons and tooltips to adjust
-    // enabled - bool, sets if the button is to be disabled or enabled
+    // enabled - bool, sets if the button is to be disabled or attempted to be enabled pendning checks
     // disk_size - size for determining size limit enabling and tooltip message, is assumed to be in TB
+    // record_count - record count for determining async vs. sync manifest creation and download
     // requires setting DOWNLOAD_COUNT_LIMIT, DOWNLOAD_SIZE_LIMIT, and DOWNLOAD_SIZE_WARN
     function _updateDownloadBtns(type, enabled, disk_size, record_count) {
         let btn = $(`#download-${type}-images`);

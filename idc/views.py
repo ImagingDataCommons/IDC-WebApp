@@ -548,11 +548,13 @@ def cart_page(request):
         carthist = json.loads(req.get('carthist', '{}'))
         mxseries = req.get('mxseries',0)
         mxstudies = req.get('mxstudies',0)
+        cart_disk_size = req.get('cart_disk_size', 0)
         stats = req.get('stats', '')
 
         context['carthist'] = carthist
         context['mxseries'] = mxseries
         context['mxstudies'] = mxstudies
+        context['cart_disk_size'] = cart_disk_size
         context['stats'] = stats
 
     except Exception as e:

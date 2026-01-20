@@ -137,7 +137,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                 nmstudies=nmstudies+window.proj_in_cart[projid]['studies'];
                 nmseries=nmseries+window.proj_in_cart[projid]['series'];
             }
-            let content = buttonContents+'<span id ="#cart_stats">Cart contents: ' + nmseries.toString()+' series from '+nmprojs.toString()+
+            let content = buttonContents+'<span id ="cart_stats">Cart contents: ' + nmseries.toString()+' series from '+nmprojs.toString()+
                 ' collections / '+nmcases.toString()+' cases / '+nmstudies.toString()+' studies</span> <span class="cart_disk_size">(Calculating size...)</span>';
             localStorage.setItem('manifestSeriesCount',nmseries);
 
@@ -167,6 +167,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                 let cart_disk_res = await cart_disk_resp.json();
                 cart_disk_size = cart_disk_res['total_size']/Math.pow(1000,4);
                 cart_disk_display_size = cart_disk_res['display_size'];
+                $('#cart_stats').attr('data-cart-disk-size',cart_disk_size);
             }
             $('.cart_disk_size').html(cart_disk_display_size);
             base.updateDownloadBtns('cart', cart_has_contents, cart_disk_size, nmseries);
@@ -286,39 +287,43 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         }
         var csrftoken = $.getCookie('csrftoken');
         var form = document.createElement('form');
+        let input = null;
         form.id = "cart-view-elem";
         form.style.visibility = 'hidden'; // no user interaction is necessary
         form.method = 'POST'; // forms by default use GET query strings
         //form.action = '/explore/cart/';
         form.action = '/cart/';
         //form.append(csrftoken);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "csrfmiddlewaretoken";
         input.value =csrftoken;
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "carthist";
         input.value = JSON.stringify(window.cartHist);
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "filtergrp_list";
         input.value = JSON.stringify(filterSets);
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "partitions";
         input.value = JSON.stringify(partitions);
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "mxseries";
         input.value = mxNumSeries;
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "mxstudies";
         input.value = mxNumStudies;
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "proj_in_cart";
         input.value = JSON.stringify(window.proj_in_cart);
+        input = document.createElement('input');
+        input.name = "cart_disk_size";
+        input.value = $('#cart_stats').attr('data-cart-disk-size');
         form.appendChild(input);
         document.body.appendChild(form)
         form.submit();
