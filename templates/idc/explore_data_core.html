@@ -249,14 +249,14 @@
                             </ul>
                             <div class="tab-content">
                                 <div id="search_orig_set" role="tabpanel" class="tab-pane search-set active">
-                                {% with ordered_attr=set_attributes.origin_set.All.attributes|sort_orig_attr %}
+                                {% with ordered_attr=set_attributes.origin_set.All.attributes|sort_orig_attr top_attr="Modality,license_short_name,BodyPartExamined,tcia_tumorLocation,CancerType"%}
                                     {% for attr in ordered_attr %}
                                         {% if attr.name != "collection_id"  and attr.name != "analysis_results_id" %}
                                             <ul class="list-group" role="tablist" aria-multiselectable="true">
                                                 <li class="list-group-item">
                                                     <div id="{{ attr.name }}_heading" class="list-group-item__heading">
                                                         <a role="button" data-toggle="collapse" href="#{{ attr.name }}"
-                                                           aria-expanded="{% if attr.name in "Modality,BodyPartExamined,tcia_tumorLocation,CancerType" %}true{% else %}false{% endif %}"
+                                                           aria-expanded="{% if attr.name in top_attr %}true{% else %}false{% endif %}"
                                                            aria-controls="{{ attr.name }}">
                                                             <i class="fa fa-solid fa-caret-right"></i> <i
                                                                 class="fa fa-solid fa-caret-down"></i> <span
@@ -271,10 +271,10 @@
                                                     </div>
                                                     <div id="{{ attr.name }}" data-filter-attr-id="{{ attr.id }}"
                                                          class="list-group-item__body collapse search-config-item
-                                                            {% if attr.name in "Modality,BodyPartExamined,tcia_tumorLocation,CancerType" %} in
+                                                            {% if attr.name in top_attr %} in
                                                             {% endif %}
                                                             "
-                                                         aria-expanded="{% if attr.name in "Modality,BodyPartExamined,tcia_tumorLocation,CancerType" %}true
+                                                         aria-expanded="{% if attr.name in top_attr %}true
                                                          {% else %}false{% endif %}"
                                                         {% if attr.min_max %}
                                                          data-min="{{ attr.min_max.min|floor }}"
@@ -910,6 +910,7 @@
                                             <th class="ckbx cartnumholder"># Series in Cart</th>
                                             <th class="collex_name sorting_1">Collection Name</th>
                                             <th class="numeric_data table-count">Cases (Total / Filtered)</th>
+                                            <th class="license">License(s)</th>
                                         </tr>
                                         </thead>
                                     </table>
@@ -935,6 +936,7 @@
                                             <th class="text_data">Case ID <i class="fas fa-info-circle case-info"></i></th>
                                             <th class="numeric_data narrow"># Studies</th>
                                             <th class="numeric_data narrow"># Series</th>
+                                            <th class="license">License(s)</th>
                                         </tr>
                                         </thead>
                                     </table>

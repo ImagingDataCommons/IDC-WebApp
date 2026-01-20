@@ -242,7 +242,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             {className: "ckbx shopping-cart-holder table-interactive", "targets": [2]},
             {className: "ckbx cartnumholder table-interactive", "targets": [3]},
             {className: "collex_name", "targets": [4]},
-            {className: "collex-case-count projects_table_num_cohort table-count", "targets": [5]}
+            {className: "collex-case-count projects_table_num_cohort table-count", "targets": [5]},
+            {className: "license", "targets": [6]},
         ];
     }
 
@@ -287,6 +288,11 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             }, render: function(td, data,row) {
                 return `${row[4]} / ${row[5]}`;
             }};
+        var license_col = { "type": "html", orderable: true, "createdCell": function (td, data, row) {
+                $(td).attr('id', 'license_col_' + row[0]);
+            }, render: function(td, data,row) {
+                return `${row[7]}`;
+            }};
         const download_col = {"type": "html", "orderable": false, data: 'collection_id', render: function(data, type, row) {
             let download_size = window.collection[row[0]]['total_size_with_ar'];
             if ("showDirectoryPicker" in window && download_size < 3) {
@@ -308,7 +314,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             }
         }};
 
-        return [caret_col, download_col, cart_col, cartnum_col, collection_col, case_col];
+        return [caret_col, download_col, cart_col, cartnum_col, collection_col, case_col, license_col];
     }
 
      const setRowCartClasses = function(row){
@@ -387,7 +393,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                   //stats[item + '_in_filter'] = 0;
               }
             }
-            var ncur=[cur[0], lclstats["series_in_cart"], cur[0], cur[1],cur[2],cur[3],lclstats];
+            var ncur=[projid, lclstats["series_in_cart"], projid, cur[1],cur[2],cur[3],lclstats, cur[4]];
             newCollectionData.push(ncur);
         }
 
@@ -497,7 +503,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             {className: "col1 project-name wide", "targets": [4]},
             {className: "col1 case-id", "targets": [5]},
             {className: "col1 numrows narrow", "targets": [6]},
-            {className: "col1 numseries narrow", "targets": [7]}
+            {className: "col1 numseries narrow", "targets": [7]},
+            {className: "col1 license", "targets": [8]}
         ];
     };
 
@@ -567,7 +574,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                 }
                 return `<i class="fa fa-download  download-instances is-disabled" data-disabled-type="download-all-disabled"></i>`;
         }};
-        return [caret_col, download_col, cart_col, cartnum_col, collection_col, case_col, study_col, series_col];
+        const license_col =  {"type": "html", "orderable": true, data: 'license_short_name', render: function(data, type,row){
+            return `${row['license_short_name'].sort().join(", ")}`;
+        }};
+        return [caret_col, download_col, cart_col, cartnum_col, collection_col, case_col, study_col, series_col, license_col];
     };
 
     // recreates the cases table when a chevron is clicked in the projects table. Defines the chevron and cart selection actions.

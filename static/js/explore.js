@@ -85,8 +85,9 @@ require([
         for (project in window.programs[program]['projects']) {
             let id = project;
             let disp = window.programs[program]['projects'][project]['display'];
-            let val = window.programs[program]['projects'][project]['val'];;
-            window.collectionData.push([id, disp, val, val]);
+            let subjCount = window.programs[program]['projects'][project]['val'];
+            let license = window.programs[program]['projects'][project]['license'];
+            window.collectionData.push([id, disp, subjCount, subjCount, license]);
             window.selProjects[project]=new Object();
         }
     }
