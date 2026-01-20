@@ -32,7 +32,8 @@ require.config({
         cartutils: 'cartutils',
         tippy: 'libs/tippy-bundle.umd.min',
          '@popperjs/core': 'libs/popper.min',
-        citations_modal: 'citations_modal'
+        citations_modal: 'citations_modal',
+        downloader: 'downloader'
     },
     shim: {
         '@popperjs/core': {
@@ -65,7 +66,8 @@ require([
     'jquerydt',
     'jqueryui',
     'bootstrap',
-    'citations_modal'
+    'citations_modal',
+    'downloader'
 ], function(cartutils, tables, $, tippy, _, base) {
 
     var ajaxtriggered = false;
@@ -74,22 +76,6 @@ require([
         localStorage.setItem("cartcleared","yes");
         window.history.back();
     }
-
-    tippy.delegate('#cart-table', {
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        target: '.copy-this',
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        trigger: "click",
-        maxWidth: 85
-    });
 
     setCartDetailsModal = function(){
         var contentArray= [];
@@ -136,7 +122,6 @@ require([
             contentArray.push(`${filter_div}${adjustment_div}`)
         }
         let content = `<ul>${contentArray.map(d => `<li class="cart-def-list">${d}`).join("")}</ul>`;
-        console.log(content);
         $('#cart-description-modal').find('.modal-body').html(content);
     }
 
@@ -147,9 +132,11 @@ require([
              navelem.attr('href', 'javascript:window.history.back()')
          }
          window.mxseries = parseInt(JSON.parse(document.getElementById('mxseries').textContent));
-         //window.totseries = parseInt(JSON.parse(document.getElementById('totseries').textContent));
          window.mxstudies = parseInt(JSON.parse(document.getElementById('mxstudies').textContent));
          window.cartHist = JSON.parse(document.getElementById('carthist').textContent);
+         window.cart_disk_size = JSON.parse(document.getElementById('cart_disk_size').textContent);
+
+         base.updateDownloadBtns('cart',true,window.cart_disk_size,window.mxseries);
 
          setCartDetailsModal();
 
@@ -157,7 +144,6 @@ require([
          var ret =cartutils.formcartdata();
          window.partitions = ret[0];
          window.filtergrp_list = ret[1];
-
 
          ajaxtriggered = true;
 

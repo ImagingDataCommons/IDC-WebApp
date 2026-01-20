@@ -29,10 +29,36 @@
         title="Display the cart's citation list in Vancouver format."
     > Citations <i class="smaller-icon fa fa-quote-left"></i><i class="smaller-icon fa fa-quote-right"></i>
     </button>
-    <button id="export-manifest-cart" class="btn btn-special pull-right cart-export-from-cp"  data-toggle="modal"
-        data-target="#export-manifest-modal" title="Get the series manifest for this cart."
-    > Manifest <i class="fa fa-solid fa-download"></i>
-    </button>
+    <div class="dropdown cart-download-menu-container pull-right"
+        title="Select a filter to enable this feature."
+         data-default-title="Save this cart's image files."
+         disabled="disabled"
+    >
+        <a class="dropdown-toggle btnGroupDropViewers cart-download-menu-toggle download-toggle btn btn-special pull-right"
+           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+           title="Save this cart's image files."
+        >
+            Download <i class="fa-solid fa-download"></i>
+        </a>
+        <ul class="dropdown-menu cart-download-menu no-pull" role="menu">
+            <li>
+                <a id="export-manifest-cart" class="export-cart-manifest cart-export-from-cp" data-toggle="modal"
+                    title="Export this cart's series as a manifest for download."
+                    data-target="#export-manifest-modal"
+                ><i class="fa fa-solid fa-list"></i> Manifest
+                </a>
+            </li>
+            <li>
+                <span id="download-cart-images-tooltips" class="download-instances is-disabled"
+                      data-download-type="cart" data-disabled-type="download-cart-disabled">
+                    <a id="download-cart-images" class="download-all-instances download-menu-item tip-titled"
+                        data-download-type="cart"
+                    ><i class="fa fa-solid fa-save"></i> Save
+                    </a>
+                </span>
+            </li>
+        </ul>
+    </div>
 </div>
 {% endblock %}
 {% block content %}
@@ -86,14 +112,17 @@
     {{ carthist|json_script:"carthist" }}
     {{ mxstudies|json_script:"mxstudies" }}
     {{ mxseries|json_script:"mxseries" }}
+    {{ cart_disk_size|json_script:"cart_disk_size" }}
 	{{ block.super }}
     <script type="text/javascript" src="{% static 'js/cart_page.js' %}?v={{ APP_VERSION }}"></script>
     <script type="text/javascript" src="{% static 'js/cohorts/export-manifest.js' %}?v={{ APP_VERSION }}"></script>
     <script type="text/javascript" src="{% static 'js/citations_modal.js' %}?v={{ APP_VERSION }}"></script>
+    <script type="text/javascript" src="{% static 'js/tooltips.js' %}?v={{ APP_VERSION }}"></script>
 {% endblock %}
 
 {% block modal_includes %}
     {% include "idc/citations-modal.html" %}
     {% include "cohorts/cart-description-modal.html" %}
     {% include "cohorts/export-manifest-modal.html" %}
+    {% include "idc/download-modal.html" %}
 {% endblock %}

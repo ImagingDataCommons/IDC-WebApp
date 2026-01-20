@@ -832,6 +832,7 @@ require([
         warning_button.attr("data-collection", clicked.attr("data-collection"));
         warning_button.attr("data-study", clicked.attr("data-study"));
         warning_button.attr('data-patient', clicked.attr('data-patient'));
+        warning_button.attr("data-download-type", clicked.attr("data-download-type"));
     });
 
     $('.container-fluid').on('click', '.cancel-download', function () {

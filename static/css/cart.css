@@ -73,3 +73,9 @@
     top: 2px;
     margin-left: -1px;
 }
+
+#cart .pull-right > .dropdown-menu.no-pull {
+    right: auto;
+    margin-top: 1px;
+    margin-left: 10px;
+}

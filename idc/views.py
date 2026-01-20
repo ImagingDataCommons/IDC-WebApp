@@ -548,11 +548,13 @@ def cart_page(request):
         carthist = json.loads(req.get('carthist', '{}'))
         mxseries = req.get('mxseries',0)
         mxstudies = req.get('mxstudies',0)
+        cart_disk_size = req.get('cart_disk_size', 0)
         stats = req.get('stats', '')
 
         context['carthist'] = carthist
         context['mxseries'] = mxseries
         context['mxstudies'] = mxstudies
+        context['cart_disk_size'] = cart_disk_size
         context['stats'] = stats
 
     except Exception as e:
@@ -597,12 +599,12 @@ def cart_data(request):
                     filtergrp_list, partitions, field_list if (not doi_or_size_only) else None, limit, offset,
                     with_records=(not doi_or_size_only), dois_only=dois_only, size_only=size_only
                 )
-        print("response: {}".format(response))
         if dois_only:
             response = {'dois': response['dois']}
         if size_only:
             response = {
-                "display_size": convert_disk_size(response['total_size'])
+                "display_size": convert_disk_size(response['total_size']),
+                "total_size": response['total_size']
             }
     except Exception as e:
         logger.error("[ERROR] While loading cart:")
