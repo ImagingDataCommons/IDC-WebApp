@@ -410,7 +410,7 @@ tr {
 #projects_table td.cartnumholder, #projects_table_head th.cartnumholder,
 #cases_table td.cartnumholder, #cases_table_head th.cartnumholder,
 #studies_table td.cartnumholder, #studies_table_head th.cartnumholder {
-    width: 10%;
+    width: 6%;
 }
 
 td.collex-case-count, th.collex-case-count {
@@ -456,7 +456,7 @@ td.license, th.license {
 
 #studies_table_head th.study-id,
 #studies_table td.study-id {
-    width: 16%;
+    width: 10%;
 }
 
 #studies_table_head th.study-date,
@@ -466,7 +466,7 @@ td.license, th.license {
 
 #studies_table_head th.study-description,
 #studies_table td.study-description {
-    width:29%;
+    width:45%;
 }
 
 #studies_table_head th.numrows,
@@ -494,10 +494,10 @@ td.license, th.license {
     text-decoration: none;
 }
 
-#series_table td.table-interactive,
-#cases_table td.table-interactive,
-#proj_table td.table-interactive,
-#studies_table td.table-interactive {
+#series_table td,
+#cases_table td,
+#proj_table td,
+#studies_table td {
     vertical-align: middle;
 }
 
@@ -508,15 +508,13 @@ td.license, th.license {
 #series_table_head th.study-id, #series_table_head th.series-id,
 #series_table td.study-id, #series_table td.series-id
 {
-   width: 15%;
+   width: 10%;
 }
 
-#series_table_head th.manifest-controls,
-#series_table td.manifest-controls,
 #series_table_head th.series-number,
 #series_table td.series-number
 {
-    width: 10%;
+    width: 6%;
 }
 
 #series_table_head th.modality,
@@ -529,7 +527,7 @@ td.license, th.license {
 }
 #series_table_head th.series-description,
 #series_table td.series-description {
-    width:22%;
+    width:35%;
 }
 #series_table_head th.open-viewer,
 #series_table td.open-viewer {
