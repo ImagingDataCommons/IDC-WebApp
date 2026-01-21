@@ -951,7 +951,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         }
                     }, {
                         "type": "text", "orderable": true, data: 'PatientID', render: function (data) {
-                            return pretty_print_id(data, 16);
+                            return data.length > 18 ? pretty_print_id(data, 16) : data;
                         }
                     }, {
                         "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
