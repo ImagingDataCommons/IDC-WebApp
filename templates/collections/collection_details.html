@@ -34,8 +34,17 @@
                        {% if size_warning %}data-toggle="modal" data-target="#download-warning"{% endif %}
                     >
                     Direct <i class="fa fa-solid fa-download"></i></a></li>
-                <li class="collex-list-item"><a class="dropdown-item" href="#">idc-index <i class="fa fa-solid fa-list"></i></a></li>
-                <li class="collex-list-item"><a class="dropdown-item" href="#">Manifest <i class="fa fa-solid fa-list"></i></a></li>
+                  <li class="collex-list-item">
+                      <a
+                          class="dropdown-item"
+                          role="button"
+                          data-toggle="modal"
+                          data-bs-toggle="modal"
+                          data-bs-target="#export-collex-manifest-modal"
+                          data-target="#export-collex-manifest-modal">idc-index <i class="fa fa-solid fa-list"></i>
+                      </a>
+                  </li>
+{#                <li class="collex-list-item"><a class="dropdown-item" href="#">Manifest <i class="fa fa-solid fa-list"></i></a></li>#}
             {% endwith %}
             </ul>
         </div>
@@ -114,7 +123,9 @@
 
 {% include 'idc/citations-modal.html' %}
 {% include 'idc/download-modal.html' %}
-
+{% with collection_type=collection_type collection_id=collection_id %}
+    {% include 'idc/export-collex-modal.html' %}
+{% endwith %}
 {% endblock %}
 
 {% block js_file %}
