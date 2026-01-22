@@ -951,7 +951,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         }
                     }, {
                         "type": "text", "orderable": true, data: 'PatientID', render: function (data) {
-                            return data;
+                            return data.length > 26 ? pretty_print_id(data, 21) : data;
                         }
                     }, {
                         "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
@@ -2253,9 +2253,16 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         }
     }
 
-    const pretty_print_id = function (id) {
-        let newId = id.slice(0, 8) + '...' + id.slice(id.length - 8, id.length);
-        return newId;
+    const pretty_print_id = function (id, max_length=13, is_split=true) {
+        let pretty_id = id;
+        if(!is_split) {
+            pretty_id = `${id.slice(0,max_length-3)}...`;
+        } else {
+            let half_max_length = ((max_length-3)/2);
+            pretty_id = id.slice(0, half_max_length) + '...' + id.slice(id.length - half_max_length, id.length);
+        }
+
+        return pretty_id;
     }
     return {
         initializeTableCacheData: initializeTableCacheData,
