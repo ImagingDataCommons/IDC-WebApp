@@ -756,13 +756,18 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             updatePromise.reject();
         }
 
+        // Remove element-level styles so CSS widths can prevail, preserving our tooltip behavior
+        $('#cases_table_head').children('tr').children().each(function(){
+            this.style.width=null;
+        });
         $('#cases_tab').on('draw.dt', function(){
             $('#cases_table_head').children('tr').children().each(function(){
                 this.style.width=null;
-                }
-            );
+            });
         });
+
         $('#cases_tab').find('tbody').attr('id','cases_table');
+
         $('#cases_panel').find('.dataTables_controls').find('.dataTables_length').after(
             '<div class="dataTables_goto_page"><label>Page </label><input class="goto-page-number" '
             + 'type="number"><button onclick="changePage(\'cases_tab_wrapper\')">Go</button></div>'
@@ -1129,11 +1134,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             updatePromise.reject();
         }
 
+        $('#studies_table_head').children('tr').children().each(function(){
+            this.style.width=null;
+        });
         $('#studies_tab').on('draw.dt', function(){
             $('#studies_table_head').children('tr').children().each(function(){
                 this.style.width=null;
-                }
-            );
+            });
         })
 
         $('#studies_tab').children('tbody').attr('id','studies_table');
@@ -1496,6 +1503,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             updatePromise.reject();
         }
 
+        $('#series_table_head').children('tr').children().each(function(){
+            this.style.width=null;
+        });
         $('#series_tab').on('draw.dt', function(){
             $('#series_table_head').children('tr').children().each(function(){
                 this.style.width=null;
