@@ -387,6 +387,18 @@ require([
         maxWidth: 800
     });
 
+    tippy.delegate('#collections-table', {
+        content: function(reference) {
+            return $(reference).attr("data-tooltip");
+        },
+        theme: 'dark',
+        placement: 'right',
+        arrow: false,
+        target: '.collex-table-tip',
+        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
+        maxWidth: 200
+    });
+
     tippy.delegate('#body', disabled_download_tooltip);
     tippy.delegate('#body', download_tooltip);
 
