@@ -449,9 +449,9 @@ td.license, th.license {
 #studies_table_head th, #studies_table td {
     word-break: break-word; }
 
-#studies_table_head th.project-name, th.case-id,
-#studies_table td.project-name, td.case-id {
-    width: 12%;
+#studies_table_head th.case-id,
+#studies_table td.case-id {
+    width: 16%;
 }
 
 #studies_table_head th.study-id,
@@ -466,7 +466,7 @@ td.license, th.license {
 
 #studies_table_head th.study-description,
 #studies_table td.study-description {
-    width:45%;
+    width:34%;
 }
 
 #studies_table_head th.numrows,
