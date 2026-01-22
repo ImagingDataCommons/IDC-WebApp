@@ -238,11 +238,13 @@ require([
     };
 
     const chromium_only = "Direct download is only available in Chromium browsers.";
+    const plz_use = "Please use idc-index or a cohort/cart manifest to download these files.";
+
     const disabled_download_tooltip = {
         plugins: [dynamicTipFuncDL],
         dynamicTip: function(ref){
             if($(ref).hasClass('download-size-disabled')) {
-                return "This set of images is over 3TB in size. Please use manifest download to obtain these images.";
+                return `This set of images is over 3TB in size. ${plz_use}`;
             }
             return chromium_only;
         },
@@ -291,8 +293,8 @@ require([
 
     let disabled_messages = {
         'download-all-disabled': chromium_only,
-        'download-size-disabled': "This set of files is over 3TB in size. Please use manifest download to obtain these files.",
-        'download-count-disabled': "This set of files contains over 65000 records. Please use manifest download to obtain these files.",
+        'download-size-disabled': `This set of files is over 3TB in size. ${plz_use}`,
+        'download-count-disabled': `This set of files contains over 65000 records. ${plz_use}`,
         'download-cart-disabled': "Add items to the cart to enable this feature.",
         'download-cohort-disabled': "Select a filter to enable this feature."
     };
@@ -385,6 +387,18 @@ require([
         target: '.description-tip',
         interactive: true, // This is required for any table tooltip to show at the appropriate spot!
         maxWidth: 800
+    });
+
+    tippy.delegate('#collections-table', {
+        content: function(reference) {
+            return $(reference).attr("data-tooltip");
+        },
+        theme: 'dark',
+        placement: 'right',
+        arrow: false,
+        target: '.collex-table-tip',
+        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
+        maxWidth: 200
     });
 
     tippy.delegate('#body', disabled_download_tooltip);

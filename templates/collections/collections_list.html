@@ -24,7 +24,8 @@
                 <table id="collections-table" class="table collex-table sortable_table table-striped table-hover">
                     <thead>
                         <th></th>
-                        <th class="id-col">ID</th>
+                        <th class="id-col">Name</th>
+                        <th>Explore Images</th>
                         <th class="collex-type-col">Collection Type</th>
                         <th class="access-col">Access</th>
                         <th class="cancer-type-col">Cancer Type</th>
@@ -35,18 +36,19 @@
                     </thead>
                     <colgroup>
                         <col style="width: 3%">
-                        <col style="width: 12%">
+                        <col style="width: 16%">
                         <col style="width: 8%">
                         <col style="width: 8%">
+                        <col style="width: 4%">
+                        <col style="width: 20%">
                         <col style="width: 13%">
                         <col style="width: 8%">
-                        <col style="width: 8%">
-                        <col style="width: 9%">
+                        <col style="width: 15%">
                         <col style="width: 9%">
                     </colgroup>
                     <tbody>
                         {% for collection in active_collections %}
-                            {% with collex_type=collection.get_collection_type %}
+                            {% with collex_type_display=collection.get_collection_type %}
                             <tr>
                                 <td class="details-control" data-doi="{{ collection.doi }}"
                                     data-source-url="{{ collection.source_url }}"
@@ -54,22 +56,35 @@
                                     title="Click to display collection description."
                                 >
                                     <i class="fa-solid fa-circle-plus show-button"> </i><i class="fa-solid fa-circle-minus hide-button"> </i></td>
+                                <td class="collection-name"
+                                >
+                                    <a class="collex-table-tip"
+                                            data-tooltip="View this {{ collex_type_display }}'s page (opens a new tab)."
+                                    {% if collection.collection_type == 'A' %}
+                                        href="/analysis_results/{{ collection.collection_id }}" target="_blank" rel="nofollow noreferrer">
+                                        {{ collection.collection_id }}
+                                    {% else %}
+                                        href="/collections/{{ collection.collection_id }}" target="_blank" rel="nofollow noreferrer">
+                                        {% if collection.tcia_collection_id|length == 0 %}
+                                            {{ collection.name }}
+                                        {% else %}
+                                            {{ collection.tcia_collection_id }}
+                                        {% endif %}
+                                    {% endif %}
+                                    </a>
+                                </td>
                                 <td class="collection-explore"
                                     data-collex-id="{{ collection.collection_id }}"
                                     data-collex-collex="{{ collection.collections }}"
-                                    data-collex-type="{{ collex_type }}"
+                                    data-collex-type="{{ collection.collection_type }}"
                                 >
-                                    <a role="button" >
-                                {% if collex_type == 'Analysis' %}
-                                    {{ collection.collection_id }}
-                                {% elif collection.tcia_collection_id|length == 0 %}
-                                    {{ collection.name }}
-                                {% else %}
-                                    {{ collection.tcia_collection_id }}
-                                {% endif %}
+                                    <a role="button" class="collex-table-tip"
+                                        data-tooltip="Open the data explorer filtered to this {{ collex_type_display }}."
+                                    >
+                                        <i class="fa-solid fa-eye"></i>
                                     </a>
                                 </td>
-                                <td>{{ collection.get_collection_type }}</td>
+                                <td>{{ collex_type_display }}</td>
                                 <td>{{ collection.access }}</td>
                                 <td>{{ collection.cancer_type }}</td>
                                 <td>{{ collection.image_types }}</td>
@@ -94,6 +109,7 @@
     {{ active_collection_descs|json_script:"collection_descs" }}
 	{{ block.super }}
 	<script type="text/javascript" src="{% static 'js/collections_list.js' %}?v={{ APP_VERSION }}"></script>
+    <script type="text/javascript" src="{% static 'js/tooltips.js' %}?v={{ APP_VERSION }}"></script>
     <script>
         const collection_descs = JSON.parse(document.getElementById('collection_descs').textContent);
     </script>
