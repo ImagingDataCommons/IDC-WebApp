@@ -82,6 +82,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     });
     $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table').on('draw.dt', function(){
         window.hide_spinner();
+        // Auto-width needing to be shut off at the table header level during draw time.
+        $(this).children('th').each(function() {
+            this.style.width = null;
+        });
     });
 
     // Update the rows in the Projects Table, clear the other tables.
@@ -456,7 +460,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         });
     }
 
-
     window.getProjectCartStats = function(projidArr){
         var parsedFiltObj = filterutils.parseFilterObj();
         parsedFiltObj.collection_id = projidArr;
@@ -756,14 +759,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             updatePromise.reject();
         }
 
-        // Remove element-level styles so CSS widths can prevail, preserving our tooltip behavior
+        // Remove autowidthing from the table header, which is reapplied any time it's created
         $('#cases_table_head').children('tr').children().each(function(){
             this.style.width=null;
-        });
-        $('#cases_tab').on('draw.dt', function(){
-            $('#cases_table_head').children('tr').children().each(function(){
-                this.style.width=null;
-            });
         });
 
         $('#cases_tab').find('tbody').attr('id','cases_table');
@@ -1137,11 +1135,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         $('#studies_table_head').children('tr').children().each(function(){
             this.style.width=null;
         });
-        $('#studies_tab').on('draw.dt', function(){
-            $('#studies_table_head').children('tr').children().each(function(){
-                this.style.width=null;
-            });
-        })
 
         $('#studies_tab').children('tbody').attr('id','studies_table');
         $('#studies_tab_wrapper').find('.dataTables_controls').find('.dataTables_length').after(
@@ -1505,11 +1498,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
         $('#series_table_head').children('tr').children().each(function(){
             this.style.width=null;
-        });
-        $('#series_tab').on('draw.dt', function(){
-            $('#series_table_head').children('tr').children().each(function(){
-                this.style.width=null;
-            });
         });
         $('#series_tab').children('tbody').attr('id','series_table');
         $('#series_tab_wrapper').find('.dataTables_controls').find('.dataTables_length').after(
