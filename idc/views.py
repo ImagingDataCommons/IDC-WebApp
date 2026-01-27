@@ -59,6 +59,10 @@ logger = logging.getLogger(__name__)
 
 BQ_ATTEMPT_MAX = 10
 WEBAPP_LOGIN_LOG_NAME = settings.WEBAPP_LOGIN_LOG_NAME
+SERIES_COLLEX_ID_TYPE = {
+    "collection": "collection_id",
+    "analysis_result": "analysis_results_id"
+}
 
 
 # The site's homepage
@@ -617,12 +621,13 @@ def cart_data(request):
 def get_series(request, collection_id=None, patient_id=None, study_uid=None):
     status = 200
     response = {"result": []}
+    req = request.GET if request.method == 'GET' else request.POST
     try:
         fields = ["collection_id", "PatientID", "StudyInstanceUID", "Modality", "crdc_series_uuid", "SeriesInstanceUID", "aws_bucket", "instance_size"]
         result = {}
         if not collection_id:
             # This is a request for filters and/or a cart
-            body_unicode = request.body.decode('utf-8')
+            body_unicode = req.body.decode('utf-8')
             body = json.loads(body_unicode)
             partitions = body.get("partitions", {})
             filtergrp_list = body.get("filtergrp_list", {})
@@ -656,8 +661,9 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None):
                 active=True, source_type=DataSource.SOLR,
                 aggregate_level="SeriesInstanceUID"
             ).first()
+            id_type = SERIES_COLLEX_ID_TYPE[req.get("type","collection")]
             filters = {
-                "collection_id": [collection_id]
+                id_type: [collection_id]
             }
             if patient_id:
                 filters['PatientID'] = [patient_id]
