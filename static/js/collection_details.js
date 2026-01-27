@@ -22,4 +22,20 @@ require(['jquery', 'datatables.net','jqueryui', 'bootstrap', 'base', 'tooltips']
         download_btn.attr('data-disabled-type','download-all-disabled');
         download_btn.addClass('is-disabled');
     }
+
+    $('#collection_details').on('click', '.show-more, .show-less', function(){
+        const clicked = $(this);
+        if(clicked.hasClass('show-more')) {
+            let xtra_vals = $(clicked.attr('data-show-target')).find('.extra-values');
+            xtra_vals.removeClass('is-hidden');
+            $('.show-more-count').hide();
+        }
+        if(clicked.hasClass('show-less')) {
+            let xtra_vals = $(clicked.attr('data-hide-target')).find('.extra-values');
+            xtra_vals.addClass('is-hidden');
+            $('.show-more-count').show();
+        }
+        clicked.siblings('.show-sib').removeClass('is-hidden');
+        clicked.addClass('is-hidden');
+    });
 });

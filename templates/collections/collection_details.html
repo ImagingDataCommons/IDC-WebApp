@@ -82,7 +82,7 @@
                   </p>
                   {% endif %}
                   <p>
-                      <b>Cancer Type: </b>{{ cancer_type }}
+                      <b>Cancer Type(s): </b>{{ cancer_type }}
                   </p>
                   {% if species != "" %}
                   <p>
@@ -94,15 +94,29 @@
                       <b>Supporting Data: </b>{{ supporting_data }}
                   </p>
                   {% endif %}
-                    {% if collections != "" %}
-                        <p>
-                            <b>Collections: </b>
+                {% if collections != "" %}
+                    <p class="collex-divider"></p>
+                    <p>
+                        <b>Collections</b>
+                        {% with col_count=collections|length %}
+                            {% if col_count > 5 %}
+                                <p>
+                                    <a class="show-more show-sib" data-show-target=".ar-collex-set"><i class="fa-solid fa-plus-circle"></i> show more</a>
+                                    <a class="show-less show-sib is-hidden" data-hide-target=".ar-collex-set"><i class="fa-solid fa-minus-circle"></i> show less</a>
+                                </p>
+                            {% endif %}
+                            <ul class="ar-collex-set">
                                 {% for col in collections %}
-                                    <a href="{% url 'collection_details' col %}">{{ col }}</a>
+                                    <li class="ar-collex{% if forloop.counter > 5 %} extra-values is-hidden{% endif %}"><a href="{% url 'collection_details' col.collection_id %}">{{ col.collection_name }}</a></li>
+                                    {% if forloop.counter == 6 %}
+                                    <li class="show-more-count">... {{ col_count|add:-5 }} more collections</li>
+                                    {% endif %}
                                 {% endfor %}
-                        </p>
-                    {% endif %}
-                <p style="margin-left: 20px; margin-right: 20px; margin-top: 25px; margin-bottom: 25px; border-bottom: 1px solid black;"></p>
+                            </ul>
+                    {% endwith %}
+                    </p>
+                {% endif %}
+                <p class="collex-divider"></p>
                 {% for doi in dois %}
                   <p><i class="fa fa-solid fa-globe"></i> <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer">{{ doi }}</a></p>
                 {% endfor %}
