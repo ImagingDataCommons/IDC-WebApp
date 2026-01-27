@@ -30,7 +30,7 @@
             {% with size_warning=total_size_with_ar|size_check %}
                 <li class="collex-list-item">
                     <a class="dropdown-item download-instances{% if size_warning %} download-size-warning{% elif total_size_with_ar > 3 %} is-disabled{% else %} download-all-instances{% endif %}"
-                       href="#" data-download-type="collection" data-collection="{{ collection_id }}"{% if total_size_with_ar > 3 %}data-disabled-type="download-size-disabled"{% endif %}
+                       href="#" data-download-type="{{ collection_type.lower|replace_whitespace:"_" }}" data-collection="{{ collection_id }}"{% if total_size_with_ar > 3 %}data-disabled-type="download-size-disabled"{% endif %}
                        {% if size_warning %}data-toggle="modal" data-target="#download-warning"{% endif %}
                     >
                     Direct <i class="fa fa-solid fa-download"></i></a></li>
