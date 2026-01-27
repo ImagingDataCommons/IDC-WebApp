@@ -275,6 +275,9 @@ require([
 
     const manifest_tooltip = {
         dynamicTip: function(ref){
+            if($(ref).hasClass('idc-index')) {
+                return `View instructions for downloading this ${$(ref).attr("data-download-type-display")} using the idc-index tool.`;
+            }
             let table_type = $(ref).parents('table').attr('data-table-type');
             if(table_type === 'series') {
                 return 'Download a manifest file for this series to use with a download tool.'
@@ -304,7 +307,7 @@ require([
                 return disabled_messages[$(ref).attr('data-disabled-type')];
             }
             let download_type = $(ref).attr('data-download-type');
-            return `Download all of the files in this ${download_type}.`;
+            return `Download all of the files in this ${download_type.replace("_"," ")}.`;
         },
         content: 'Download all files.', // placeholder text
         theme: 'dark',
@@ -354,7 +357,7 @@ require([
     tippy.delegate('.cases-table', copy_tip);
 
     tippy.delegate('#body', {
-        content: 'Get the citation list for this cohort.',
+        content: 'View citation(s) in Vancouver Elsevier format.',
         theme: 'dark',
         placement: 'left',
         arrow: false,
@@ -403,6 +406,7 @@ require([
 
     tippy.delegate('#body', disabled_download_tooltip);
     tippy.delegate('#body', download_tooltip);
+    tippy.delegate("#collection_details", manifest_tooltip);
 
     tippy.delegate('#body', {
         content: function(reference) {

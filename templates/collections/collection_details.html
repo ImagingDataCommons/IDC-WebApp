@@ -30,15 +30,16 @@
             {% with size_warning=total_size_with_ar|size_check %}
                 <li class="collex-list-item">
                     <a class="dropdown-item download-instances{% if size_warning %} download-size-warning{% elif total_size_with_ar > 3 %} is-disabled{% else %} download-all-instances{% endif %}"
-                       href="#" data-download-type="collection" data-collection="{{ collection_id }}"{% if total_size_with_ar > 3 %}data-disabled-type="download-size-disabled"{% endif %}
+                       href="#" data-download-type="{{ collection_type.lower|replace_whitespace:"_" }}" data-collection="{{ collection_id }}"{% if total_size_with_ar > 3 %}data-disabled-type="download-size-disabled"{% endif %}
                        {% if size_warning %}data-toggle="modal" data-target="#download-warning"{% endif %}
                     >
                     Direct <i class="fa fa-solid fa-download"></i></a></li>
                   <li class="collex-list-item">
                       <a
-                          class="dropdown-item"
+                          class="dropdown-item idc-index export-button"
                           role="button"
                           data-toggle="modal"
+                          data-download-type-display="{{ collection_type.lower }}"
                           data-bs-toggle="modal"
                           data-bs-target="#export-collex-manifest-modal"
                           data-target="#export-collex-manifest-modal">idc-index <i class="fa fa-solid fa-list"></i>
