@@ -13,14 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import uuid
+from datetime import timedelta
 
 from django.db import models
 from django.contrib.auth.models import User
-
+import uuid
+import datetime
+import base64
 import logging
 
 logger = logging.getLogger(__name__)
 
+def cart_keygen():
+    return '{}'.format(base64.b64encode(uuid.uuid4().bytes).replace("=",""))
+
+CART_EXPIRATION = datetime.timedelta(days=90)
 
 class AppInfo(models.Model):
     id = models.AutoField(primary_key=True, null=False, blank=False)
@@ -29,9 +37,25 @@ class AppInfo(models.Model):
     app_date = models.DateField(auto_now_add=True, null=False, blank=False)
     active = models.BooleanField(default=True, null=False, blank=False)
 
-
 class User_Data(models.Model):
     id = models.AutoField(primary_key=True, null=False, blank=False)
     user = models.ForeignKey(User, null=False, blank=True, on_delete=models.CASCADE)
     history = models.CharField(max_length=2000, blank=False, null=False, default='')
 
+class SharedCart(models.Model):
+    cart_id = models.CharField(primary_key=True, max_length=64, null=False, blank=False, default=cart_keygen)
+    source_ip = models.GenericIPAddressField(null=False, blank=False, default='0.0.0.0')
+    created_on = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+    definition = models.TextField(null=False, blank=False, default='{}')
+    series_ids = models.TextField(null=False, blank=False, default='')
+
+    @classmethod
+    def clear_expired_carts(cls):
+        expired = cls.objects.filter(created_on__lte=datetime.datetime.now(datetime.UTC)-CART_EXPIRATION)
+        expired.delete()
+
+    @classmethod
+    def get_carts_this_ip(cls, ip_addr):
+        total_carts = cls.objects.filter(source_ip=ip_addr).length
+        carts_per_min = ((cls.objects.filter(source_ip=ip_addr, created_on__gte=datetime.datetime.now(datetime.UTC)-timedelta(hours=2))).length)/120
+        return { 'total': total_carts, 'per_min': carts_per_min }
