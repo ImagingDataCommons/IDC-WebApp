@@ -74,6 +74,19 @@
     display: none !important;
 }
 
+.ar-collex-set {
+    list-style-type: circle;
+}
+
+.ar-collex-set li {
+    list-style-type: circle;
+    margin-left: 20px;
+}
+
+.ar-collex-set li a {
+    margin-left: -5px;
+}
+
 .show-more, .show-less {
     cursor: pointer;
     font-weight: bold;
@@ -82,4 +95,19 @@
 
 .show-more:hover, .show-less:hover {
     text-decoration: none;
+}
+
+.doi-section-title {
+    font-weight: 500;
+}
+
+.doi-list li {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 10px;
+}
+
+.doi-list .fa-li i {
+    font-size: 12px;
+    vertical-align: middle;
 }

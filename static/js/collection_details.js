@@ -25,15 +25,14 @@ require(['jquery', 'datatables.net','jqueryui', 'bootstrap', 'base', 'tooltips']
 
     $('#collection_details').on('click', '.show-more, .show-less', function(){
         const clicked = $(this);
+        let xtra_vals = $(clicked.attr('data-toggle-target')).find('.extra-values');
         if(clicked.hasClass('show-more')) {
-            let xtra_vals = $(clicked.attr('data-show-target')).find('.extra-values');
             xtra_vals.removeClass('is-hidden');
-            $('.show-more-count').hide();
+            $('.show-more-count').addClass('is-hidden');
         }
         if(clicked.hasClass('show-less')) {
-            let xtra_vals = $(clicked.attr('data-hide-target')).find('.extra-values');
             xtra_vals.addClass('is-hidden');
-            $('.show-more-count').show();
+            $('.show-more-count').removeClass('is-hidden');
         }
         clicked.siblings('.show-sib').removeClass('is-hidden');
         clicked.addClass('is-hidden');

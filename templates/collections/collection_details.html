@@ -101,28 +101,82 @@
                         {% with col_count=collections|length %}
                             {% if col_count > 5 %}
                                 <p>
-                                    <a class="show-more show-sib" data-show-target=".ar-collex-set"><i class="fa-solid fa-plus-circle"></i> show more</a>
-                                    <a class="show-less show-sib is-hidden" data-hide-target=".ar-collex-set"><i class="fa-solid fa-minus-circle"></i> show less</a>
+                                    <a class="show-more show-sib" data-toggle-target=".ar-collex-set"><i class="fa-solid fa-plus-circle"></i> show more</a>
+                                    <a class="show-less show-sib is-hidden" data-toggle-target=".ar-collex-set"><i class="fa-solid fa-minus-circle"></i> show less</a>
                                 </p>
                             {% endif %}
                             <ul class="ar-collex-set">
                                 {% for col in collections %}
                                     <li class="ar-collex{% if forloop.counter > 5 %} extra-values is-hidden{% endif %}"><a href="{% url 'collection_details' col.collection_id %}">{{ col.collection_name }}</a></li>
                                     {% if forloop.counter == 6 %}
-                                    <li class="show-more-count">... {{ col_count|add:-5 }} more collections</li>
+                                    <span class="show-more-count">... {{ col_count|add:-5 }} more collections</span>
                                     {% endif %}
                                 {% endfor %}
                             </ul>
-                    {% endwith %}
+                        {% endwith %}
+                    </p>
+                {% endif %}
+                {% if analysis_results != "" %}
+                    <p class="collex-divider"></p>
+                    <p>
+                        <b>Analysis Results</b>
+                        {% with col_count=analysis_results|length %}
+                            {% if col_count > 5 %}
+                                <p>
+                                    <a class="show-more show-sib" data-toggle-target=".ar-collex-set"><i class="fa-solid fa-plus-circle"></i> show more</a>
+                                    <a class="show-less show-sib is-hidden" data-toggle-target=".ar-collex-set"><i class="fa-solid fa-minus-circle"></i> show less</a>
+                                </p>
+                            {% endif %}
+                            <ul class="ar-collex-set">
+                                {% for col in analysis_results %}
+                                    <li class="ar-collex{% if forloop.counter > 5 %} extra-values is-hidden{% endif %}"><a href="{% url 'collection_details' col.collection_id %}">{{ col.collection_id }}</a></li>
+                                    {% if forloop.counter == 6 %}
+                                    <span class="show-more-count">... {{ col_count|add:-5 }} more analysis results</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        {% endwith %}
                     </p>
                 {% endif %}
                 <p class="collex-divider"></p>
-                {% for doi in dois %}
-                  <p><i class="fa fa-solid fa-globe"></i> <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer">{{ doi }}</a></p>
-                {% endfor %}
+                <p><b>DOIs</b></p>
+                {% if collection_type == "Analysis Result" %}
+                    <p>
+                    <i class="fa-solid fa-globe"></i> {{ collection_id }} <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer">{{ doi }}</a>
+                    </p>
+                    <p>
+                        <span class="doi-section-title">Collections analyzed:</span>
+                        <ul class="doi-list fa-ul">
+                        {% for col in collections %}
+                            <li><span class="fa-li"><i class="fa-solid fa-globe"></i></span>{{ col.collection_name }}
+                                {% for doi in col.doi %} <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer">{{ doi }}</a>{% endfor %}
+                            </li>
+                        {% endfor %}
+                        </ul></p>
+                    </p>
+                {% endif %}
+                {% if collection_type == "Collection" %}
+                    <p>
+                        <span class="doi-section-title">{{ collection_name }} original data:</span>
+                        <ul class="doi-list fa-ul">
+                        {% for entry in doi %}
+                            <li><span class="fa-li"><i class="fa-solid fa-globe"></i></span><a href="https://doi.org/{{ entry }}" target="_blank" rel="nofollow noreferrer">{{ entry }}</a></li>
+                        {% endfor %}
+                        </ul>
+                    </p>
+                {% endif %}
+                {% if analysis_results != "" %}
+                    <p>
+                        <span class="doi-section-title">Analysis Results:</span>
+                    <ul class="doi-list fa-ul">
+                    {% for ar in analysis_results %}
+                        <li><span class="fa-li"><i class="fa-solid fa-globe"></i></span>{{ ar.collection_id }} <a href="https://doi.org/{{ ar.doi }}" target="_blank" rel="nofollow noreferrer">{{ ar.doi }}</a></li>
+                    {% endfor %}
+                    </ul></p>
+                {% endif %}
                   <p>
-                        <button type="button" role="button" class="btn btn-small btn-primary citations-button for-collection" data-bs-toggle="modal" data-bs-target="#citations-modal" data-toggle="modal" data-target="#citations-modal" aria-expanded="false" data-citations=""> View Citations
-                        </button>
+                    <button type="button" role="button" class="btn btn-small btn-primary citations-button for-collection" data-bs-toggle="modal" data-bs-target="#citations-modal" data-toggle="modal" data-target="#citations-modal" aria-expanded="false" data-citations=""> View Citations
+                    </button>
                   </p>
               </div>
             </div>
