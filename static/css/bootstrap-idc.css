@@ -64,3 +64,42 @@
 .collection-header .collection-buttons {
     margin-bottom: 20px;
 }
+
+.collex-divider {
+    margin: 25px 20px 25px 20px;
+    border-bottom: 1px solid black;
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.show-more, .show-less {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: smaller;
+}
+
+.show-more:hover, .show-less:hover {
+    text-decoration: none;
+}
+
+.doi-section-title {
+    font-weight: 500;
+}
+
+.doi-list li {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 10px;
+}
+
+.doi-list .fa-li i {
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.doi-list.ar-collex-set {
+    margin-left: var(--fa-li-margin,0.75em);
+    margin-bottom: 1em;
+}
