@@ -48,6 +48,7 @@ class SharedCart(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, null=False, blank=False)
     definition = models.TextField(null=False, blank=False, default='{}')
     series_ids = models.TextField(null=False, blank=False, default='')
+    description = models.TextField(null=False, blank=False, default='')
 
     @classmethod
     def clear_expired_carts(cls):
