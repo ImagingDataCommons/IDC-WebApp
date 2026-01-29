@@ -74,19 +74,6 @@
     display: none !important;
 }
 
-.ar-collex-set {
-    list-style-type: circle;
-}
-
-.ar-collex-set li {
-    list-style-type: circle;
-    margin-left: 20px;
-}
-
-.ar-collex-set li a {
-    margin-left: -5px;
-}
-
 .show-more, .show-less {
     cursor: pointer;
     font-weight: bold;
@@ -110,4 +97,9 @@
 .doi-list .fa-li i {
     font-size: 12px;
     vertical-align: middle;
+}
+
+.doi-list.ar-collex-set {
+    margin-left: var(--fa-li-margin,0.75em);
+    margin-bottom: 1em;
 }
