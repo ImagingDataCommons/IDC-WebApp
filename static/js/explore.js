@@ -105,7 +105,6 @@ require([
     })
 
     $('#save-cohort-modal').on('show.bs.modal', function() {
-
         var modality_join = $('.join_val').filter(':checked').prop('value');
         var filters = {};
         $('.search-scope .search-checkbox-list input:checked , ' +
@@ -131,13 +130,11 @@ require([
                             + '"><span class="attr">' + $(this).data('filter-display-attr') + ':</span></p>');
                     }
 
-
                     if ( ($(this).data('filter-display-attr')=='Modality') && (filters[$(this).data('filter-attr-id')])  ){
                           $(`${modal_filter_block} p.` + $(this).data('filter-attr-id')).append(
                          '<span class="val">' + modality_join + '</span>'
                         );
                      }
-
 
                     $(`${modal_filter_block} p.` + $(this).data('filter-attr-id')).append(
                          '<span class="val">' + $(this).data('filter-display-val') + '</span>'
