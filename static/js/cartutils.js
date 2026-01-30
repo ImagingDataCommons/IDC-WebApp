@@ -709,7 +709,6 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                     ndic['aggregate_level'] = 'StudyInstanceUID'
                     ndic['results_level'] = 'StudyInstanceUID'
                     var csrftoken = $.getCookie('csrftoken');
-                    window.show_spinner();
                     $.ajax({
                         url: url,
                         dataType: 'json',
@@ -730,19 +729,16 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                              });
                              var txt =$('#cart-table_info').text().replace('entries','studies');
                              $('#cart-table_info').text(txt);
-                             window.hide_spinner();
                         },
                         error: function () {
                             console.log("problem getting data");
                             alert("There was an error fetching server data. Please alert the systems administrator");
-                            window.hide_spinner();
                         }
                     });
                 }
             });
         } catch(Exception){
             alert("The following error was reported when processing server data: "+ Exception +". Please alert the systems administrator");
-            window.hide_spinner();
         }
     }
 
