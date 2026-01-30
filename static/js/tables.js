@@ -80,6 +80,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table').on('preInit.dt', function(){
         window.show_spinner();
     });
+
     $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table').on('draw.dt', function(){
         window.hide_spinner();
         // Auto-width needing to be shut off at the table header level during draw time.
@@ -236,6 +237,20 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             auxIsNum= false;
         }
          cache.data.sort((a,b)=> compCols(a,b,col,dir,isNum,hasAux,auxCol,auxIsNum))
+    }
+
+    const rowIsOpen = function(row_id, row_type, collection_id=null, patient_id=null) {
+        if(row_type === "project") {
+            return ((window.selProjects && row_id in window.selProjects
+                && 'state' in window.selProjects[row_id])
+                && ('view' in window.selProjects[row_id]['state'])
+                && (window.selProjects[row_id]['state']['view'] ));
+        } else if(row_type === "case") {
+            return (collection_id in window.openCases) && (row_id in window.openCases[collection_id]);
+        } else if(row_type === "study") {
+            return (patient_id in window.openStudies) && (row_id in window.openStudies[patient_id]);
+        }
+        return false;
     }
 
     // classes for project(collection) table columns
@@ -432,6 +447,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     }
                     setRowCartClasses(row);
 
+                    rowIsOpen(data[0], "project") && $(row).addClass('open');
+
                     $(row).on('click', function(event) {
                         handleRowClick("collections", row, event, [projid])
                     });
@@ -514,7 +531,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     const caseTableColumns = function() {
         const caret_col = {
             "type": "html", "orderable": false, "data":"PatientID", render: function (PatientID, type, row) {
-                collection_id=row['collection_id'][0]
+                let collection_id=row['collection_id'][0]
                 if ((collection_id in window.openCases) && (PatientID in window.openCases[collection_id]) ) {
                     //return '<input type="checkbox" checked>'
                    return '<a role="button">'+
@@ -655,6 +672,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     }
 
                     setRowCartClasses(row);
+                    rowIsOpen(caseid, "case", projid) && $(row).addClass('open');
 
                     $(row).on('click', function(event) {
                         handleRowClick('cases', row, event,[projid, caseid])
@@ -849,22 +867,23 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
                     if ('nf_unique_series' in data){
                            $(row).attr('mxseries', data['nf_unique_series']);
-                        } else {
-                            $(row).attr('mxseries', data['unique_series']);
-                        }
-                        $(row).attr('series_in_filter', data['unique_series']);
-                        if ('unique_series_cart' in data){
-                            $(row).attr('series_in_cart', data['unique_series_cart']);
-                        } else {
-                            $(row).attr('series_in_cart', 0);
-                        }
-                        if ('unique_series_filter_and_cart' in data){
-                            $(row).attr('series_in_filter_and_cart', data['unique_series_filter_and_cart']);
-                        } else {
-                            $(row).attr('series_in_filter_and_cart', 0);
-                        }
+                    } else {
+                        $(row).attr('mxseries', data['unique_series']);
+                    }
+                    $(row).attr('series_in_filter', data['unique_series']);
+                    if ('unique_series_cart' in data){
+                        $(row).attr('series_in_cart', data['unique_series_cart']);
+                    } else {
+                        $(row).attr('series_in_cart', 0);
+                    }
+                    if ('unique_series_filter_and_cart' in data){
+                        $(row).attr('series_in_filter_and_cart', data['unique_series_filter_and_cart']);
+                    } else {
+                        $(row).attr('series_in_filter_and_cart', 0);
+                    }
 
                     setRowCartClasses(row);
+                    rowIsOpen(studyid, "study", null, caseid) && $(row).addClass('open');
 
                     var cnt = 0;
                     var content = ""
@@ -891,8 +910,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         "orderable": false,
                         "data": "StudyInstanceUID",
                         render: function (StudyInstanceUID, type, row) {
-                            var PatientID= row['PatientID']
-                            var collection_id=row['collection_id']
+                            let PatientID= row['PatientID']
                             if ( (PatientID in window.openStudies) && (StudyInstanceUID in window.openStudies[PatientID])) {
                                 //return '<input type="checkbox" checked>'
                                return '<a role="button">'+
