@@ -35,6 +35,40 @@ require([
     'base', 'jquery', 'cartutils', 'filterutils',
 ], function (base, $, cartutils, filterutils) {
 
+    const TestResult = Object.freeze({
+        SUCCESS: "success",
+        CANCEL: "cancel",
+        FLAT: "flat",
+        ERROR: "error"
+    });
+
+    async function createNestedDirectories(topLevelDirectoryHandle, path) {
+        const pathSegments = path.split('/').filter((segment) => segment !== '');
+        let currentDirectoryHandle = topLevelDirectoryHandle;
+        for (const segment of pathSegments) {
+            try {
+                // Attempt to get the directory handle without creating it
+                const entry = await currentDirectoryHandle.getDirectoryHandle(segment, {
+                    create: false
+                })
+                currentDirectoryHandle = entry;
+            } catch (error) {
+                // If the error is specifically about the directory not existing, create it
+                if (error.name === 'NotFoundError') {
+                    const entry = await currentDirectoryHandle.getDirectoryHandle(segment, {
+                        create: true
+                    })
+                    currentDirectoryHandle = entry;
+                } else {
+                    // TODO: Handle other potential errors (e.g., name conflicts)
+                    return false; // Indicate failure
+                }
+            }
+        }
+        // Return the last directory handle
+        return currentDirectoryHandle;
+    }
+
     const byte_level = Object.freeze({
         1: "KB",
         2: "MB",
@@ -125,6 +159,7 @@ require([
             this.crdc_series_id = request['crdc_series_id'];
             this.directory = request['directory'];
             this.total_size = parseFloat(request['series_size']);
+            this.save_flat = request['save_flat'] || false;
 
             if(this.series_id) {
                 this.request_type = REQ_TYPE.SERIES;
@@ -199,7 +234,8 @@ require([
                                 'modality': this.modality,
                                 'instance': instance,
                                 'patient': this.patient_id,
-                                'directory': this.directory
+                                'directory': this.directory,
+                                'save_flat': this.save_flat
                             });
                         }
                     }
@@ -302,7 +338,7 @@ require([
             }
             // It's possible a cancellation came in while we were doing this. If so, re-empty the working_queue
             if(this.cancellation_underway) {
-                this.working_queue.slice(0,this.working_queue.length);
+                this.working_queue.length = 0;
             }
         }
 
@@ -389,6 +425,35 @@ require([
     class DownloadManager {
         progressDisplay = new DownloadProgressDisplay();
 
+        // The directory we're downloading to
+        directoryHandle = null;
+
+        // Save style
+        flat_save = false;
+        flatSaveManifest = null;
+        manifestOutputStream = null;
+        async setupFlatSave() {
+            if(!this.flat_save)
+                return;
+            let now = new Date();
+            const offset = now.getTimezoneOffset();
+            now = new Date(now.getTime() - (offset*60*1000));
+            let datestamp = now.toISOString().replace(/[\-:]/g,"").replace("T","_").split(".")[0];
+            this.flatSaveManifest = await this.directoryHandle.getFileHandle(`idc_file_id_manifest_${datestamp}.txt`, {create: true});
+            this.manifestOutputStream = await this.flatSaveManifest.createWritable();
+            this.manifestOutputStream.write("File Instance Name,Collection ID,Patient ID,Study ID,Series ID\n")
+        }
+        async updateFlatSave(file_info) {
+            if(!this.flat_save)
+                return;
+            await this.manifestOutputStream.write(`${file_info['instance']},${file_info['collection']},${file_info['patient']},${file_info['study']},${file_info['series']}\n`);
+        }
+        async cleanupFlatSave() {
+            this.manifestOutputStream && await this.manifestOutputStream.close();
+            this.manifestOutputStream = null;
+            this.flatSaveManifest = null;
+        }
+
         // Text blobs
         workerCode = `
             const abort_controller = new AbortController();
@@ -441,7 +506,7 @@ require([
                 let response = null;
                 let fileHandle = null;
                 const seriesDirectory = modality + "_" + seriesInstanceUID;
-                const filePath = [collection_id, patientID, studyInstanceUID, seriesDirectory].join("/");
+                const filePath = metadata['save_flat'] ? collection_id : [collection_id, patientID, studyInstanceUID, seriesDirectory].join("/");
                 try {
                     const directoryHandle = event.data['directoryHandle'];
                     const subDirectoryHandle = await createNestedDirectories(directoryHandle, filePath);
@@ -617,6 +682,7 @@ require([
                     URL.revokeObjectURL(this.workerObjectURL);
                     this.workerObjectURL = null;
                 }
+                await this.cleanupFlatSave();
                 let msg = this.pending_cancellation ? 'Download cancelled.' : `Download complete.`;
                 this.queues.reset_queue_manager();
                 let type = this.pending_cancellation ? 'warning' : 'success';
@@ -647,6 +713,7 @@ require([
                                     'metadata': item_to_download,
                                     'directoryHandle': item_to_download['directory']
                                 });
+                                this.updateFlatSave(item_to_download);
                                 let msg = `Download status: ${this.in_progress} file(s) in progress${this.pending_msg}...`;
                                 this.progressUpdate(msg, "download");
                             } else {
@@ -675,13 +742,17 @@ require([
                 worker.postMessage({'abort': true, 'reason': 'User cancelled download.'});
             });
             // Sometimes worker latency can cause a race condition between final cleanup and resetting the download
-            // manager's state. Run trigger a final time after waiting a couple of seconds to be totally sure
+            // manager's state. Run triggerWorkerDownloads a final time after waiting a couple of seconds to be totally sure
             // we've cleaned up after ourselves.
-            setTimeout(2000, function(){
+            setTimeout(function(){
                 if(downloader_manager.pending_cancellation) {
+                    // Make sure all workers are finalized
+                    downloader_manager.downloadWorkers.forEach(worker => {
+                        downloader_manager.finalizeWorker(worker);
+                    });
                     downloader_manager.triggerWorkerDownloads();
                 }
-            });
+            }, 2000);
         }
 
         set_download_stats(stats) {
@@ -690,20 +761,20 @@ require([
             );
         }
 
-        beginDownloads() {
+        async beginDownloads() {
             if(!this.queues.isEmpty()) {
+                await this.setupFlatSave();
                 if(this.in_progress <= 0) {
                     $('.cancel-download').show();
                     $('.close-message-window').hide();
                     this.statusMessage("Download underway.", 'info', "download", false, true);
                 }
-                this.triggerWorkerDownloads();
+                await this.triggerWorkerDownloads();
             }
         }
     }
 
     let downloader_manager = new DownloadManager();
-
 
     async function handleLargeDownload(filter_and_cart) {
         let series_job = await fetch(
@@ -761,11 +832,74 @@ require([
         warning_button.attr("data-collection", clicked.attr("data-collection"));
         warning_button.attr("data-study", clicked.attr("data-study"));
         warning_button.attr('data-patient', clicked.attr('data-patient'));
+        warning_button.attr("data-download-type", clicked.attr("data-download-type"));
     });
 
     $('.container-fluid').on('click', '.cancel-download', function () {
         downloader_manager.cancel();
     });
+
+    async function showPathErrorDialog(min_length) {
+        $('.min-length-path').html(min_length);
+        $('#download-issue-dialog').modal('show');
+        return new Promise((resolve) => {
+            // Bind the new promise
+            $('#download-issue-dialog .btn').unbind('click').on('click', function(){
+                let result = null;
+                if($(this).hasClass('save-flat')) {
+                    result = TestResult.FLAT;
+                } else if($(this).hasClass('cancel-save')) {
+                    result = TestResult.CANCEL;
+                } else {
+                    result = TestResult.ERROR;
+                }
+                $('#download-issue-dialog').modal('hide');
+                resolve(result);
+            });
+        });
+    }
+
+    async function testFileCreation(tests, directoryHandle) {
+        let failed_paths = [];
+        let failed_flats = [];
+        for(const test_series of tests) {
+            let test_name = crypto.randomUUID();
+            let flat_okay = false;
+            let test_path = `testing_${test_series['collection_id']}/${test_series['patient_id']}/${test_series['study_id']}/${test_series['modality']}_${test_series['series_id']}/${test_name}.dcm`;
+            try {
+                // First, try the flat option--if it doesn't work, no point to checking the big one
+                await createNestedDirectories(directoryHandle,`testing_${test_series['collection_id']}`);
+                // If we make it here, flat format is okay
+                flat_okay = true;
+                // Now we test the whole path
+                await createNestedDirectories(directoryHandle, test_path);
+                // If we made it here, we're probably okay to proceed and can delete our test
+                await directoryHandle.removeEntry(`testing_${test_series['collection_id']}`, {recursive: true});
+            } catch (error) {
+                // A NotFoundError in response to a create attempt likely means we have a Windows path length error
+                // though it can also be a permissions error. either way we know we can't save this hypothetical file.
+                if (error.name === 'NotFoundError') {
+                    if(!flat_okay) {
+                        // There's something we can't save at all
+                        // No need to delete the test as no part of it was even made
+                        failed_flats.push(`${test_series['collection_id']}`);
+                    } else {
+                        // At least the top-level directory was made, so recursively clean it out and note the failed path
+                        await directoryHandle.removeEntry(`testing_${test_series['collection_id']}`, {recursive: true});
+                        failed_paths.push(test_path);
+                    }
+                }
+            }
+        }
+        if(failed_flats.length > 0) {
+            $('#download-failed-dialog').modal('show');
+            return TestResult.CANCEL;
+        }
+        if(failed_paths.length > 0) {
+            return await showPathErrorDialog(failed_paths.sort((a,b) => {return b.length - a.length})[0].length);
+        }
+        return TestResult.SUCCESS;
+    }
 
     $('body').on('click', '.download-all-instances', async function (event) {
         // Stop propagation to the other handlers or the showDirectoryPicker will complain.
@@ -777,6 +911,7 @@ require([
             startIn: 'downloads',
             mode: 'readwrite',
         });
+        downloader_manager.directoryHandle = directoryHandle;
         const collection_id = clicked.attr('data-collection');
         const study_id = clicked.attr('data-study');
         const patient_id = clicked.attr('data-patient');
@@ -784,6 +919,7 @@ require([
         let csrftoken = $.getCookie('csrftoken');
 
         let series = [];
+        let test_series = null;
         if(download_type !== "series") {
             let response = null;
             if(["cohort", "cart"].includes(download_type)) {
@@ -818,7 +954,8 @@ require([
             } else {
                 let study_uri = (study_id !== undefined && study_id !== null) ? `${study_id}/` : "";
                 let patient_uri = (patient_id !== undefined && patient_id !== null) ? `${patient_id}/` : "";
-                response = await fetch(`${BASE_URL}${SERIES_IDS_URL}${collection_id}/${patient_uri}${study_uri}`);
+                let type = (download_type === "analysis_result") ? `?type=analysis_result` : "";
+                response = await fetch(`${BASE_URL}${SERIES_IDS_URL}${collection_id}/${patient_uri}${study_uri}${type}`);
             }
             if (!response.ok) {
                 console.error(`[ERROR] Failed to retrieve series IDs: ${response.status}`);
@@ -826,6 +963,11 @@ require([
             }
             const series_data = await response.json();
             series.push(...series_data['result']);
+            if('test_series' in series_data && series_data['test_series']) {
+                test_series = series_data['test_series'];
+            } else {
+                test_series = [series[0]];
+            }
             if('download_stats' in series_data){
                 downloader_manager.set_download_stats(series_data['download_stats']);
             }
@@ -840,11 +982,33 @@ require([
                 "patient_id": patient_id,
                 "collection_id": collection_id
             });
+            test_series = [series[0]];
         }
+        // Before we create the requests, we need to verify the path length isn't going to be an issue for the local
+        // system
+        let save_flat = false;
+        let res = await testFileCreation(test_series, directoryHandle);
+        switch(res){
+            case TestResult.CANCEL:
+                series.length = 0;
+                break;
+            case TestResult.FLAT:
+                save_flat = true;
+                break;
+            default:
+                break;
+        }
+
+        if(series.length === 0) {
+            // For one reason or another, we cancelled
+            return;
+        }
+        downloader_manager.flat_save = save_flat;
         series.forEach(series_request => {
             series_request['directory'] = directoryHandle;
+            series_request['save_flat'] = save_flat;
             downloader_manager.addRequest(series_request);
         });
-        downloader_manager.beginDownloads();
+        await downloader_manager.beginDownloads();
     });
 });

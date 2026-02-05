@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_tags %}
+{% load idc_collections_custom_tags %}
+{% block title %}Collection Details {{ collection_id }} | IDC{% endblock %}}
+{% block extra_css_libs %}
+    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-5.css' %}" />
+    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-idc.css' %}" />
+{% endblock %}
+{% block header %}
+
+{% endblock %}
+
+{% block link_page_name %}collection_details{% endblock %}
+{% block page_name %}collection_details{% endblock %}
+
+{% block page_header %}
+<div class="container-fluid collection-header">
+    <h3>{{ collection_type }} <i class="fa fa-solid fa-ellipsis-v collection-spacer"></i> {{ collection_name }}</h3>
+    <p>
+        <hr />
+    </p>
+    <div class="collection-buttons">
+        <div id="collex-download-options" class="dropdown">
+            <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="collex-download-options-link"
+               data-toggle="dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Download
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="collex-download-options-link">
+            {% with size_warning=total_size_with_ar|size_check %}
+                <li class="collex-list-item">
+                    <a class="dropdown-item download-instances{% if size_warning %} download-size-warning{% elif total_size_with_ar > 3 %} is-disabled{% else %} download-all-instances{% endif %}"
+                       href="#" data-download-type="{{ collection_type.lower|replace_whitespace:"_" }}" data-collection="{{ collection_id }}"{% if total_size_with_ar > 3 %}data-disabled-type="download-size-disabled"{% endif %}
+                       {% if size_warning %}data-toggle="modal" data-target="#download-warning"{% endif %}
+                    >
+                    Direct <i class="fa fa-solid fa-download"></i></a></li>
+                  <li class="collex-list-item">
+                      <a
+                          class="dropdown-item idc-index export-button"
+                          role="button"
+                          data-toggle="modal"
+                          data-download-type-display="{{ collection_type.lower }}"
+                          data-bs-toggle="modal"
+                          data-bs-target="#export-collex-manifest-modal"
+                          data-target="#export-collex-manifest-modal">idc-index <i class="fa fa-solid fa-list"></i>
+                      </a>
+                  </li>
+{#                <li class="collex-list-item"><a class="dropdown-item" href="#">Manifest <i class="fa fa-solid fa-list"></i></a></li>#}
+            {% endwith %}
+            </ul>
+        </div>
+        <a type="button" role="button" target="_blank" class="btn btn-special explore-images action-button"
+           href="{% if collection_type == "Collection" %}{% url 'parse_explore_filters' %}/?collection_id={{ collection_id }}{% else %}{% url 'parse_explore_filters' %}/?analysis_results_id={{ collection_id }}{% endif %}">
+            Explore Images
+        </a>
+    </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid collection-details">
+    <div class="row">
+        <div class="col">
+            <div class="card collex-card collex-details-card">
+                <div class="card-header">
+                      <h4>Details</h4>
+                </div>
+              <div class="card-body">
+                  <p>
+                      <b>Subject Count: </b>{{ subject_count }}
+                  </p>
+                  <p>
+                      <b>Primary Site: </b>{{ primary_tumor_location }}
+                  </p>
+                  {% if image_types != "" %}
+                  <p>
+                      <b>Image Modalities: </b>{{ image_types }}
+                  </p>
+                  {% endif %}
+                  {% if analysis_artifacts != "" %}
+                  <p>
+                    <b>Analysis Artifacts: </b> {{ analysis_artifacts }}
+                  </p>
+                  {% endif %}
+                  <p>
+                      <b>Cancer Type(s): </b>{{ cancer_type }}
+                  </p>
+                  {% if species != "" %}
+                  <p>
+                      <b>Species: </b>{{ species }}
+                  </p>
+                  {% endif %}
+                  {% if supporting_data != "" %}
+                  <p>
+                      <b>Supporting Data: </b>{{ supporting_data }}
+                  </p>
+                  {% endif %}
+                <p class="collex-divider"></p>
+                <p><b>DOIs</b></p>
+                {% if collection_type == "Analysis Result" %}
+                    <p>
+                    <i class="fa-solid fa-globe"></i> {{ collection_id }} <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer">{{ doi }}</a>
+                    </p>
+                    <span class="doi-section-title">Collections analyzed:</span>
+                    {% with col_count=collections|length %}
+                        {% if col_count > 5 %}
+                            <p>
+                                <a class="show-more show-sib" data-toggle-target=".ar-collex-set"><i class="fa-solid fa-plus-circle"></i> show more</a>
+                                <a class="show-less show-sib is-hidden" data-toggle-target=".ar-collex-set"><i class="fa-solid fa-minus-circle"></i> show less</a>
+                            </p>
+                        {% endif %}
+                        <ul class="ar-collex-set doi-list fa-ul">
+                            {% for col in collections %}
+                                <li class="ar-collex{% if forloop.counter > 5 %} extra-values is-hidden{% endif %}">
+                                    <span class="fa-li"><i class="fa-solid fa-globe"></i></span>
+                                    <a href="{% url 'collection_details' col.collection_id %}">{{ col.collection_name }}</a><br />
+                                    {% for doi in col.doi %}
+                                        <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer"> {{ doi }}</a><br />
+                                    {% endfor %}
+                                </li>
+                                {% if forloop.counter == 6 %}
+                                <span class="show-more-count">... {{ col_count|add:-5 }} more collections</span>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    {% endwith %}
+                {% endif %}
+                {% if collection_type == "Collection" %}
+                    <p>
+                        <span class="doi-section-title">{{ collection_name }} original data:</span>
+                        <ul class="doi-list fa-ul">
+                        {% for entry in doi %}
+                            <li><span class="fa-li"><i class="fa-solid fa-globe"></i></span><a href="https://doi.org/{{ entry }}" target="_blank" rel="nofollow noreferrer">{{ entry }}</a></li>
+                        {% endfor %}
+                        </ul>
+                    </p>
+                {% endif %}
+                {% if analysis_results != "" %}
+                    <p>
+                        <span class="doi-section-title">Analysis Results:</span>
+                    <ul class="doi-list fa-ul">
+                    {% for ar in analysis_results %}
+                        <li><span class="fa-li"><i class="fa-solid fa-globe"></i></span>{{ ar.collection_id }}<br /> <a href="https://doi.org/{{ ar.doi }}" target="_blank" rel="nofollow noreferrer">{{ ar.doi }}</a></li>
+                    {% endfor %}
+                    </ul></p>
+                {% endif %}
+                  <p>
+                    <button type="button" role="button" class="btn btn-small btn-primary citations-button for-collection" data-bs-toggle="modal" data-bs-target="#citations-modal" data-toggle="modal" data-target="#citations-modal" aria-expanded="false" data-citations=""> View Citations
+                    </button>
+                  </p>
+              </div>
+            </div>
+        </div>
+        <div class="col-9">
+            <h3>Description</h3>
+            <div class="desc">
+                {{ desc|safe }}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'idc/citations-modal.html' %}
+{% include 'idc/download-modal.html' %}
+{% with collection_type=collection_type collection_id=collection_id %}
+    {% include 'idc/export-collex-modal.html' %}
+{% endwith %}
+{% endblock %}
+
+{% block js_file %}
+    {{ citations|json_script:"collex_citations" }}
+	{{ block.super }}
+    <script>
+        const collex_citations = JSON.parse(document.getElementById('collex_citations').textContent);
+    </script>
+	<script type="text/javascript" src="{% static 'js/collection_details.js' %}?v={{ APP_VERSION }}"></script>
+    <script type="text/javascript" src="{% static 'js/citations_modal.js' %}?v={{ APP_VERSION }}"></script>
+    <script type="text/javascript" src="{% static 'js/downloader.js' %}?v={{ APP_VERSION }}"></script>
+{% endblock %}

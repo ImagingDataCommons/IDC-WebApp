@@ -123,7 +123,7 @@ require([
         }
         var csrftoken = $.getCookie('csrftoken');
         let deferred = $.Deferred();
-       // window.show_spinner();
+       window.show_spinner();
         $.ajax({
             url: url,
             data: ndic,
@@ -278,7 +278,7 @@ require([
                 console.log('error loading data');
             },
             complete: function() {
-                //window.hide_spinner();
+                window.hide_spinner();
             }
         });
         return deferred.promise();
@@ -306,90 +306,90 @@ require([
     }
 
     window.displayInfo = function(targ) {
-        let collection_id=$(targ).attr('value');
-        let collectionDisp=$(targ).data('filterDisplayVal')
+        let collection_id = $(targ).attr('value');
+        let collectionDisp = $(targ).data('filterDisplayVal')
 
-        let pos =$(targ).parent().find('.collection_info, .analysis_info').offset();
+        let pos = $(targ).parent().find('.collection_info, .analysis_info').offset();
         let info_icon = $(targ).parent().find('.collection_info, .analysis_info');
         let tooltip='';
         if ($(info_icon).hasClass('collection_info')){
             tooltip = collection_tooltips[collection_id];
-        }
-        else {
+        } else {
             tooltip = analysis_results_tooltips[collection_id];
         }
+        let collex_modal = $('#collection-modal');
+        collex_modal.find('#collecton-modal-title').text(collectionDisp);
+        collex_modal.find('.modal-body').html(tooltip);
 
-        $('#collection-modal').find('#collecton-modal-title').text(collectionDisp);
-        $('#collection-modal').find('.modal-body').html(tooltip);
-
-        $('#collection-modal').addClass('fade');
-        $('#collection-modal').addClass('in');
-        $('#collection-modal').css("display","block");
-        var width=$('#collection-modal').find('.modal-content').outerWidth();
-        var height =$('#collection-modal').find('.modal-content').outerHeight();
-        $('#collection-modal').height(height);
-            $('#collection-modal').width(width);
-
-        $('#collection-modal').css({position:"absolute", top: Math.max((pos.top-height),0), left: pos.left })
+        collex_modal.addClass('fade');
+        collex_modal.addClass('in');
+        collex_modal.css("display","block");
+        let width=collex_modal.find('.modal-content').outerWidth();
+        let height=collex_modal.find('.modal-content').outerHeight();
+        collex_modal.height(height);
+        collex_modal.width(width);
+        collex_modal.css({position:"absolute", top: Math.max((pos.top-height),0), left: pos.left })
     }
 
     var filterItemBindings = function (filterId) {
-        $('#' + filterId).find('.join_val').on('click', function () {
-            var attribute = $(this).closest('.list-group-item__body, .list-group-sub-item__body','.colections-list')[0].id;
-            if (filterObj.hasOwnProperty(attribute) && (window.filterObj[attribute]['values'].length>1)){
+        let selFilter = $(`#${filterId}`);
+        selFilter.find('.join_val').on('click', function () {
+            let attribute = $(this).closest('.list-group-item__body, .list-group-sub-item__body','.colections-list')[0].id;
+            if (filterObj.hasOwnProperty(attribute) && (window.filterObj[attribute]['values'].length >= 1)){
                 filterutils.mkFiltText();
                 filterObj[attribute]['op']=$(this).attr('value');
                 updateFacetsData(true);
             }
         });
 
-        $('#' + filterId).find('.collection_info, .analysis_info').on("mouseenter", function(e){
+        selFilter.find('.collection_info, .analysis_info').on("mouseenter", function(e){
             $(e.target).addClass('fa-lg');
          });
 
-       $('#' + filterId).find('.collection_info, .analysis_info').on("mouseleave", function(e){
+       selFilter.find('.collection_info, .analysis_info').on("mouseleave", function(e){
            $(e.target).removeClass('fa-lg');
        });
 
-        $('#' + filterId).find('input:checkbox').not('.hide-zeros').on('click', function (e) {
-            var targ=e.target;
+        selFilter.find('input:checkbox').not('.hide-zeros').on('click', function (e) {
+            let targ=e.target;
             if ($(e.target).parent().find('.collection_info.fa-lg, .analysis_info.fa-lg').length>0){
                 $(targ).prop("checked",!$(targ).prop("checked"));
                 window.displayInfo(targ);
-            }
-            else{
+            } else {
               handleFilterSelectionUpdate(this, true, true);
             }
-
         });
 
-        $('#' + filterId).find('.show-more').on('click', function () {
+        selFilter.find('.show-more').on('click', function () {
             $(this).parent().parent().children('.less-checks').show();
             $(this).parent().parent().children('.less-checks').removeClass('is-hidden');
             $(this).parent().parent().children('.more-checks').addClass('is-hidden');
 
             $(this).parent().hide();
-            var extras = $(this).closest('.list-group-item__body, .collection-list, .list-group-sub-item__body').children('.search-checkbox-list').children('.extra-values')
+            var extras = $(this).closest('.list-group-item__body, .collection-list, .list-group-sub-item__body')
+                .children('.search-checkbox-list')
+                .children('.extra-values')
 
-            if ( ($('#'+filterId).closest('.search-configuration').find('.hide-zeros').length>0)  && ($('#'+filterId).closest('.search-configuration').find('.hide-zeros').prop('checked'))){
+            if ( (selFilter.closest('.search-configuration').find('.hide-zeros').length>0)
+                && ($('#'+filterId).closest('.search-configuration').find('.hide-zeros').prop('checked'))){
                 extras=extras.not('.zeroed');
             }
             extras.removeClass('is-hidden');
         });
 
-        $('#' + filterId).find('.show-less').on('click', function () {
+        selFilter.find('.show-less').on('click', function () {
             $(this).parent().parent().children('.more-checks').show();
             $(this).parent().parent().children('.more-checks').removeClass('is-hidden');
             $(this).parent().parent().children('.less-checks').addClass('is-hidden');
 
             $(this).parent().hide();
-            $(this).closest('.list-group-item__body, .collection-list, .list-group-sub-item__body').children('.search-checkbox-list').children('.extra-values').addClass('is-hidden');
+            $(this).closest('.list-group-item__body, .collection-list, .list-group-sub-item__body')
+                .children('.search-checkbox-list').children('.extra-values').addClass('is-hidden');
         });
 
-        $('#' + filterId).find('.check-all').on('click', function () {
+        selFilter.find('.check-all').on('click', function () {
             if (!is_cohort) {
                 filterutils.checkUncheckAll(this, true, true);
-
             }
         });
 
@@ -432,11 +432,9 @@ require([
         $('.list-group-item__body').each(function() {
             let $group = $(this);
             let my_id = $group.data('filter-attr-id');
-            if (my_id != null)
-            {
+            if (my_id != null) {
                 let checkboxes = $group.find("input:checked").not(".hide-zeros").not(".sort_val").not('.join_val');
-                if (checkboxes.length > 0)
-                {
+                if (checkboxes.length > 0) {
                     let values = [];
                     checkboxes.each(function() {
                         let $checkbox = $(this);
@@ -542,10 +540,10 @@ require([
     }
 
     window.changePage = function(wrapper){
-        var elem=$('#'+wrapper);
-        var valStr = elem.find('.dataTables_controls').find('.goto-page-number').val();
+        let elem=$('#'+wrapper);
+        let valStr = elem.find('.dataTables_controls').find('.goto-page-number').val();
         try {
-            var val =parseInt(valStr);
+            let val = parseInt(valStr);
             if (Number.isInteger(val) && (val>0) ) {
                 elem.find('table').DataTable().page(val-1).draw(false);
             }

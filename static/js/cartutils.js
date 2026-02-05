@@ -137,7 +137,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                 nmstudies=nmstudies+window.proj_in_cart[projid]['studies'];
                 nmseries=nmseries+window.proj_in_cart[projid]['series'];
             }
-            let content = buttonContents+'<span id ="#cart_stats">Cart contents: ' + nmseries.toString()+' series from '+nmprojs.toString()+
+            let content = buttonContents+'<span id ="cart_stats">Cart contents: ' + nmseries.toString()+' series from '+nmprojs.toString()+
                 ' collections / '+nmcases.toString()+' cases / '+nmstudies.toString()+' studies</span> <span class="cart_disk_size">(Calculating size...)</span>';
             localStorage.setItem('manifestSeriesCount',nmseries);
 
@@ -145,6 +145,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
             $('#cart_stats').removeClass('empty-cart');
             cart_controls.each(function(){
                 $(this).removeAttr('disabled');
+                $(this).removeClass('disabled');
                 !$(this).hasClass('tip-titled') && $(this).attr("title",$(this).attr("data-default-title"));
             });
             let cart_disk_size = 0;
@@ -166,6 +167,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                 let cart_disk_res = await cart_disk_resp.json();
                 cart_disk_size = cart_disk_res['total_size']/Math.pow(1000,4);
                 cart_disk_display_size = cart_disk_res['display_size'];
+                $('#cart_stats').attr('data-cart-disk-size',cart_disk_size);
             }
             $('.cart_disk_size').html(cart_disk_display_size);
             base.updateDownloadBtns('cart', cart_has_contents, cart_disk_size, nmseries);
@@ -173,7 +175,8 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
             $('#cart_stats_holder').html('<span id="#cart_stats">Your cart is currently empty</span>');
             $('#cart_stats').addClass('empty-cart');
             cart_controls.each(function(){
-                $(this).attr('disabled', 'disabled');
+                !$(this).hasClass('dropdown-toggle') && $(this).attr('disabled', 'disabled');
+                $(this).hasClass('dropdown-toggle') && $(this).addClass('disabled');
                 !$(this).hasClass('tip-titled') && $(this).attr("title","Add items to the cart to enable this feature.");
             });
         }
@@ -284,39 +287,43 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         }
         var csrftoken = $.getCookie('csrftoken');
         var form = document.createElement('form');
+        let input = null;
         form.id = "cart-view-elem";
         form.style.visibility = 'hidden'; // no user interaction is necessary
         form.method = 'POST'; // forms by default use GET query strings
         //form.action = '/explore/cart/';
         form.action = '/cart/';
         //form.append(csrftoken);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "csrfmiddlewaretoken";
         input.value =csrftoken;
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "carthist";
         input.value = JSON.stringify(window.cartHist);
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "filtergrp_list";
         input.value = JSON.stringify(filterSets);
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "partitions";
         input.value = JSON.stringify(partitions);
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "mxseries";
         input.value = mxNumSeries;
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "mxstudies";
         input.value = mxNumStudies;
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "proj_in_cart";
         input.value = JSON.stringify(window.proj_in_cart);
+        input = document.createElement('input');
+        input.name = "cart_disk_size";
+        input.value = $('#cart_stats').attr('data-cart-disk-size');
         form.appendChild(input);
         document.body.appendChild(form)
         form.submit();
@@ -702,7 +709,6 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                     ndic['aggregate_level'] = 'StudyInstanceUID'
                     ndic['results_level'] = 'StudyInstanceUID'
                     var csrftoken = $.getCookie('csrftoken');
-                    window.show_spinner();
                     $.ajax({
                         url: url,
                         dataType: 'json',
@@ -723,19 +729,16 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                              });
                              var txt =$('#cart-table_info').text().replace('entries','studies');
                              $('#cart-table_info').text(txt);
-                             window.hide_spinner();
                         },
                         error: function () {
                             console.log("problem getting data");
                             alert("There was an error fetching server data. Please alert the systems administrator");
-                            window.hide_spinner();
                         }
                     });
                 }
             });
         } catch(Exception){
             alert("The following error was reported when processing server data: "+ Exception +". Please alert the systems administrator");
-            window.hide_spinner();
         }
     }
 

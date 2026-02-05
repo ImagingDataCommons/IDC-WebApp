@@ -1,0 +1,105 @@
+#collection_details {
+    font-family: system-ui;
+}
+
+.container-fluid.collection-details {
+    padding-bottom: 125px;
+}
+
+.collex-card {
+    font-size: larger;
+    border: 2px solid #b14715;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.collex-card i {
+    font-size: smaller;
+}
+
+.collex-card .card-body {
+
+}
+
+.collex-card .card-header {
+    background: #c97024;
+    color: #fff;
+}
+
+.collection-details .desc {
+    font-size: larger;
+}
+
+.collection-spacer {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+#collex-download-options-link, #collex-download-options li.collex-list-item {
+    background: #fff;
+    color: #373737;
+}
+
+#collex-download-options {
+    display: inline-block;
+}
+
+#collex-download-options ul {
+    border: 1px solid black;
+}
+
+#collex-download-options a:hover {
+    background: #cbcbcb;
+}
+
+.collection-header a  {
+    font-weight: bold;
+    font-size: medium;
+}
+
+.collection-header .action-button {
+    margin-left: 10px;
+}
+
+.collection-header .collection-buttons {
+    margin-bottom: 20px;
+}
+
+.collex-divider {
+    margin: 25px 20px 25px 20px;
+    border-bottom: 1px solid black;
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.show-more, .show-less {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: smaller;
+}
+
+.show-more:hover, .show-less:hover {
+    text-decoration: none;
+}
+
+.doi-section-title {
+    font-weight: 500;
+}
+
+.doi-list li {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 10px;
+}
+
+.doi-list .fa-li i {
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.doi-list.ar-collex-set {
+    margin-left: var(--fa-li-margin,0.75em);
+    margin-bottom: 1em;
+}
