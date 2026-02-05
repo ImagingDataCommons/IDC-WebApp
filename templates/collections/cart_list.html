@@ -5,9 +5,9 @@
 {% block extra_css_libs %}{% endblock %}
 {% block header %}
 
-    <link type="text/css" rel="stylesheet" href="{% static 'css/spinner.css' %}">
-    <link type="text/css" rel="stylesheet" href="{% static 'css/cart.css' %}">
-    <link type="text/css" rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}">
+    <link type="text/css" rel="stylesheet" href="{% static 'css/spinner.css' %}?v={{ APP_VERSION }}">
+    <link type="text/css" rel="stylesheet" href="{% static 'css/cart.css' %}?v={{ APP_VERSION }}">
+    <link type="text/css" rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}?v={{ APP_VERSION }}">
 
 {% endblock %}
 

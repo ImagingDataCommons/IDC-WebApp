@@ -21,9 +21,9 @@
 {% endcomment %}
 
 {% block header %}
-    <link type="text/css" rel="stylesheet" href="{% static 'css/search.css' %}">
-    <link type="text/css" rel="stylesheet" href="{% static 'css/spinner.css' %}">
-    <link type="text/css" rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}">
+    <link type="text/css" rel="stylesheet" href="{% static 'css/search.css' %}?v={{ APP_VERSION }}">
+    <link type="text/css" rel="stylesheet" href="{% static 'css/spinner.css' %}?v={{ APP_VERSION }}">
+    <link type="text/css" rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}?v={{ APP_VERSION }}">
 {% endblock %}
 
 
@@ -139,7 +139,7 @@
         var user_is_auth = {% if request.user.is_authenticated %} true {% else %} false {% endif %};
         var user_id = {% if request.user.is_authenticated %}{{ request.user.id|safe }}{% else %}null{% endif %};
     </script>
-    <script type="text/javascript" src="{% static 'js/libs/d3.v5.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/libs/d3.v5.min.js' %}?v={{ APP_VERSION }}"></script>
     {{ block.super }}
     <script type="text/javascript" src="{% static 'js/explore.js' %}?v={{ APP_VERSION }}"></script>
     <script type="text/javascript" src="{% static 'js/bq-string.js' %}?v={{ APP_VERSION }}"></script>

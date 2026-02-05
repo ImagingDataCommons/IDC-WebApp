@@ -4,8 +4,8 @@
 {% load idc_collections_custom_tags %}
 {% block title %}Collection Details {{ collection_id }} | IDC{% endblock %}}
 {% block extra_css_libs %}
-    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-5.css' %}" />
-    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-idc.css' %}" />
+    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-5.css' %}?v={{ APP_VERSION }}" />
+    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-idc.css' %}?v={{ APP_VERSION }}" />
 {% endblock %}
 {% block header %}
 
