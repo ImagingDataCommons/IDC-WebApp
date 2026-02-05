@@ -102,6 +102,7 @@ ATTR_SPECIFIC_ORDERS = [
 
 ORIG_ATTR_FIRST = [
     "tcia_tumorLocation",
+    "license_short_name",
     "CancerType",
     "BodyPartExamined",
     "Modality"
@@ -119,6 +120,11 @@ def quick_js_bracket_replace(matchobj):
         return '\u003C'
     else:
         return '\u003E'
+
+
+@register.filter
+def size_check(collex_size):
+    return 1 < collex_size <= 3
 
 
 @register.filter

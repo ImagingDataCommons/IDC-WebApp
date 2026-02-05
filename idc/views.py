@@ -39,6 +39,7 @@ from google_helpers.stackdriver import StackDriverLogger
 from cohorts.models import Cohort, Cohort_Perms
 
 from idc_collections.models import Program, DataSource, Collection, ImagingDataCommonsVersion, Attribute, Attribute_Tooltips, DataSetType, Citation
+from idc_collections.views import collection_details
 from idc_collections.collex_metadata_utils import (build_explorer_context, get_collex_metadata, create_file_manifest,
                                                    get_cart_data_serieslvl, get_cart_data_studylvl,
                                                    get_table_data_with_cart_data, cart_manifest)
@@ -58,6 +59,10 @@ logger = logging.getLogger(__name__)
 
 BQ_ATTEMPT_MAX = 10
 WEBAPP_LOGIN_LOG_NAME = settings.WEBAPP_LOGIN_LOG_NAME
+SERIES_COLLEX_ID_TYPE = {
+    "collection": "collection_id",
+    "analysis_result": "analysis_results_id"
+}
 
 
 # The site's homepage
@@ -290,6 +295,8 @@ def populate_tables(request):
 
     return JsonResponse(response, status=status)
 
+def analysis_results_details(request, analysis_result_id):
+    return collection_details(request, analysis_result_id)
 
 def get_citations(request):
     resp = { 'message': 'error', 'citations': None}
@@ -524,7 +531,7 @@ def parse_explore_filters(request):
 
 # Callback for recording the user's agreement to the warning popup
 def warn_page(request):
-    request.session['seenWarning'] = True;
+    request.session['seenWarning'] = True
     return JsonResponse({'warning_status': 'SEEN'}, status=200)
 
 
@@ -545,11 +552,13 @@ def cart_page(request):
         carthist = json.loads(req.get('carthist', '{}'))
         mxseries = req.get('mxseries',0)
         mxstudies = req.get('mxstudies',0)
+        cart_disk_size = req.get('cart_disk_size', 0)
         stats = req.get('stats', '')
 
         context['carthist'] = carthist
         context['mxseries'] = mxseries
         context['mxstudies'] = mxstudies
+        context['cart_disk_size'] = cart_disk_size
         context['stats'] = stats
 
     except Exception as e:
@@ -594,12 +603,12 @@ def cart_data(request):
                     filtergrp_list, partitions, field_list if (not doi_or_size_only) else None, limit, offset,
                     with_records=(not doi_or_size_only), dois_only=dois_only, size_only=size_only
                 )
-        print("response: {}".format(response))
         if dois_only:
             response = {'dois': response['dois']}
         if size_only:
             response = {
-                "display_size": convert_disk_size(response['total_size'])
+                "display_size": convert_disk_size(response['total_size']),
+                "total_size": response['total_size']
             }
     except Exception as e:
         logger.error("[ERROR] While loading cart:")
@@ -612,12 +621,13 @@ def cart_data(request):
 def get_series(request, collection_id=None, patient_id=None, study_uid=None):
     status = 200
     response = {"result": []}
+    req = request.GET if request.method == 'GET' else request.POST
     try:
         fields = ["collection_id", "PatientID", "StudyInstanceUID", "Modality", "crdc_series_uuid", "SeriesInstanceUID", "aws_bucket", "instance_size"]
         result = {}
         if not collection_id:
             # This is a request for filters and/or a cart
-            body_unicode = request.body.decode('utf-8')
+            body_unicode = req.body.decode('utf-8')
             body = json.loads(body_unicode)
             partitions = body.get("partitions", {})
             filtergrp_list = body.get("filtergrp_list", {})
@@ -651,8 +661,9 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None):
                 active=True, source_type=DataSource.SOLR,
                 aggregate_level="SeriesInstanceUID"
             ).first()
+            id_type = SERIES_COLLEX_ID_TYPE[req.get("type","collection")]
             filters = {
-                "collection_id": [collection_id]
+                id_type: [collection_id]
             }
             if patient_id:
                 filters['PatientID'] = [patient_id]
@@ -673,7 +684,9 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None):
                 }
             )
 
+        test_series = {}
         for doc in result['docs']:
+            collection_id = doc['collection_id'][0] if isinstance(doc['collection_id'], list) else doc['collection_id']
             response['result'].append({
                 "series_id": doc['SeriesInstanceUID'],
                 "crdc_series_id": doc['crdc_series_uuid'],
@@ -682,8 +695,15 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None):
                 "modality": doc['Modality'][0] if isinstance(doc['Modality'], list) else doc['Modality'],
                 "study_id": doc['StudyInstanceUID'],
                 "patient_id": doc["PatientID"],
-                "collection_id": doc['collection_id'][0] if isinstance(doc['collection_id'], list) else doc['collection_id']
+                "collection_id": collection_id
             })
+            if not collection_id in test_series:
+                test_series[collection_id] = {
+                    "series_id": doc['SeriesInstanceUID'],
+                    "study_id": doc['StudyInstanceUID'],
+                    "patient_id": doc["PatientID"],
+                    "collection_id": collection_id
+                }
         if 'facets' in result:
             response['download_stats'] = {
                 'series_count': result['facets']['total_SeriesInstanceUID'],
@@ -692,6 +712,7 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None):
                 'case_count': result['facets']['total_PatientID'],
                 'queue_byte_size': result['facets']['instance_size'],
             }
+        response['test_series'] = list(test_series.values())
 
     except Exception as e:
         logger.error("[ERROR] While fetching series per study ID:")

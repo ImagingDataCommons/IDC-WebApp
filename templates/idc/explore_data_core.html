@@ -249,14 +249,14 @@
                             </ul>
                             <div class="tab-content">
                                 <div id="search_orig_set" role="tabpanel" class="tab-pane search-set active">
-                                {% with ordered_attr=set_attributes.origin_set.All.attributes|sort_orig_attr %}
+                                {% with ordered_attr=set_attributes.origin_set.All.attributes|sort_orig_attr top_attr="Modality,license_short_name,BodyPartExamined,tcia_tumorLocation,CancerType"%}
                                     {% for attr in ordered_attr %}
                                         {% if attr.name != "collection_id"  and attr.name != "analysis_results_id" %}
                                             <ul class="list-group" role="tablist" aria-multiselectable="true">
                                                 <li class="list-group-item">
                                                     <div id="{{ attr.name }}_heading" class="list-group-item__heading">
                                                         <a role="button" data-toggle="collapse" href="#{{ attr.name }}"
-                                                           aria-expanded="{% if attr.name in "Modality,BodyPartExamined,tcia_tumorLocation,CancerType" %}true{% else %}false{% endif %}"
+                                                           aria-expanded="{% if attr.name in top_attr %}true{% else %}false{% endif %}"
                                                            aria-controls="{{ attr.name }}">
                                                             <i class="fa fa-solid fa-caret-right"></i> <i
                                                                 class="fa fa-solid fa-caret-down"></i> <span
@@ -271,10 +271,10 @@
                                                     </div>
                                                     <div id="{{ attr.name }}" data-filter-attr-id="{{ attr.id }}"
                                                          class="list-group-item__body collapse search-config-item
-                                                            {% if attr.name in "Modality,BodyPartExamined,tcia_tumorLocation,CancerType" %} in
+                                                            {% if attr.name in top_attr %} in
                                                             {% endif %}
                                                             "
-                                                         aria-expanded="{% if attr.name in "Modality,BodyPartExamined,tcia_tumorLocation,CancerType" %}true
+                                                         aria-expanded="{% if attr.name in top_attr %}true
                                                          {% else %}false{% endif %}"
                                                         {% if attr.min_max %}
                                                          data-min="{{ attr.min_max.min|floor }}"
@@ -626,18 +626,37 @@
                             collections are not publicly available
                         </div>
                         <div class="space-top-10">
-                            <button id="export-manifest" class="btn btn-primary btn-small filter-activated-controls" disabled data-toggle="modal"
-                                data-default-title="Export this cohort's series as a manifest for download."
-                                data-target="#export-manifest-modal"
+                            <div class="dropdown filter-download-menu-container filter-activated-controls"
                                 title="Select a filter to enable this feature."
-                            > Manifest <i class="fa fa-solid fa-list"></i>
-                            </button>
-                            <span id="download-cohort-images-tooltips" class="download-instances is-disabled" data-download-type="cohort" data-disabled-type="download-cohort-disabled">
-                            <button id="download-cohort-images" class="btn btn-primary btn-small filter-activated-controls download-all-instances tip-titled" disabled
-                                data-download-type="cohort"
-                            > Download <i class="fa fa-solid fa-download"></i>
-                            </button>
-                            </span>
+                                 data-default-title="Save this cohort's image files."
+                                 disabled="disabled"
+                            >
+                                <a class="disabled dropdown-toggle btnGroupDropViewers filter-activated-controls filter-download-menu-toggle download-toggle btn btn-primary btn-small"
+                                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                                   title="Select a filter to enable this feature."
+                                   data-default-title="Save this cohort's image files."
+                                >
+                                    Download <i class="fa-solid fa-download"></i>
+                                </a>
+                                <ul class="dropdown-menu filter-download-menu" role="menu">
+                                    <li>
+                                        <a id="export-manifest" class="export-filter-manifest" data-toggle="modal"
+                                            title="Export this cohort's series as a manifest for download."
+                                            data-target="#export-manifest-modal"
+                                        ><i class="fa fa-solid fa-list"></i> Manifest
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <span id="download-cohort-images-tooltips" class="download-instances is-disabled"
+                                              data-download-type="cohort" data-disabled-type="download-cohort-disabled">
+                                            <a id="download-cohort-images" class="download-all-instances download-menu-item tip-titled"
+                                                data-download-type="cohort"
+                                            ><i class="fa fa-solid fa-save"></i> Save
+                                            </a>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
                             <button class="btn btn-small btn-special citations-button filter-activated-controls" disabled
                                 data-toggle="modal" data-target="#citations-modal" role="button"
                                 data-default-title=""
@@ -679,18 +698,37 @@
                     <div class="panel-body">
                         <p id="cart_stats_holder"><span id="cart_stats" class="empty-cart">Your cart is currently empty.</span></p>
                         <div class="cart-container space-top-10">
-                            <button id="export-manifest-cart" class="btn btn-primary cart-export btn-small cart-activated-controls" disabled data-toggle="modal"
-                                data-target="#export-manifest-modal"
-                                data-default-title="Download a manifest of this cart's series."
-                                title="Add items to the cart to enable this feature."
-                            > Manifest <i class="fa fa-solid fa-list"></i>
-                            </button>
-                            <span id="download-cart-images-tooltips" class="download-instances is-disabled" data-download-type="cart" data-disabled-type="download-cart-disabled">
-                            <button id="download-cart-images" class="btn btn-primary btn-small cart-activated-controls tip-titled" disabled
-                                data-download-type="cart"
-                            > Download <i class="fa fa-solid fa-download"></i>
-                            </button>
-                            </span>
+                            <div class="dropdown cart-download-menu-container cart-activated-controls"
+                                title="Select a filter to enable this feature."
+                                 data-default-title="Save this cart's image files."
+                                 disabled="disabled"
+                            >
+                                <a class="disabled dropdown-toggle btnGroupDropViewers cart-activated-controls cart-download-menu-toggle download-toggle btn btn-primary btn-small"
+                                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                                   title="Select a filter to enable this feature."
+                                   data-default-title="Save this cart's image files."
+                                >
+                                    Download <i class="fa-solid fa-download"></i>
+                                </a>
+                                <ul class="dropdown-menu cart-download-menu" role="menu">
+                                    <li>
+                                        <a id="export-manifest-cart" class="export-cart-manifest cart-export" data-toggle="modal"
+                                            title="Export this cart's series as a manifest for download."
+                                            data-target="#export-manifest-modal"
+                                        ><i class="fa fa-solid fa-list"></i> Manifest
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <span id="download-cart-images-tooltips" class="download-instances is-disabled"
+                                              data-download-type="cart" data-disabled-type="download-cart-disabled">
+                                            <a id="download-cart-images" class="download-all-instances download-menu-item tip-titled"
+                                                data-download-type="cart"
+                                            ><i class="fa fa-solid fa-save"></i> Save
+                                            </a>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
                             <button class="btn btn-small btn-special citations-button cart-activated-controls for-cart"
                                 disabled data-toggle="modal" data-target="#citations-modal" role="button"
                                 data-default-title=""
@@ -859,7 +897,6 @@
 
                                 </div>
                                 <div id="projects_panel" class="panel-body">
-
                                     <table id="proj_table" class="table table-striped projects-table" data-table-type="collection">
                                         <thead id="projects_table_head">
                                         <tr>
@@ -872,6 +909,7 @@
                                             <th class="ckbx cartnumholder"># Series in Cart</th>
                                             <th class="collex_name sorting_1">Collection Name</th>
                                             <th class="numeric_data table-count">Cases (Total / Filtered)</th>
+                                            <th class="license">License(s)</th>
                                         </tr>
                                         </thead>
                                     </table>
@@ -882,7 +920,6 @@
                             <div id="cases_panel_container" class="panel panel-default">
                                 <div class="panel-heading clearfix"><h4 class="panel-title">Selected Cases</h4></div>
                                 <div id="cases_panel" class="panel-body">
-
                                     <table id="cases_tab" class="table table-striped cases-table" data-table-type="case">
                                         <thead id="cases_table_head">
                                         <tr>
@@ -897,6 +934,7 @@
                                             <th class="text_data">Case ID <i class="fas fa-info-circle case-info"></i></th>
                                             <th class="numeric_data narrow"># Studies</th>
                                             <th class="numeric_data narrow"># Series</th>
+                                            <th class="license">License(s)</th>
                                         </tr>
                                         </thead>
                                     </table>
@@ -918,12 +956,11 @@
                                             <th class="ckbx cart-info"><i class="fa-solid fa-info-circle cart-info-icon"></i></th>
                                             <th class="ckbx cartnumholder"># Series in Cart</th>
                                             <th class="col1 text_data case-id has_aux" data-auxid="3">Case ID <i class="fas fa-info-circle case-info"></i></th>
-                                            <th class="col2 text_data study-id study-id-col">Study Instance UID</th>
+                                            <th class="col2 text_data study-id study-id-col">Study UID</th>
                                             <th class="col1 text_data study-date">Study Date</th>
                                             <th class="col1 text_data study-description">Study Description</th>
                                             <th class="col1 numrows numeric_data table-count"># Series</th>
                                             <th class="ohif text_data open-viewer">View</th>
-                                            <th class="manifest-col"></th>
                                         </tr>
                                         </thead>
                                     </table>
@@ -939,14 +976,13 @@
                                         <tr>
                                             <th class="download-files dowbload-series download-col"></th>
                                             <th class="ckbx cart-info"><i class="fa-solid fa-info-circle cart-info-icon"></i></th>
-                                            <th class="study-id">Study Instance UID</th>
-                                            <th class="series-id ">Series Instance UID</th>
-                                            <th class="series-number numeric_data">Series Number</th>
+                                            <th class="study-id">Study UID</th>
+                                            <th class="series-id ">Series UID</th>
+                                            <th class="series-number numeric_data">Series #</th>
                                             <th class="modality">Modality</th>
                                             <th class="body-part-examined">Body Part Examined</th>
                                             <th class="series-description">Series Description</th>
                                             <th class="open-viewer text_data">View</th>
-                                            <th class="download-manifest"></th>
                                         </tr>
                                         </thead>
                                     </table>
