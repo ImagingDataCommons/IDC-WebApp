@@ -19,6 +19,7 @@ from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
+import re
 import datetime
 import base64
 import logging
@@ -26,9 +27,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 def cart_keygen():
-    return '{}'.format(base64.b64encode(uuid.uuid4().bytes).replace("=",""))
+    return re.sub(r'[^A-Za-z\d]',"",base64.b64encode(uuid.uuid4().bytes).decode('utf-8'))
 
-CART_EXPIRATION = datetime.timedelta(days=90)
+CART_EXPIRATION = datetime.timedelta(days=5000)
 
 class AppInfo(models.Model):
     id = models.AutoField(primary_key=True, null=False, blank=False)
