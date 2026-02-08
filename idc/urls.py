@@ -31,6 +31,7 @@ urlpatterns = [
 
     re_path(r'^$', views.landing_page, name='landing_page'),
     re_path(r'^quota/$', views.quota_page, name='quota_page'),
+    re_path(r'^quota/index.html$', views.quota_page, name='quota_page_index'),
     re_path(r'^users/(?P<user_id>\d+)/$', views.user_detail, name='user_detail'),
     re_path(r'^users/api/', views_api.user_detail, name='user_detail_api'),
 
