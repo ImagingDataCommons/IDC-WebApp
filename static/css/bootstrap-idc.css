@@ -103,3 +103,24 @@
     margin-left: var(--fa-li-margin,0.75em);
     margin-bottom: 1em;
 }
+
+.quota-card {
+    margin-top: 100px;
+}
+
+.quota-card .card-header {
+    background: #d98033;
+    color: #fff;
+    font-family: system-ui;
+}
+
+.quota-details {
+    height: 80vh;
+    min-height: 500px;
+    font-size: large;
+    font-family: system-ui;
+}
+
+.quota-details a {
+    font-weight: bold;
+}
