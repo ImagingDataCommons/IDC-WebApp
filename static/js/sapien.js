@@ -18,6 +18,7 @@
 
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
+    urlArgs: "v="+APP_VERSION,
     paths: {
         jquery: 'libs/jquery-3.7.1.min',
         jqueryui: 'libs/jquery-ui.min',

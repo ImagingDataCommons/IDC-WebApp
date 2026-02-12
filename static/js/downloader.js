@@ -19,6 +19,7 @@
 // initial design by @pieper 6/25/25
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
+    urlArgs: "v="+APP_VERSION,
     paths: {
         jquery: 'libs/jquery-3.7.1.min',
         base: 'base',
@@ -954,7 +955,8 @@ require([
             } else {
                 let study_uri = (study_id !== undefined && study_id !== null) ? `${study_id}/` : "";
                 let patient_uri = (patient_id !== undefined && patient_id !== null) ? `${patient_id}/` : "";
-                response = await fetch(`${BASE_URL}${SERIES_IDS_URL}${collection_id}/${patient_uri}${study_uri}`);
+                let type = (download_type === "analysis_result") ? `?type=analysis_result` : "";
+                response = await fetch(`${BASE_URL}${SERIES_IDS_URL}${collection_id}/${patient_uri}${study_uri}${type}`);
             }
             if (!response.ok) {
                 console.error(`[ERROR] Failed to retrieve series IDs: ${response.status}`);

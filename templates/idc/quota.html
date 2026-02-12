@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
-
 {% comment %}
-
-   Copyright 2019, Institute for Systems Biology
+   Copyright 2025, Institute for Systems Biology
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,17 +15,60 @@
    limitations under the License.
 
 {% endcomment %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}Quota Reached | IDC{% endblock %}
+{% block extra_css_libs %}
+    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-5.css' %}" />
+    <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-idc.css' %}" />
+{% endblock %}
+{% block header %}
+
+{% endblock %}
+
+{% block link_page_name %}quota_page{% endblock %}
+{% block page_name %}quota_notice{% endblock %}
+
+{% block page_header %}{% endblock %}
 
 {% block content %}
-    <div>
-        <div class="quota-body">
-            <div class="center">
-                <h1 class="center"><span>Daily Imaging Data Quota Exceeded</span></h1>
-                <p>Users are restricted to a quota of {{ quota }} GB per day of medical imaging files. You have reached your daily quota. Your quota will be reset at midnight GMT. For further details consult our <a href="https://learn.canceridc.dev/portal/proxy-policy">proxy policy</a>.</p>
+<div class="container-fluid quota-details">
+    <div class="row">
+        <div class="col-3"></div>
+        <div class="col">
+            <div class="card quota-card">
+                <div class="card-header text-center">
+                      <h3>Daily DICOMweb and Viewer Quota Exceeded</h3>
+                </div>
+                <div class="card-body text-left">
+                  <p>
+                      Users are restricted to a quota of <b>{{ quota }} GB</b> per day of medical imaging files accessed via
+                      our DICOMweb interface and image viewers. You have reached your daily quota. Your quota will be reset at
+                      midnight UTC.
+                  </p>
+                  <p>
+                      IDC images and data can be accessed in several alternative ways which do not have download quotas,
+                      detailed in <a href="" url="https://learn.canceridc.dev/data/downloading-data" title="Download options"
+                        class="external-link" data-toggle="modal" data-target="#external-web-warning"
+                         data-bs-toggle="modal" data-bs-target="#external-web-warning"
+                      >this article <i class="fa-solid fa-external-link external-link-icon" aria-hidden="true"></i></a>.
+                  </p>
+                    <p>
+                      For further details on the usage limits imposed on our DICOMweb interface, consult our
+                      <a href="" url="https://learn.canceridc.dev/portal/proxy-policy/" title="Proxy Policy"
+                        class="external-link" data-toggle="modal" data-target="#external-web-warning"
+                         data-bs-toggle="modal" data-bs-target="#external-web-warning"
+                      >proxy policy <i class="fa-solid fa-external-link external-link-icon" aria-hidden="true"></i></a>.
+                  </p>
+                </div>
             </div>
         </div>
+        <div class="col-3"></div>
     </div>
+</div>
 {% endblock %}
 
 {% block js_file %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/landing.js' %}?v={{ APP_VERSION }}"></script>
 {% endblock %}
