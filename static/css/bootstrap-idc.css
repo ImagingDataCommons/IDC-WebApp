@@ -108,10 +108,15 @@
     margin-top: 100px;
 }
 
+.quota-card p {
+    padding-left: 15px;
+    padding-right: 15px;
+}
 .quota-card .card-header {
     background: #d98033;
     color: #fff;
     font-family: system-ui;
+    margin-bottom: 10px;
 }
 
 .quota-details {
