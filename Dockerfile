@@ -49,6 +49,12 @@ RUN pip install pexpect
 
 RUN apt-get -y install unzip libffi-dev libssl-dev libmysqlclient-dev python3-mysqldb python3-dev libpython3-dev git g++ curl
 
+# Update the proxy to the newest version so we have MySQL 8.4 support
+RUN curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.21.1/cloud-sql-proxy.linux.amd64
+RUN chmod +x cloud-sql-proxy
+RUN mkdir /cloudsql; chmod 777 /cloudsql
+RUN ./cloud-sql-proxy --unix-socket /cloudsql ${DB_INSTANCE} &
+
 ADD . /app
 
 # We need to recompile some of the items because of differences in compiler versions
