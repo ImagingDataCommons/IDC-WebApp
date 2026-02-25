@@ -70,7 +70,8 @@ else:
     print("[STATUS] Access to the site is NOT restricted!", file=sys.stdout)
 
 # Theoretically Nginx allows us to use '*' for ALLOWED_HOSTS but...
-ALLOWED_HOSTS = list(set(os.environ.get('ALLOWED_HOST', 'localhost').split(',') + ['localhost', '127.0.0.1', '[::1]', gethostname(), gethostbyname(gethostname()),]))
+# ALLOWED_HOSTS = list(set(os.environ.get('ALLOWED_HOST', 'localhost').split(',') + ['localhost', '127.0.0.1', '[::1]', gethostname(), gethostbyname(gethostname()),]))
+ALLOWED_HOSTS = ["*"]
 print("Allowed hosts are: {}".format(ALLOWED_HOSTS))
 
 SSL_DIR = os.path.abspath(os.path.dirname(__file__))+os.sep
