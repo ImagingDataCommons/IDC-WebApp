@@ -18,6 +18,7 @@ from datetime import timedelta
 
 from django.db import models
 from django.contrib.auth.models import User
+from idc_collections.models import ImagingDataCommonsVersion
 import uuid
 import re
 import datetime
@@ -49,7 +50,7 @@ class SharedCart(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, null=False, blank=False)
     definition = models.TextField(null=False, blank=False, default='{}')
     series_ids = models.TextField(null=False, blank=False, default='')
-    description = models.TextField(null=False, blank=False, default='')
+    idc_version = models.ForeignKey(ImagingDataCommonsVersion, null=True, blank=False, on_delete=models.CASCADE)
 
     @classmethod
     def clear_expired_carts(cls):
