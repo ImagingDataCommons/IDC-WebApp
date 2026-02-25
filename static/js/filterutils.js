@@ -68,8 +68,9 @@ define(['jquery', 'base'], function($, base) {
             $('.filter-placeholder').show();
             $('.filter-activated-controls').each(function(){
                 if(!$(this).attr('data-pending-manifest')) {
-                    $(this).attr("disabled","disabled");
-                    $(this).attr("title","Select a filter to enable this feature.");
+                    !$(this).hasClass('dropdown-toggle') && $(this).attr("disabled","disabled");
+                    $(this).hasClass('dropdown-toggle') && $(this).addClass('disabled');
+                    !$(this).hasClass('tip-titled') && $(this).attr("title","Select a filter to enable this feature.");
                 }
             })
             $('.bq-string, .citations-list').html("");
@@ -89,8 +90,9 @@ define(['jquery', 'base'], function($, base) {
             $('.filter-placeholder').hide();
             $('.filter-activated-controls').each((function(){
                 if(!$(this).attr('data-pending-manifest')) {
-                    $(this).attr("title", $(this).attr("data-default-title"));
+                     !$(this).hasClass('tip-titled') && $(this).attr("title", $(this).attr("data-default-title"));
                     $(this).removeAttr("disabled");
+                    $(this).removeClass('disabled');
                 }
             }));
             $('.bq-string-display, .bq-string-copy').attr('filter-params', JSON.stringify(filters));
@@ -642,7 +644,6 @@ define(['jquery', 'base'], function($, base) {
         window.filterObj= {};
         window.handleFilterSelectionUpdate(null, true, true);
     }
-
 
     window.handleFilterSelectionUpdate = function(filterElem, mkFilt, doUpdate) {
         var promise =  null

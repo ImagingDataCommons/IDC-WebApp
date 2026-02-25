@@ -1,5 +1,6 @@
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
+    urlArgs: "v="+APP_VERSION,
     paths: {
         jquery: 'libs/jquery-3.7.1.min',
         bootstrap: 'libs/bootstrap.min',
@@ -36,7 +37,7 @@ require(['jquery', 'datatables.net','jqueryui', 'bootstrap', 'base'],
                 let collex_info = $(this).siblings('.collection-explore');
                 let type = collex_info.data('collex-type');
                 let desc = collection_descs[$(this).data('collex-id')];
-                if(type === 'Analysis'){
+                if(type === 'A'){
                     desc += `<p><b>Collections:</b> `+collex_info.data('collex-collex').replaceAll(",", ", ")+`</p>`;
                 }
                 let sources = $(this).data('doi').split(" ").map(function(i){
@@ -51,7 +52,7 @@ require(['jquery', 'datatables.net','jqueryui', 'bootstrap', 'base'],
 
         $('#collections-table tbody').on('click', 'td.collection-explore', function () {
             let url = '/explore/filters/?'
-                + ($(this).data('collex-type') === 'Analysis' ? "analysis_results_id" : "collection_id")
+                + ($(this).data('collex-type') === 'A' ? "analysis_results_id" : "collection_id")
                 + "=" + $(this).data('collex-id');
 
             window.location.href = url;

@@ -122,46 +122,64 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         return deferred.promise();
     };
 
-
-    const updateCartCounts =function(){
-
-        var buttonContents = '<button class="btn filter-type clear-cart" role="button" title="Clear the current filter set."><i class="fa fa-rotate-left"></i></button>';
-
-        if (Object.keys(window.proj_in_cart).length>0){
+    const updateCartCounts = async function(){
+        var buttonContents = '<button class="btn filter-type clear-cart" role="button" title="Empty your cart."><i class="fa fa-rotate-left"></i></button>';
+        let cart_has_contents = Boolean(Object.keys(window.proj_in_cart).length>0);
+        let cart_controls = $('.cart-activated-controls');
+        var nmseries = 0;
+        if (cart_has_contents){
             var nmprojs = 0;
             var nmcases=0;
             var nmstudies=0;
-            var nmseries =0;
             for (projid in window.proj_in_cart){
                 nmprojs++;
                 nmcases=nmcases+window.proj_in_cart[projid]['cases'];
                 nmstudies=nmstudies+window.proj_in_cart[projid]['studies'];
                 nmseries=nmseries+window.proj_in_cart[projid]['series'];
             }
-
-
-            var content = buttonContents+'<span id ="#cart_stats">Cart contents: ' + nmseries.toString()+' series from '+nmprojs.toString()+
-                ' collections / '+nmcases.toString()+' cases / '+nmstudies.toString()+' studies</span>';
+            let content = buttonContents+'<span id ="cart_stats">Cart contents: ' + nmseries.toString()+' series from '+nmprojs.toString()+
+                ' collections / '+nmcases.toString()+' cases / '+nmstudies.toString()+' studies</span> <span class="cart_disk_size">(Calculating size...)</span>';
             localStorage.setItem('manifestSeriesCount',nmseries);
 
             $('#cart_stats_holder').html(content) ;
             $('#cart_stats').removeClass('empty-cart');
-            $('#export-manifest-cart').removeAttr('disabled');
-            $('.cart-view').removeAttr('disabled');
-            $('.clear-cart').removeAttr('disabled');
-            $('.clear-cart').on('click', function(){
-                 window.resetCart();
+            cart_controls.each(function(){
+                $(this).removeAttr('disabled');
+                $(this).removeClass('disabled');
+                !$(this).hasClass('tip-titled') && $(this).attr("title",$(this).attr("data-default-title"));
             });
-
+            let cart_disk_size = 0;
+            let cart_disk_display_size = "(Calculating...)";
+            let cart_disk_resp = await fetch(`${BASE_URL}/cart_data/`, {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        'filtergrp_list': JSON.stringify(window.filtergrp_list ? window.filtergrp_list : [{}]),
+                        'partitions': JSON.stringify(window.partitions),
+                        'size_only': 'true'
+                    }),
+                    headers: {"X-CSRFToken": $.getCookie('csrftoken'), "content-type": 'application/x-www-form-urlencoded'}
+            });
+            if(!cart_disk_resp.ok) {
+                console.error("Unable to fetch cart size!");
+                cart_disk_size = 4;
+                cart_disk_display_size = "(Unable to retrieve size.)";
+            } else {
+                let cart_disk_res = await cart_disk_resp.json();
+                cart_disk_size = cart_disk_res['total_size']/Math.pow(1000,4);
+                cart_disk_display_size = cart_disk_res['display_size'];
+                $('#cart_stats').attr('data-cart-disk-size',cart_disk_size);
+            }
+            $('.cart_disk_size').html(cart_disk_display_size);
+            base.updateDownloadBtns('cart', cart_has_contents, cart_disk_size, nmseries);
         } else {
             $('#cart_stats_holder').html('<span id="#cart_stats">Your cart is currently empty</span>');
             $('#cart_stats').addClass('empty-cart');
-
-            $('#export-manifest-cart').attr('disabled', 'disabled');
-            $('.cart-view').attr('disabled', 'disabled');
-            $('.clear-cart').attr('disabled', 'disabled');
+            cart_controls.each(function(){
+                !$(this).hasClass('dropdown-toggle') && $(this).attr('disabled', 'disabled');
+                $(this).hasClass('dropdown-toggle') && $(this).addClass('disabled');
+                !$(this).hasClass('tip-titled') && $(this).attr("title","Add items to the cart to enable this feature.");
+            });
         }
-
     }
 
     // remove all items from the cart. clear the glblcart, carHist, cartDetails
@@ -184,12 +202,8 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
 
          $('#cart_stats').addClass('empty-cart');
          $('#cart_stats').html("Your cart is currently empty.");
-         $('#export-manifest-cart').attr('disabled','disabled');
-         $('.cart-view').attr('disabled','disabled');
-         $('.clear-cart').attr('disabled','disabled');
+         $('.cart-activated-controls').attr('disabled','disabled');
     }
-
-
 
     //as user makes selections in the tables, record the selections in the cartHist object. Make new partitions from the selections
     const updateCartSelections = function(newSel){
@@ -198,10 +212,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         var selections = window.cartHist[curInd]['selections'];
         selections.push(newSel);
         window.cartHist[curInd]['partitions'] = mkOrderedPartitions(window.cartHist[curInd]['selections']);
-
-
     }
-
 
     // make partitions from table selections
     const mkOrderedPartitions = function(selections){
@@ -276,39 +287,43 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         }
         var csrftoken = $.getCookie('csrftoken');
         var form = document.createElement('form');
+        let input = null;
         form.id = "cart-view-elem";
         form.style.visibility = 'hidden'; // no user interaction is necessary
         form.method = 'POST'; // forms by default use GET query strings
         //form.action = '/explore/cart/';
         form.action = '/cart/';
         //form.append(csrftoken);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "csrfmiddlewaretoken";
         input.value =csrftoken;
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "carthist";
         input.value = JSON.stringify(window.cartHist);
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "filtergrp_list";
         input.value = JSON.stringify(filterSets);
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "partitions";
         input.value = JSON.stringify(partitions);
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "mxseries";
         input.value = mxNumSeries;
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "mxstudies";
         input.value = mxNumStudies;
         form.appendChild(input);
-        var input = document.createElement('input');
+        input = document.createElement('input');
         input.name = "proj_in_cart";
         input.value = JSON.stringify(window.proj_in_cart);
+        input = document.createElement('input');
+        input.name = "cart_disk_size";
+        input.value = $('#cart_stats').attr('data-cart-disk-size');
         form.appendChild(input);
         document.body.appendChild(form)
         form.submit();
@@ -317,7 +332,6 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
 
      window.updatePartitionsFromScratch = function(){
         window.partitions = new Array();
-
         for (var i=0;i<window.cartHist.length;i++){
            var cartHist=window.cartHist[i];
            updateGlobalPartitions(cartHist.partitions);
@@ -327,10 +341,6 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
            refilterGlobalPartitions(cartHist,i);
         }
         fixpartitions();
-        var filtStrings = createFiltStrings();
-        var solrStr = createSolrString(filtStrings);
-        window.solrStr = solrStr;
-        var ii=1;
     };
 
     //looking across the history of cart selections, create one set of exclusive partitions of the imaging data
@@ -507,29 +517,6 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
             filtStrings.push(fstr);
         }
         return(filtStrings);
-    }
-
-    // not really needed, but used to creating the solr string in on the client side
-    const createSolrString = function(filtStringA){
-        var solrStr=''
-        var solrA=[]
-        for (var i=0;i< window.partitions.length;i++){
-            var curPart = window.partitions[i];
-            if (!curPart['null']) {
-                var curPartAttStrA = parsePartitionAttStrings(filtStringA, curPart);
-                var curPartStr = parsePartitionStrings(curPart);
-                for (var j = 0; j < curPartAttStrA.length; j++) {
-                    if (curPartAttStrA[j].length > 0) {
-                        solrA.push('(' + curPartStr + ')(' + curPartAttStrA[j] + ')')
-                    } else{
-                        solrA.push(curPartStr);
-                    }
-                }
-            }
-        }
-        solrA = solrA.map(x => '('+x+')');
-        var solrStr = solrA.join(' OR ')
-        return solrStr
     }
 
     const parsePartitionAttStrings = function(filtStringA, partition){
@@ -722,7 +709,6 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                     ndic['aggregate_level'] = 'StudyInstanceUID'
                     ndic['results_level'] = 'StudyInstanceUID'
                     var csrftoken = $.getCookie('csrftoken');
-                    window.show_spinner();
                     $.ajax({
                         url: url,
                         dataType: 'json',
@@ -743,19 +729,16 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                              });
                              var txt =$('#cart-table_info').text().replace('entries','studies');
                              $('#cart-table_info').text(txt);
-                             window.hide_spinner();
                         },
                         error: function () {
                             console.log("problem getting data");
                             alert("There was an error fetching server data. Please alert the systems administrator");
-                            window.hide_spinner();
                         }
                     });
                 }
             });
         } catch(Exception){
             alert("The following error was reported when processing server data: "+ Exception +". Please alert the systems administrator");
-            window.hide_spinner();
         }
     }
 
@@ -763,6 +746,10 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         var newId = id.slice(0, 8) + '...' + id.slice(id.length - 8, id.length);
         return newId;
     }
+
+    $('.shopping-cart-panel').on('click', '.clear-cart', function(){
+         window.resetCart();
+    });
 
     return {
         mkOrderedPartitions: mkOrderedPartitions,

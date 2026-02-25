@@ -54,12 +54,15 @@
         const STATIC_FILES_URL = '{{ STATIC_FILES_URL }}';
         const BASE_URL = '{{ BASE_URL }}' || "";
         const STORAGE_URI = '{{ STORAGE_URI }}';
+        const APP_VERSION = '{{ APP_VERSION }}';
         const OHIF_V2_PATH = '{{ OHIF_V2_PATH }}';
         const OHIF_V3_PATH = '{{ OHIF_V3_PATH }}';
         const VOLVIEW_PATH = '{{ VOLVIEW_PATH }}';
         const SLIM_VIEWER_PATH = '{{ SLIM_VIEWER_PATH }}';
         const FETCH_MANIFEST_URL = "{% url 'fetch_user_manifest_base' %}";
         const CHECK_MANIFEST_URL = "{% url 'check_user_manifest_base' %}";
+        const SERIES_IDS_URL = "{% url 'get_series_ids_base' %}";
+        const SERIES_IDS_FILTER_URL = "{% url 'get_series_ids_filter' %}";
     </script>
     <!-- OCPL Banner -->
     <script async src="https://assets.adobedtm.com/6a4249cd0a2c/785de09de161/launch-70d67a6a40a8.min.js"></script>
@@ -104,6 +107,8 @@
                                    style="display: none;"></i>
                                 <i class="floating-message-icon floating-message-icon-cancel fa-solid fa-circle-exclamation"
                                    style="display: none;"></i>
+                                <i class="floating-message-icon floating-message-icon-seek fa-solid fa-compass fa-spin"
+                                   style="display: none;"></i>
                             </p>
                             <p>
                                 <button type="button"
@@ -123,7 +128,7 @@
         </div>
     </div>
     <!-- The landing page and collections page have a special layout, so they have their own footer include -->
-    {% if request.path != '/' and request.path != '/collections/' and request.path != '/cohorts/' %}
+    {% if request.path != '/' and request.path != '/cohorts/' and 'collection' not in request.path %}
         {% include 'share/site_footer.html'  %}
     {% endif %}
 </main>

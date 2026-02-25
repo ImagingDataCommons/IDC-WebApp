@@ -1,0 +1,65 @@
+<!-- Export Collection Manifest Modal -->
+<div class="modal fade" id="export-collex-manifest-modal" tabindex="-1" role="dialog"
+     aria-labelledby="exportCollexManifestModal" aria-hidden="true" data-file-timestamp="{% now "Ymd_Gis" %}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="exportCollexManifestModal">{{ collection_type }} Export</h4>
+                <button type="button" class="close btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+                <div class="modal-body">
+                    <div class="form-group list-group">
+                        <ul class="nav nav-tabs manifest">
+                            <li class="filter-tab active manifest-idc-index" role="presentation">
+                                <a href="#manifest-idc-index" role="tab" data-toggle="tab" title="idc-index manifest"
+                                   aria-expanded="true"
+                                >
+                                    idc-index
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content">
+                            <div id="manifest-idc-index" class="tab-pane manifest active" role="tab-panel">
+                                <p>
+                                    <br />
+                                    To obtain these images, install the
+                                    <a class="external-link" url="https://github.com/ImagingDataCommons/idc-index"
+                                       data-toggle="modal" data-target="#external-web-warning">idc-index
+                                        <i class="fa-solid fa-external-link external-link-icon" aria-hidden="true"></i>
+                                    </a> python package:</p>
+                                <p>
+                                    <span class="code">
+                                        pip install --upgrade idc-index
+                                    </span> <a
+                                        role="button" class="pip-install copy-this"
+                                        content="pip install --upgrade idc-index"
+                                        title="Copy command to clipboard">
+                                        <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                                    </a>
+                                </p>
+                                <p>
+                                    Then run the following command:
+                                </p>
+                                <p>
+                                    <span class="code idc-index-text">
+                                        idc download {{ collection_id }}
+                                    </span> <a
+                                        role="button" class="idc-index copy-this"
+                                        content="idc download {{ collection_id }}"
+                                        title="Copy command to clipboard">
+                                        <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                                    </a>
+                                </p>
+                                <p>To learn about more ways to download IDC data, please <a
+                                       class="external-link" href="" url="https://learn.canceridc.dev/data/downloading-data"
+                                       data-toggle="modal" data-target="#external-web-warning"
+                                    >
+                                    see IDC download instructions page. <i class="fa-solid fa-external-link external-link-icon" aria-hidden="true"></i></a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+</div>

@@ -18,6 +18,7 @@
 
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
+    urlArgs: "v="+APP_VERSION,
     paths: {
         jquery: 'libs/jquery-3.7.1.min',
         bootstrap: 'libs/bootstrap.min',
@@ -66,16 +67,47 @@ require([
 
     A11y.Core();
 
-    let csrftoken = $.getCookie('csrftoken')
+    let csrftoken = $.getCookie('csrftoken');
 
     $('#citations-modal').on('show.bs.modal', async function(event) {
         let button = $(event.relatedTarget);
-        let dois = button.attr('data-dois').split("||");
         let cites_list = $("#citations-modal .citations-list");
         let copy_cites = $("#citations-modal .copy-this");
+
+        let dois = null;
         cites_list.html(`
             Formatting citation(s)... <i class="fa fa-compass fa-spin"></i>
         `);
+
+        if(button.hasClass('for-cart')) {
+            let cart_result = await fetch(`${BASE_URL}/cart_data/`, {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        'filtergrp_list': JSON.stringify(window.filtergrp_list ? window.filtergrp_list : [{}]),
+                        'partitions': JSON.stringify(window.partitions),
+                        'dois_only': 'true'
+                    }),
+                    headers: {"X-CSRFToken": csrftoken, "content-type": 'application/x-www-form-urlencoded'}
+            });
+            if(!cart_result.ok) {
+                cites_list.html("Failed to retrieve citations!");
+                throw new Error("Failed to retrieve citations!");
+            }
+            let data = await cart_result.json();
+            dois = data['dois'];
+        } else if(button.hasClass('for-collection')) {
+            $('.cite-type').html("collection");
+            let citations = collex_citations;
+            dois = Object.keys(citations);
+            for(let doi of dois) {
+                if(!DOI_CACHE[doi]) {
+                    DOI_CACHE[doi] = citations[doi];
+                }
+            }
+        } else {
+            dois = button.attr('data-dois').split("||");
+        }
+
         let dois_to_get = dois.filter((d) => (DOI_CACHE[d] === null || DOI_CACHE[d] === undefined));
         if(dois_to_get.length > 0) {
             let resp = null;
@@ -85,8 +117,10 @@ require([
                     body: JSON.stringify({
                         'doi': dois_to_get
                     }),
-                    headers: {"X-CSRFToken": csrftoken},
-                    "content-type": "application/json"
+                    headers: {
+                        "X-CSRFToken": csrftoken,
+                        "content-type": "application/json"
+                    }
                 });
             } else {
                 let encoded_dois = dois_to_get.map(d => `doi=${encodeURIComponent(d)}`);

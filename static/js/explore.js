@@ -17,6 +17,7 @@
  */
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
+    urlArgs: "v="+APP_VERSION,
     paths: {
         jquery: 'libs/jquery-3.7.1.min',
         bootstrap: 'libs/bootstrap.min',
@@ -30,7 +31,8 @@ require.config({
         image_search: 'image_search',
         tippy: 'libs/tippy-bundle.umd.min',
         '@popperjs/core': 'libs/popper.min',
-        session_security: 'session_security/script'
+        session_security: 'session_security/script',
+        tooltips: 'tooltips'
     },
     shim: {
         '@popperjs/core': {
@@ -62,6 +64,7 @@ require([
     'jquerydt',
     'bootstrap',
     'tablesorter',
+    'tooltips'
 
 ], function (image_search, tables,$, tippy, base) {
 
@@ -73,9 +76,6 @@ require([
     //sesssionStorage.setItem("cartHist",JSON.stringify(window.cartHist));
     window.partitions = new Array();
 
-    window.studymp=new Object();
-    window.projstudymp = new Object();
-    window.casestudymp = new Object();
     window.collection = JSON.parse(document.getElementById('collections').textContent);
     var lst = Object.keys(window.collection).sort();
     window.collectionData = new Array();
@@ -84,10 +84,11 @@ require([
 
     for (program in window.programs) {
         for (project in window.programs[program]['projects']) {
-            var col = project;
-            var disp = window.programs[program]['projects'][project]['display'];
-            var val = window.programs[program]['projects'][project]['val'];
-            window.collectionData.push([col, disp, val, val]);
+            let id = project;
+            let disp = window.programs[program]['projects'][project]['display'];
+            let subjCount = window.programs[program]['projects'][project]['val'];
+            let license = window.programs[program]['projects'][project]['license'];
+            window.collectionData.push([id, disp, subjCount, subjCount, license]);
             window.selProjects[project]=new Object();
         }
     }
@@ -105,7 +106,6 @@ require([
     })
 
     $('#save-cohort-modal').on('show.bs.modal', function() {
-
         var modality_join = $('.join_val').filter(':checked').prop('value');
         var filters = {};
         $('.search-scope .search-checkbox-list input:checked , ' +
@@ -131,13 +131,11 @@ require([
                             + '"><span class="attr">' + $(this).data('filter-display-attr') + ':</span></p>');
                     }
 
-
                     if ( ($(this).data('filter-display-attr')=='Modality') && (filters[$(this).data('filter-attr-id')])  ){
                           $(`${modal_filter_block} p.` + $(this).data('filter-attr-id')).append(
                          '<span class="val">' + modality_join + '</span>'
                         );
                      }
-
 
                     $(`${modal_filter_block} p.` + $(this).data('filter-attr-id')).append(
                          '<span class="val">' + $(this).data('filter-display-val') + '</span>'
@@ -265,420 +263,6 @@ require([
     $('#collection_modal_button').on("click", function(){
         $('#collection-modal').removeClass('in');
         $('#collection-modal').css("display","none");
-    });
-
-    var cart_info = function(type) {
-        return '<p><span class="cart-info-tip case1">' +
-            `<i class="fa-solid fa-cart-shopping shopping-cart "></i></span> <span>All series from this ${type} are in the cart</span></p>`+
-            '<p><span class="cart-info-tip case2">' +
-            `<i class="fa-solid fa-cart-shopping shopping-cart case2"></i></span> <span>Some series from this ${type} are in the cart</span></p>` +
-             '<p><span class="cart-info-tip case3">' +
-            `<i class="fa-solid fa-cart-shopping shopping-cart case3"></i></span> <span>No series from this ${type} are in the cart</span></p>`+
-            '<p>Note: clicking the cart icons only add or remove series belonging to ' +
-            '<b>studies</b> that match the current filter</p>';
-    };
-
-    tippy.delegate('#projects_table_head', {
-        interactive: true,
-        target:'.cart-info',
-        allowHTML:true,
-        theme:'light',
-        placement:'right',
-        content: cart_info("collection")
-    });
-
-    tippy.delegate('#cases_table_head', {
-        interactive: true,
-        target:'.cart-info',
-        allowHTML:true,
-        theme:'light',
-        placement:'right',
-        content: cart_info("case")
-    });
-
-    tippy.delegate('#studies_table_head', {
-        interactive: true,
-        target:'.cart-info',
-        allowHTML:true,
-        theme:'light',
-        placement:'right',
-        content: cart_info("study")
-    });
-
-    tippy.delegate('#series_table_head', {
-        interactive: true,
-        target:'.cart-info',
-        allowHTML:true,
-        theme:'light',
-        placement:'right',
-        content: '<p><span class="cart-info-tip case1">' +
-            '<i class="fa-solid fa-cart-shopping shopping-cart "></i></span> <span>This series is in the cart</span></p>'+
-             '<p><span class="cart-info-tip case3">' +
-            '<i class="fa-solid fa-cart-shopping shopping-cart case3"></i></span> <span>This series is not the cart</span></p>'
-    });
-
-    tippy('.case-info', {
-        interactive: true,
-        content: 'The Case ID attribute in the portal corresponds to the DICOM Patient ID attribute'
-    });
-
-    tippy('.explainer', {
-        interactive: true,
-        allowHTML:true,
-        content: 'As some attributes have non mutually exclusive values the charts may contain non zero counts for these ' +
-            'values even when they are not selected in the left hand panel. ' +
-            'See <a href="https://learn.canceridc.dev/portal/data-exploration-and-cohorts/exploring-imaging-data#understanding-counts-in-the-search-results" target="_blank" rel="noopener noreferrer">here</a> for a detailed explanation.'
-    });
-
-    tippy('.tooltip_filter_info',{
-        content: 'Each chart below reports the number of cases (or patients) for all values within a given attribute, ' +
-            'given the currently defined filter set. Once a case is selected, all series for that case, including those ' +
-            'that do not meet the search criteria, are included. For example, cases selected based on the presence of CT ' +
-            'modality may also contain PET modality, and thus counts for both values will appear in the chart, and the ' +
-            'manifest.',
-        theme: 'light',
-        placement: 'right-end',
-        arrow: false
-    });
-
-    tippy('.tooltip_chart_info',{
-        content: 'Counts shown below are the number of cases (or patients) for each attribute value. Counts for each ' +
-            'attribute (e.g. Modality) are unchanged by the values (e.g. PET) selected (checked) for that attribute. ' +
-            'They only change based on the values selected for all other attributes.',
-        theme: 'light',
-        placement: 'right-end',
-        arrow: false
-    });
-
-    tippy('.filterset_info',{
-        content: 'Go ask Bill',
-        theme: 'light',
-        placement: 'right-end',
-        arrow: false
-    });
-
-    tippy('.checkbox-none',{
-        content: 'Filtering on the \'None\' attribute is not currently supported within derived data.',
-        theme: 'light',
-        placement: 'top-start',
-        arrow: false
-    });
-
-    tippy.delegate('.studies-table', {
-        content: 'Some or all of the images in this collection are not publicly available.',
-        theme: 'dark',
-        placement: 'right',
-        arrow: false,
-        interactive:true,
-        target: '.coll-explain',
-        maxWidth: 130
-    });
-
-    tippy.delegate('.series-table', {
-        content: function(reference) {
-            if($(reference).hasClass('not-viewable')) {
-                return 'No valid viewer is available for this modality.'
-            }
-            return 'Please open at the study level to view this series.';
-        },
-        theme: 'dark',
-        placement: 'right',
-        arrow: false,
-        interactive:true,
-        target: ['.no-viewer-tooltip', '.not-viewable'],
-        maxWidth: 130
-    });
-
-    tippy.delegate('.studies-table', {
-        content: 'This study cannot be viewed.',
-        theme: 'dark',
-        placement: 'right',
-        arrow: false,
-        interactive:true,
-        target: ['.no-viewer-tooltip', '.not-viewable'],
-        maxWidth: 130
-    });
-
-    tippy('.bq-string-copy',{
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        trigger: 'disabled',
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        maxWidth: 85
-    });
-
-    tippy.delegate('.series-table', {
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        target: '.copy-this',
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        trigger: "click",
-        maxWidth: 85
-    });
-
-    tippy.delegate('.studies-table', {
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        target: '.copy-this',
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        trigger: "click",
-        maxWidth: 85
-    });
-
-    tippy.delegate('.projects-table', {
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        target: '.copy-this',
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        trigger: "click",
-        maxWidth: 85
-    });
-
-    const dynamicCartTip = {
-        fn: (instance) => ({
-            onShow() {
-                instance.setContent(instance.props.dynamicTip(instance.reference));
-            }
-        })
-    };
-
-    tippy.delegate('.projects-table', {
-        dynamicTip: function(ref){
-            if($(ref).parentsUntil('tbody').filter('tr').hasClass('extraInFilter') || !($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart'))) {
-                return "add series to cart"
-            }
-            return "remove series from cart"
-        },
-        interactive: true,
-        allowHTML: true,
-        placement: 'right',
-        content: 'add series to cart', // placeholder text
-        target: '.shopping-cart-holder',
-        plugins: [dynamicCartTip]
-    });
-
-    tippy.delegate('.cases-table', {
-        dynamicTip: function(ref){
-            if($(ref).parentsUntil('tbody').filter('tr').hasClass('extraInFilter') || !($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart'))) {
-                return "add series to cart"
-            }
-            return "remove series from cart"
-        },
-        interactive: true,
-        allowHTML: true,
-        placement: 'right',
-        content: 'add series to cart', // placeholder text
-        target: '.shopping-cart-holder',
-        plugins: [dynamicCartTip]
-    });
-
-    tippy.delegate('.series-table', {
-        dynamicTip: function(ref){
-            if ($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart')) {
-                return "remove from cart"
-            }
-            return "add to cart"
-        },
-        interactive: true,
-        allowHTML: true,
-        placement: 'right',
-        content: 'add series to cart', // placeholder text
-        target: '.shopping-cart-holder',
-        plugins: [dynamicCartTip]
-    });
-
-    tippy.delegate('.studies-table', {
-        dynamicTip: function(ref){
-            if($(ref).parentsUntil('tbody').filter('tr').hasClass('extraInFilter') || !($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart'))) {
-                return "add series to cart"
-            }
-            return "remove series from cart"
-        },
-        interactive: true,
-        allowHTML: true,
-        placement: 'right',
-        content: 'add series to cart', // placeholder text
-        target: '.shopping-cart-holder',
-        plugins: [dynamicCartTip]
-    });
-
-    tippy.delegate('.cases-table', {
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        target: '.copy-this',
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        trigger: "click",
-        maxWidth: 85
-    });
-
-
-    tippy.delegate('.filter-display-panel', {
-        content: 'Get the citation list for this cohort.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.citations-button',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.cases-table', {
-        content: 'Download all of the image instances in this case.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-instances',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.cases-table', {
-        content: 'Direct download is only available in Chromium browsers.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-disabled',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.studies-table', {
-        content: 'Download all of the image instances in this study.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-instances',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.studies-table', {
-        content: 'Download a manifest file for this study.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.export-button',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.studies-table', {
-        content: 'Direct download is only available in Chromium browsers.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-disabled',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.series-table', {
-        content: 'Download all of the image instances in this series.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-instances',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.series-table', {
-        content: 'Download a manifest file for this series.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.export-button',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.series-table', {
-        content: 'Direct download is only available in Chromium browsers.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.download-all-disabled',
-        maxWidth: 200
-    });
-
-    tippy.delegate('.series-table', {
-        content: 'Some or all of the images in this collection are not publicly available.',
-        theme: 'dark',
-        placement: 'right',
-        arrow: false,
-        interactive:true,
-        target: '.coll-explain',
-        maxWidth: 130
-    });
-
-    tippy.delegate('.series-table', {
-        content: function(reference) {
-            return $(reference).data('description');
-        },
-        theme: 'dark',
-        placement: 'right',
-        arrow: false,
-        target: '.description-tip',
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        maxWidth: 800
-    });
-
-    tippy.delegate('#body', {
-        content: function(reference) {
-            return "Copied!";
-        },
-        theme: 'blue',
-        placement: 'auto',
-        arrow: true,
-        target: '.copy-this',
-        trigger: 'click',
-        interactive: true,
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        maxWidth: 85
-    });
-
-    $('.download-link').on('click', function(){
-        $('#download-images').modal("hide");
     });
 
     $('.container-fluid').on('click', '.collapse-all', function(){

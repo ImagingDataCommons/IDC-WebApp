@@ -17,6 +17,7 @@
  */
 require.config({
     baseUrl: STATIC_FILES_URL + 'js/',
+    urlArgs: "v="+APP_VERSION,
     paths: {
         jquery: 'libs/jquery-3.7.1.min',
         bootstrap: 'libs/bootstrap.min',
@@ -32,8 +33,8 @@ require.config({
         cartutils: 'cartutils',
         tippy: 'libs/tippy-bundle.umd.min',
          '@popperjs/core': 'libs/popper.min',
-
-
+        citations_modal: 'citations_modal',
+        downloader: 'downloader'
     },
     shim: {
         '@popperjs/core': {
@@ -50,7 +51,8 @@ require.config({
         'underscore': {exports: '_'},
         'session_security': ['jquery'],
         'cartutils': ['jquery'],
-        'export-manifest':['jquery']
+        'export-manifest':['jquery'],
+        'citations_modal': ['jquery']
     }
 });
 
@@ -64,73 +66,63 @@ require([
     'base', // This must ALWAYS be loaded!
     'jquerydt',
     'jqueryui',
-    'bootstrap'
+    'bootstrap',
+    'citations_modal',
+    'downloader'
 ], function(cartutils, tables, $, tippy, _, base) {
 
-     var ajaxtriggered = false;
+    var ajaxtriggered = false;
 
     window.resetCartPageView = function(){
-
-
         localStorage.setItem("cartcleared","yes");
         window.history.back();
-
     }
-
-    tippy.delegate('#cart-table', {
-        content: 'Copied!',
-        theme: 'blue',
-        placement: 'right',
-        arrow: true,
-        interactive: true, // This is required for any table tooltip to show at the appropriate spot!
-        target: '.copy-this',
-        onShow(instance) {
-            setTimeout(function() {
-                instance.hide();
-            }, 1000);
-        },
-        trigger: "click",
-        maxWidth: 85
-    });
 
     setCartDetailsModal = function(){
         var contentArray= [];
         for (var i=0;i< window.cartHist.length;i++){
             var cartDetail = window.cartHist[i];
-            var filter = JSON.stringify(cartDetail.filter);
+            var filter = cartDetail.filter;
+            let is_filtered = (Object.keys(filter).length > 0);
+            let filter_match = is_filtered ? " which match the filter" : "";
+            let filter_div = "", adjustment_div = "";
             var selections = cartDetail.selections;
             if (selections.length>0){
-                contentArray.push('Set filter definition set to: '+filter);
-                for (var j=0;j<selections.length;j++){
-                    var selectext=""
-                    var selec = selections[j]
-                    if (selec.sel.length ==4){
-                        if (selec.added) {
-                            selectext += "<li>Added the series " +selec.sel[3] +" from collection " + selec.sel[0] +", case "+selec.sel[1]+", study "+selec.sel[2];
-                        }
-                        else{
-                           selectext += "<li>Removed the series " +selec.sel[3] +" from collection " + selec.sel[0] +", case "+selec.sel[1]+", study "+selec.sel[2];
-                        }
-
+                if(is_filtered) {
+                    let filter_set = [];
+                    for(attr in filter) {
+                        filter_set.push(`<span class="filter-type">${attr}</span> in (${filter[attr].map(d => '<span class="filter-att">'+d+'</span>').join("")})`);
                     }
-                    else {
-                        if (selec.added) {
-                            selectext += "<li>Added series matching the filter from collection " + selec.sel[0]
-                        } else {
-                            selectext += "<li>Removed series matching the filter from collection " + selec.sel[0]
-                        }
+                    filter_div = `<div class="cart-filter-display"><span class="filter-title">Filter: </span>${filter_set.join(" AND ")}</div>`;
+                }
+                let adjustments = [];
+                for (var j=0;j<selections.length;j++){
+                    var selectext= "";
+                    var selec = selections[j];
+                    let op = selec.added ? "Added" : "Removed";
+                    if (selec.sel.length == 4){
+                        selectext += `<span class="adjustments-op">${op}</span> series ${selec.sel[3]} from 
+                            <span class="adjustment-type">collection</span> <span class="adjustment-att">${selec.sel[0]}, 
+                            <span class="adjustment-type">case</span> <span class="adjustment-att">${selec.sel[1]}</span>, 
+                            <span class="adjustment-type">study</span> <span class="adjustment-att">${selec.sel[2]}</span>`;
+                    } else {
+                        selectext += `<span class="adjustments-op">${op}</span> series from 
+                            <span class="adjustment-type">collection</span> <span class="adjustment-att">${selec.sel[0]}</span>`
                         if (selec.sel.length > 1) {
-                            selectext += ", case " + selec.sel[1]
+                            selectext += `, <span class="adjustment-type">case </span> <span class="adjustment-att">${selec.sel[1]}</span>`
                         }
                         if (selec.sel.length > 2) {
-                            selectext += ", study " + selec.sel[2]
+                            selectext += `, <span class="adjustment-type">study</span> <span class="adjustment-att">${selec.sel[2]}</span>`
                         }
+                        selectext += filter_match
                     }
-                 contentArray.push(selectext);
+                    adjustments.push(`<p>${selectext}</p>`);
                 }
+                adjustment_div = `<div class="cart-adjustment-display">${adjustments.join("\n")}</div>`;
             }
+            contentArray.push(`${filter_div}${adjustment_div}`)
         }
-        content = "<ol>"+contentArray.join('\n')+"</ol>";
+        let content = `<ul>${contentArray.map(d => `<li class="cart-def-list">${d}`).join("")}</ul>`;
         $('#cart-description-modal').find('.modal-body').html(content);
     }
 
@@ -141,17 +133,18 @@ require([
              navelem.attr('href', 'javascript:window.history.back()')
          }
          window.mxseries = parseInt(JSON.parse(document.getElementById('mxseries').textContent));
-         //window.totseries = parseInt(JSON.parse(document.getElementById('totseries').textContent));
          window.mxstudies = parseInt(JSON.parse(document.getElementById('mxstudies').textContent));
          window.cartHist = JSON.parse(document.getElementById('carthist').textContent);
+         window.cart_disk_size = JSON.parse(document.getElementById('cart_disk_size').textContent);
+
+         base.updateDownloadBtns('cart',true,window.cart_disk_size,window.mxseries);
 
          setCartDetailsModal();
 
          window.updatePartitionsFromScratch();
          var ret =cartutils.formcartdata();
          window.partitions = ret[0];
-         window.filtergrp_lst = ret[1];
-
+         window.filtergrp_list = ret[1];
 
          ajaxtriggered = true;
 
