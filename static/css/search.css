@@ -565,12 +565,54 @@ td.license, th.license {
     vertical-align: top;
 }
 
-.filter-url {
+.filter-url, .cart-share-url {
     display: inline-block;
     vertical-align: top;
     max-width: 95%;
     padding: 7px;
     overflow-x: auto;
+}
+
+.cart-share-url {
+    min-width: 575px;
+}
+
+.is-stale .cart-share-url {
+    background: rgba(255 198 70 / 40%);
+}
+
+.cart-old-version .cart-share-url {
+    background: rgba(48, 169, 255, 0.4);
+}
+
+.icon-stale {
+    display: none;
+    height: 36px;
+    padding-top: 4px;
+    color: #db5d00
+}
+
+.is-stale .icon-stale {
+     display: inline-block;
+}
+
+.is-stale .icon-stale:hover {
+    color: #f67619;
+}
+
+.icon-old {
+    display: none;
+    height: 36px;
+    padding-top: 4px;
+    color: #0045af;
+}
+
+.cart-old-version .icon-old {
+    display: inline-block;
+}
+
+.cart-old-version .icon-old:hover {
+    color: #0f68e1;
 }
 
 .empty-cart {

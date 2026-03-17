@@ -18,7 +18,9 @@ from datetime import timedelta
 
 from django.db import models
 from django.contrib.auth.models import User
+from idc_collections.models import ImagingDataCommonsVersion
 import uuid
+import re
 import datetime
 import base64
 import logging
@@ -26,9 +28,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 def cart_keygen():
-    return '{}'.format(base64.b64encode(uuid.uuid4().bytes).replace("=",""))
+    return re.sub(r'[^A-Za-z\d]',"",base64.b64encode(uuid.uuid4().bytes).decode('utf-8'))
 
-CART_EXPIRATION = datetime.timedelta(days=90)
+CART_EXPIRATION = datetime.timedelta(days=5000)
 
 class AppInfo(models.Model):
     id = models.AutoField(primary_key=True, null=False, blank=False)
@@ -41,3 +43,28 @@ class User_Data(models.Model):
     id = models.AutoField(primary_key=True, null=False, blank=False)
     user = models.ForeignKey(User, null=False, blank=True, on_delete=models.CASCADE)
     history = models.CharField(max_length=2000, blank=False, null=False, default='')
+
+class SharedCart(models.Model):
+    SERIES_IDS_MAX = 64000
+    CART_MAX_PER_IP = 50
+    CART_PER_MIN_MAX = 2
+    cart_id = models.CharField(primary_key=True, max_length=64, null=False, blank=False, default=cart_keygen)
+    source_ip = models.GenericIPAddressField(null=False, blank=False, default='0.0.0.0')
+    created_on = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+    definition = models.TextField(null=False, blank=False, default='{}')
+    series_ids = models.TextField(null=False, blank=False, default='')
+    idc_version = models.ForeignKey(ImagingDataCommonsVersion, null=True, blank=False, on_delete=models.CASCADE)
+
+    @classmethod
+    def clear_expired_carts(cls):
+        expired = cls.objects.filter(created_on__lte=datetime.datetime.now(datetime.UTC)-CART_EXPIRATION)
+        expired.delete()
+
+    @classmethod
+    def get_carts_this_ip(cls, ip_addr):
+        carts = cls.objects.filter(source_ip=ip_addr)
+        total_carts = len(carts)
+        carts_per_min = len(cls.objects.filter(
+            source_ip=ip_addr, created_on__gte=datetime.datetime.now(datetime.UTC)-timedelta(hours=2)
+        ))/120 if total_carts > 0 else 0
+        return { 'total_carts': total_carts, 'carts_per_min': carts_per_min }

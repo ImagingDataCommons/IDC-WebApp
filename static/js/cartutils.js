@@ -75,7 +75,6 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
     var seriesTblLimit = 0;
     var seriesTblStrt = 0;
 
-
     const getCartData = function(offset, limit, aggregate_level, results_level){
         let url = '/cart_data/';
         url = encodeURI(url);
@@ -148,6 +147,12 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                 $(this).removeClass('disabled');
                 !$(this).hasClass('tip-titled') && $(this).attr("title",$(this).attr("data-default-title"));
             });
+            let shared_cart = $('.cart-share-url');
+            let container = $('.cart-share-url-container')
+            let has_id = shared_cart.attr('data-cart-id') !== "" && shared_cart.attr('data-cart-id') !== undefined && shared_cart.attr('data-cart-id') !== null;
+            if(has_id) {
+                container.addClass('is-stale');
+            }
             let cart_disk_size = 0;
             let cart_disk_display_size = "(Calculating...)";
             let cart_disk_resp = await fetch(`${BASE_URL}/cart_data/`, {
@@ -202,17 +207,35 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
 
          $('#cart_stats').addClass('empty-cart');
          $('#cart_stats').html("Your cart is currently empty.");
+         let shared_cart = $('.share-cart-url');
+         let container = $('.cart-share-url-container');
          $('.cart-activated-controls').attr('disabled','disabled');
+         $('.copy-cart-share-url').removeAttr('content');
+         shared_cart.html("");
+         container.hide();
+         container.removeClass('is-stale');
+         shared_cart.removeAttr('data-cart-id');
     }
 
     //as user makes selections in the tables, record the selections in the cartHist object. Make new partitions from the selections
     const updateCartSelections = function(newSel){
-
-        var curInd = window.cartHist.length - 1;
-        var selections = window.cartHist[curInd]['selections'];
+        let curInd = window.cartHist.length - 1;
+        let selections = window.cartHist[curInd]['selections'];
         selections.push(newSel);
         window.cartHist[curInd]['partitions'] = mkOrderedPartitions(window.cartHist[curInd]['selections']);
     }
+
+    const load_shared_cart = async function(shared_cart){
+        if(window.cartHist !== null && window.cartHist !== undefined && window.cartHist.length > 0) {
+            console.debug("Cart erasure warning here.");
+        }
+        window.cartHist = shared_cart['cart_hist'];
+        window.proj_in_cart = shared_cart['proj_in_cart'];
+        window.partitions = shared_cart['partitions'];
+        window.filtergrp_list = shared_cart['filtergrp_list'];
+        await window.handleFilterSelectionUpdate(null, true, true);
+        await updateCartCounts();
+    };
 
     // make partitions from table selections
     const mkOrderedPartitions = function(selections){
@@ -757,6 +780,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         updateCartSelections: updateCartSelections,
         getCartData: getCartData,
         updateCartTable: updateCartTable,
-        updateCartCounts: updateCartCounts
+        updateCartCounts: updateCartCounts,
+        load_shared_cart: load_shared_cart
     };
 });
