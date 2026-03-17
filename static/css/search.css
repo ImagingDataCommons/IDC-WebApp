@@ -565,12 +565,28 @@ td.license, th.license {
     vertical-align: top;
 }
 
-.filter-url {
+.filter-url, .cart-share-url {
     display: inline-block;
     vertical-align: top;
     max-width: 95%;
     padding: 7px;
     overflow-x: auto;
+}
+
+.cart-share-url {
+    min-width: 575px;
+}
+
+.is-stale .cart-share-url {
+    background: rgba(255 198 70 / 40%);
+}
+
+.is-stale::after {
+    content: url('../img/warning.svg');
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    padding-top: 4px;
 }
 
 .empty-cart {

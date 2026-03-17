@@ -358,6 +358,16 @@ require([
     tippy.delegate('.cases-table', copy_tip);
 
     tippy.delegate('#body', {
+        content: 'The current cart is out of synch with this saved cart. Click \'Share\' to update the link.',
+        theme: 'dark',
+        placement: 'right',
+        arrow: false,
+        interactive:true,
+        target: '.is-stale',
+        maxWidth: 200
+    });
+
+    tippy.delegate('#body', {
         content: 'View citation(s) in Vancouver Elsevier format.',
         theme: 'dark',
         placement: 'left',

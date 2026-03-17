@@ -45,6 +45,9 @@ class User_Data(models.Model):
     history = models.CharField(max_length=2000, blank=False, null=False, default='')
 
 class SharedCart(models.Model):
+    SERIES_IDS_MAX = 64000
+    CART_MAX_PER_IP = 50
+    CART_PER_MIN_MAX = 2
     cart_id = models.CharField(primary_key=True, max_length=64, null=False, blank=False, default=cart_keygen)
     source_ip = models.GenericIPAddressField(null=False, blank=False, default='0.0.0.0')
     created_on = models.DateTimeField(auto_now_add=True, null=False, blank=False)
@@ -59,6 +62,9 @@ class SharedCart(models.Model):
 
     @classmethod
     def get_carts_this_ip(cls, ip_addr):
-        total_carts = cls.objects.filter(source_ip=ip_addr).length
-        carts_per_min = ((cls.objects.filter(source_ip=ip_addr, created_on__gte=datetime.datetime.now(datetime.UTC)-timedelta(hours=2))).length)/120
-        return { 'total': total_carts, 'per_min': carts_per_min }
+        carts = cls.objects.filter(source_ip=ip_addr)
+        total_carts = len(carts)
+        carts_per_min = len(cls.objects.filter(
+            source_ip=ip_addr, created_on__gte=datetime.datetime.now(datetime.UTC)-timedelta(hours=2)
+        ))/120 if total_carts > 0 else 0
+        return { 'total_carts': total_carts, 'carts_per_min': carts_per_min }

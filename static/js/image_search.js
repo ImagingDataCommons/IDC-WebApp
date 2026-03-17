@@ -618,24 +618,25 @@ require([
             filterutils.mkFiltText();
             var updateDone = false;
             var updateWait = false;
-
-               updateFacetsData(true);
-               tables.initializeTableCacheData();
-               tables.initializeTableViewedItemsData();
-
+            updateFacetsData(true);
+            tables.initializeTableCacheData();
+            tables.initializeTableViewedItemsData();
         });
 
-        var cartSel = new Object();
-        cartSel['filter']=new Object();
-        cartSel['selections']= new Array();
-        cartSel['partitions']= new Array();
+        if(shared_cart) {
+            await cartutils.load_shared_cart(shared_cart);
+        } else {
+            var cartSel = new Object();
+            cartSel['filter']=new Object();
+            cartSel['selections']= new Array();
+            cartSel['partitions']= new Array();
+            setCartHist = false;
+            window.cartHist = new Array();
+            window.cartHist.push(cartSel);
+            window.proj_in_cart = new Object();
+            await filterutils.load_preset_filters();
+        }
 
-        setCartHist = false;
-        window.cartHist = new Array();
-        window.cartHist.push(cartSel);
-        window.proj_in_cart = new Object();
-
-        await filterutils.load_preset_filters();
         $('.hide-filter-uri').on('click',function() {
             $(this).hide();
             $('.get-filter-uri').show();
@@ -648,6 +649,48 @@ require([
             $('.hide-filter-uri').show();
             $('.filter-url-container').show();
             $('.filter-url-container').removeClass("is-hidden");
+        });
+
+        let csrftoken = $.getCookie('csrftoken');
+        $('.cart-share').on('click', async function(){
+            let container = $('.cart-share-url-container');
+            let url_element = $('.cart-share-url');
+            let copy_btn = $('.copy-cart-share-url');
+            let cart_id = url_element.attr('data-cart-id');
+            let has_id = cart_id !== undefined && cart_id !== null && cart_id !== "";
+            let is_stale = container.hasClass('is-stale');
+            let needs_cart_id = !has_id || is_stale;
+            if(needs_cart_id) {
+                container.removeClass('is-stale');
+                url_element.html(`Generating... <i class="fa fa-compass fa-spin"></i>`);
+            }
+            container.show();
+            container.removeClass("is-hidden");
+            if(needs_cart_id) {
+                let resp = await fetch(`${BASE_URL}${SHARED_CART_URL}`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        'filtergrp_list': (window.filtergrp_list ? window.filtergrp_list : [{}]),
+                        'partitions': window.partitions,
+                        'cart_hist': window.cartHist,
+                        'proj_in_cart': window.proj_in_cart
+                    }),
+                    headers: {"X-CSRFToken": csrftoken, "content-type": 'application/json'}
+                });
+                if(!resp.ok) {
+                    let result = await resp.json();
+                    url_element.html(result['message'] ? `Failed to make the cart!\n\n${result['message']}` : `There was an error while making the cart. Please contact us for assistance.`);
+                    throw new Error("Failed to make the cart!");
+                }
+                let result = await resp.json();
+                cart_id = result['cart_id'];
+                url_element.attr('data-cart-id', cart_id);
+            } else {
+                cart_id = url_element.attr('data-cart-id');
+            }
+            let share_url = `${BASE_URL}/explore/?shared_cart=${cart_id}`;
+            url_element.html(share_url);
+            copy_btn.attr('content', share_url);
         });
 
         $('.filter-url-container').append(
