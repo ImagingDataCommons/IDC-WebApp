@@ -363,7 +363,18 @@ require([
         placement: 'right',
         arrow: false,
         interactive:true,
-        target: '.is-stale',
+        target: '.icon-stale',
+        maxWidth: 200
+    });
+
+    tippy.delegate('#body', {
+        content: 'This cart was made under a prior version of IDC. Its contents under the current version may be '
+            +'different than when it was originally made.',
+        theme: 'dark',
+        placement: 'right',
+        arrow: false,
+        interactive:true,
+        target: '.icon-old',
         maxWidth: 200
     });
 

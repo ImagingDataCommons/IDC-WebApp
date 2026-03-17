@@ -427,8 +427,10 @@ def explore_data_page(request, filter_path=False, path_filters=None):
                 context['filters_for_load'] = filters_for_load
                 if shared_cart:
                     try:
-                        context['shared_cart'] = json.loads(SharedCart.objects.get(cart_id=shared_cart).definition)
+                        this_cart = SharedCart.objects.get(cart_id=shared_cart)
+                        context['shared_cart'] = json.loads(this_cart.definition)
                         context['shared_cart']['cart_id'] = shared_cart
+                        context['shared_cart']['active_version'] = bool(this_cart.idc_version.active == 1)
                     except ObjectDoesNotExist:
                         logger.error("[ERROR] That cart does not exist!")
                         del context['shared_cart']

@@ -235,8 +235,6 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         window.filtergrp_list = shared_cart['filtergrp_list'];
         await window.handleFilterSelectionUpdate(null, true, true);
         await updateCartCounts();
-        $('.cart-share-url').attr('data-cart-id', shared_cart['cart_id']);
-        $('.cart-share').trigger('click');
     };
 
     // make partitions from table selections

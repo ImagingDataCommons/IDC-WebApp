@@ -76,12 +76,12 @@ require([
 // Return an object for consts/methods used by most views
 
 define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils, filterutils, tippy, $, base) {
-
-    $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table').on('preInit.dt', function(){
+    let all_tables = $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table');
+    all_tables.on('preInit.dt', function(){
         window.show_spinner();
     });
 
-    $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table').on('draw.dt', function(){
+    all_tables.on('draw.dt', function(){
         window.hide_spinner();
         // Auto-width needing to be shut off at the table header level during draw time.
         $(this).children('th').each(function() {
@@ -91,12 +91,12 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
     // Update the rows in the Projects Table, clear the other tables.
     window.updateTablesAfterFilter = function (collFilt, collectionsData, collectionStats,cartStats){
-        var usedCollectionData = new Array();
+        let usedCollectionData = new Array();
+        let hasColl = Boolean(collFilt.length>0);
 
-        var hasColl = collFilt.length>0 ? true : false;
-        for (var i=0;i<window.collectionData.length;i++){
-            var cRow = window.collectionData[i];
-            var projId=cRow[0];
+        for (let i=0;i<window.collectionData.length;i++){
+            let cRow = window.collectionData[i];
+            let projId=cRow[0];
             if ( (projId in collectionsData) && (!hasColl || (collFilt.indexOf(projId)>-1)) ){
                 cRow[3] = collectionsData[projId]['count'];
             } else {
@@ -123,7 +123,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         window.openStudies = {}
     }
     const initializeTableCacheData =  function() {
-
         window.casesTableCache = {
             "data": [],
             "recordLimit": -1,
@@ -150,7 +149,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
     // check if a cache of cases, studies, or series data needs to be updated with a server call
     const checkClientCache = function(request, type){
-        var cache;
+        var cache = null;
         var reorderNeeded = false;
         var updateNeeded = true;
         if (request.draw ===1){
@@ -292,7 +291,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                return '<i class="fa-solid fa-cart-shopping shopping-cart"></i>'
           }
        };
-        var cartnum_col={"type": "html", "orderable": false, render: function(td, data, row)
+        var cartnum_col={"type": "html", "orderable": true, render: function(td, data, row)
             {
                 return ('<span class="cartnum cartnum_style">'+row[1]+'</span>');
             }};
@@ -418,55 +417,52 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
         $('#proj_table').DataTable().destroy();
         $("#proj_table_wrapper").find('.dataTables_controls').remove();
-        var colDefs = projectTableColDefs();
-        var columns = projectTableColumns();
-        var ord = [[4, "asc"]]
+        let colDefs = projectTableColDefs();
+        let columns = projectTableColumns();
+        let ord = [[4, "asc"]];
+        shared_cart && ord.unshift([3, "desc"]);
 
-        $('#proj_table').DataTable(
-            {
-                "dom": '<"dataTables_controls"ilpf>rt<"bottom"><"clear">',
-                "order": ord,
-                "data": newCollectionData,
-                "createdRow": function (row, data, dataIndex) {
-                    $(row).addClass('entity-table-row');
-                    $(row).data('projectid', data[0]);
-                    $(row).attr('data-projectid', data[0]);
-                    $(row).data('totalcases', data[5]);
-                    $(row).attr('totalcases', data[5]);
-                    $(row).attr('data-total-series', data[6]['mxseries'])
-                    $(row).attr('id', 'project_row_' + data[0]);
-                    var projid = data[0];
-                    // stats is created from the explorer data page when the page is first created
-                    // collectionStats are stats for the current filter
-                    //cartStats where applicable are cart related stats
-                    var stats = data[6];
+        $('#proj_table').DataTable({
+            "dom": '<"dataTables_controls"ilpf>rt<"bottom"><"clear">',
+            "order": ord,
+            "data": newCollectionData,
+            "createdRow": function (row, data, dataIndex) {
+                $(row).addClass('entity-table-row');
+                $(row).data('projectid', data[0]);
+                $(row).attr('data-projectid', data[0]);
+                $(row).data('totalcases', data[5]);
+                $(row).attr('totalcases', data[5]);
+                $(row).attr('data-total-series', data[6]['mxseries'])
+                $(row).attr('id', 'project_row_' + data[0]);
+                let projid = data[0];
+                // stats is created from the explorer data page when the page is first created
+                // collectionStats are stats for the current filter
+                //cartStats where applicable are cart related stats
+                let stats = data[6];
 
+                for (var stat in stats){
+                    $(row).attr(stat,stats[stat]);
+                }
+                setRowCartClasses(row);
+                rowIsOpen(data[0], "project") && $(row).addClass('open');
 
-                    for (var stat in stats){
-                        $(row).attr(stat,stats[stat]);
-                    }
-                    setRowCartClasses(row);
+                $(row).on('click', function(event) {
+                    handleRowClick("collections", row, event, [projid])
+                });
 
-                    rowIsOpen(data[0], "project") && $(row).addClass('open');
+                $(row).find('.collection_info').on("mouseenter", function(e){
+                    $(e.target).addClass('fa-lg');
+                    $(e.target).parent().parent().data("clickForInfo",false);
+                });
 
-                    $(row).on('click', function(event) {
-                        handleRowClick("collections", row, event, [projid])
-                    });
-
-                     $(row).find('.collection_info').on("mouseenter", function(e){
-                        $(e.target).addClass('fa-lg');
-                        $(e.target).parent().parent().data("clickForInfo",false);;
-                      });
-
-                   $(row).find('.collection_info').on("mouseleave", function(e){
-                      $(e.target).parent().parent().data("clickForInfo",false);
-                      $(e.target).removeClass('fa-lg');
-                    });
-                },
-                "columnDefs":[ ...colDefs],
-                "columns":[...columns]
-            }
-        );
+                $(row).find('.collection_info').on("mouseleave", function(e){
+                    $(e.target).parent().parent().data("clickForInfo",false);
+                    $(e.target).removeClass('fa-lg');
+                });
+            },
+            "columnDefs":[ ...colDefs],
+            "columns":[...columns]
+        });
         let collex_input = $('#proj_table_filter input');
         collex_input.after(`<button class="clear"><i class="fa fa-solid fa-circle-xmark"></i></button>`);
         collex_input.addClass("table-search-box");
