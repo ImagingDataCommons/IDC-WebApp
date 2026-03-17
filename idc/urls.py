@@ -70,6 +70,7 @@ urlpatterns = [
     re_path(r'^collections/', include('idc_collections.urls')),
     re_path(r'^analysis_results/(?P<analysis_result_id>[A-Za-z\d\-\_]+)/$', views.analysis_results_details, name='analysis_results'),
     re_path(r'^citations/', views.get_citations, name='get_citations'),
+    re_path(r'^get_shared_cart/', views.get_shared_cart, name='get_shared_cart'),
     # re_path(r'^share/', include('sharing.urls')),
 ]
 

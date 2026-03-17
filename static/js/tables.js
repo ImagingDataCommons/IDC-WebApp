@@ -1198,7 +1198,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     $(row).attr('data-aws',  data['aws_bucket']);
                     $(row).attr('data-gcs',  data['gcs_bucket']);
                     $(row).addClass('text_head');
-
                     $(row).attr('data-aws',  data['aws_bucket'])
 
                      if ('cart_series_in_collection' in data){
@@ -1637,8 +1636,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
          clearCartSelectionsInCaches();
     }
 
-     const propagateCartTableStatChanges = function(ids, itemChng, addingToCart,purge){
-
+     const propagateCartTableStatChanges = function(ids, itemChng, addingToCart, purge){
         var tableset = ["projects_table","cases_table","studies_table","series_table"];
         var lbl = ['data-projectid', 'data-caseid', 'data-studyid', 'data-seriesid']
         for (var i=0;i<4;i++){
@@ -1665,58 +1663,44 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                updateTableRowCartStatsDownstream(row, itemChng, curids, addingToCart, addOrRemoveAll, tbl,purge);
             });
         }
-        for (var lvl=0;lvl<3;lvl++){
-            for (var tbli=lvl+1; tbli<4;tbli++){
-                var tbl= tableset[tbli];
-                var rowsel = $("#"+tbl).find('tr');
-                var mxIdsToCk=Math.min(ids.length,lvl+1)
+        for (let lvl=0;lvl<3;lvl++){
+            for (let tbli=lvl+1; tbli<4;tbli++){
+                let tbl= tableset[tbli];
+                let rowsel = $("#"+tbl).find('tr');
+                let mxIdsToCk=Math.min(ids.length,lvl+1)
                 for (var k=0;k<mxIdsToCk;k++){
                     rowsel =rowsel.filter('[' + lbl[k] + ' = "' + ids[k] + '"]');
                 }
                 rowsel.each(function() {
-                var row = this;
-                if ((lvl+1)<ids.length){
-                    var curids= ids.slice(0,lvl+1) ;
-                } else{
-                  var curids= ids.slice(0,ids.length) ;
-                }
-                 updateTableRowCartStatsUpstream(row, itemChng, curids, lvl, addingToCart,purge);
+                    let row = this;
+                    let curids = null;
+                    if ((lvl+1)<ids.length){
+                        curids = ids.slice(0,lvl+1) ;
+                    } else {
+                        curids = ids.slice(0,ids.length) ;
+                    }
+                    updateTableRowCartStatsUpstream(row, itemChng, curids, lvl, addingToCart, purge);
                 });
             }
         }
     }
 
      const updateTableRowCartStatsUpstream = function(row,itemChng,ids, lvl,addingToCart,purge){
-         var upstream =["collection","case","study"];
+         let upstream =["collection","case","study"];
          // update row attributes
-
-         var upstreamLblCrt = "cart_series_in_" + upstream[lvl];
-         if (row.hasAttribute(upstreamLblCrt)) {
-             var curcart = parseInt($(row).attr(upstreamLblCrt))
-         } else {
-             var curcart = 0
-         }
-
-         var upstreamLblFilt = "filter_series_in_" + upstream[lvl];
-         if (row.hasAttribute(upstreamLblFilt)) {
-             var curfilt = parseInt($(row).attr(upstreamLblFilt))
-         } else {
-             var curfilt = 0
-         }
-
-         var upstreamLblFiltCrt = "filter_cart_series_in_" + upstream[lvl];
-         if (row.hasAttribute(upstreamLblFiltCrt)) {
-             var curfiltcart = parseInt($(row).attr(upstreamLblFiltCrt))
-         } else {
-                 var curfiltcart = 0
-         }
+         let upstreamLblCrt = "cart_series_in_" + upstream[lvl];
+         let upstreamLblFilt = "filter_series_in_" + upstream[lvl];
+         let upstreamLblFiltCrt = "filter_cart_series_in_" + upstream[lvl];
+         let curcart = row.hasAttribute(upstreamLblCrt) ? parseInt($(row).attr(upstreamLblCrt)) : 0;
+         let curfilt = row.hasAttribute(upstreamLblFilt) ? parseInt($(row).attr(upstreamLblFilt)) : 0;
+         let curfiltcart = row.hasAttribute(upstreamLblFiltCrt) ? parseInt($(row).attr(upstreamLblFiltCrt)): 0;
 
          // if selection was made at a higher level than level being looked at. Only some series added/deleted belong to the item
-         var newseries=0;
+         let newseries=0;
          if (ids.length<(lvl+1) && !purge){
             if (addingToCart){
                 newseries=curfilt-curfiltcart;
-            } else{
+            } else {
                 newseries=-curfiltcart;
             }
          // else they all belong here
@@ -1939,7 +1923,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         var infiltercart = 0;
                     }
                     var incartlbl = "unique_" + curitem + "_cart"
-
 
                     if (chnglvldownstreamcachelvl) {
                         newitems = itemChng[curitem]['added'];
