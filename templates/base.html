@@ -222,6 +222,7 @@
 </div>
 
 <script>
+    var showWarning = true;
     var warningSeen = {% if request.session.seenWarning %}true{% else %}false{% endif %};
     var user_is_auth = {% if request.user.is_authenticated %}true{% else %}false{% endif %};
     var user_is_social = {% if request.user.is_authenticated and request.user|has_social %}true{% else %}false{% endif %};
@@ -240,8 +241,6 @@
         var expireAfter = {{ request|expire_after|unlocalize }};
         var confirmFormDiscard = "{% trans 'You have unsaved changes in a form of this page.' %}";
         var returnToUrl = '{% url 'landing_page' %}';
-
-        var showWarning = false;
     </script>
     {% endlocalize %}
 {% endif %}
