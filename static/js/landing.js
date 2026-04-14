@@ -54,8 +54,8 @@ require([
     'sapien',
     'jqueryui',
     'bootstrap',
-    'assetscore'
-    ,'assetsresponsive',
+    'assetscore',
+    'assetsresponsive',
     'base'
 ], function($, Sapien, jqueryui, bootstrap) {
     A11y.Core();
