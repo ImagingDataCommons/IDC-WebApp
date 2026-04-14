@@ -126,15 +126,6 @@ require([
         return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
     };
 
-    $.ajaxSetup({
-        beforeSend: function(xhr, settings) {
-            var csrftoken = $.getCookie('csrftoken');
-            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                xhr.setRequestHeader("X-CSRFToken", csrftoken);
-            }
-        }
-    });
-
     $.createMessage = function(message, messageType) {
         var message_obj = $('<div class="row">' +
                             '<div class="col-lg-12">' +
@@ -253,7 +244,6 @@ define(['jquery', 'utils'], function($, utils) {
         }
     };
 
-
     // Resets forms in modals on hide. Suppressed warning when leaving page with dirty forms
     $('.modal').on('hide.bs.modal', function () {
         if(!$(this).prop("saving")) {
@@ -266,6 +256,15 @@ define(['jquery', 'utils'], function($, utils) {
     $.getCookie = utils.getCookie;
     $.setCookie = utils.setCookie;
     $.removeCookie = utils.removeCookie;
+
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            let csrftoken = $.getCookie('csrftoken');
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
 
     return {
         blacklist: /<script>|<\/script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|<iframe>|<\/iframe>/ig,
