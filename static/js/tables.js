@@ -253,7 +253,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         return false;
     }
 
-    // classes for project(collection) table columns
+    // targets indicates the visual table columns associated with these definitions
+    // It does NOT map the data to the column; this is done below in the Column generator
     var projectTableColDefs = function(){
         return [
             {className: "ckbx text_data viewbx caseview table-interactive", "targets": [0]},
@@ -268,7 +269,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
     // project(collection) table column definitions
     const projectTableColumns = function(){
-        var caret_col= { "type": "html", "orderable": false, render: function (data) {
+        var caret_col= { "type": "html", "orderable": false, "data": 0, render: function (data, type, row) {
             if (('state' in window.selProjects[data]) && ('view' in window.selProjects[data]['state']) && (window.selProjects[data]['state']['view'] )) {
                 return '<a role="button" title="Display cases in this collection below.">'+
                     '<i class="fa fa-solid fa-folder is-hidden"></i>' +
@@ -292,28 +293,34 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                return '<i class="fa-solid fa-cart-shopping shopping-cart"></i>'
           }
        };
-        var cartnum_col={"type": "html", "orderable": false, render: function(td, data, row)
-            {
-                return ('<span class="cartnum cartnum_style">'+row[1]+'</span>');
-            }};
-        var collection_col = {"type": "html", "orderable": true, render: function (td, data, row){
-             return '<span id="'+row[0]+'" class="collection_name value">'+row[3]+'</span>\n' +
-                 '<span><i class="collection_info fa-solid fa-info-circle" value="'+row[0]+'" data-filter-display-val="'+row[3]+'"></i></span>'+
-                 ' <a class="copy-this" role="button" content="' + row[0] +
-                 '" title="Copy the IDC collection_id to the clipboard"><i class="fa-solid fa-copy"></i></a>'
-               }};
-        var case_col = { "type": "num", orderable: true, "createdCell": function (td, data, row) {
+        var cartnum_col={"type": "html-num", "orderable": true, "data": 1, render: function (data, type, row){
+            if(type === "display") {
+                return ('<span class="cartnum cartnum_style">'+data+'</span>');
+            }
+            return data;
+        }};
+        var collection_col = {"type": "html", "orderable": true, "data": 3, render: function (data, type, row) {
+                if (type === "display") {
+                    return '<span id="' + row[0] + '" class="collection_name value">' + data + '</span>\n' +
+                        '<span><i class="collection_info fa-solid fa-info-circle" value="' + row[0] + '" data-filter-display-val="' + data + '"></i></span>' +
+                        ' <a class="copy-this" role="button" content="' + row[0] +
+                        '" title="Copy the IDC collection_id to the clipboard"><i class="fa-solid fa-copy"></i></a>';
+                }
+                return data;
+            }
+        };
+        var case_col = { "type": "num", orderable: true, "data": 4, "createdCell": function (td, data, row) {
                 $(td).attr('id', 'patient_col_' + row[0]);
-            }, render: function(td, data,row) {
-                return `${row[4]} / ${row[5]}`;
+            }, render: function (data, type, row) {
+                return `${data} / ${row[5]}`;
             }};
-        var license_col = { "type": "html", orderable: true, "createdCell": function (td, data, row) {
+        var license_col = { "type": "html", orderable: true, "data": 7, "createdCell": function (td, data, row) {
                 $(td).attr('id', 'license_col_' + row[0]);
-            }, render: function(td, data,row) {
-                return `${row[7]}`;
+            }, render: function (data, type, row) {
+                return data;
             }};
-        const download_col = {"type": "html", "orderable": false, data: 'collection_id', render: function(data, type, row) {
-            let download_size = window.collection[row[0]]['total_size_with_ar'];
+        const download_col = {"type": "html", "orderable": false, "data": 0, render: function(data, type, row) {
+            let download_size = window.collection[data]['total_size_with_ar'];
             if ("showDirectoryPicker" in window && download_size < 3) {
                 let download_classes = "download-collection download-instances";
                 download_classes = (download_size > 1) ? `${download_classes} download-size-warning` : `${download_classes} download-all-instances`;
@@ -322,7 +329,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     modal_attr = ` data-toggle="modal" data-target="#download-warning"`;
                 }
                 return `<i class="fa fa-download ${download_classes}"   
-                    data-collection="${row[0]}" 
+                    data-collection="${data}" 
                     data-total-series="${row[6]['mxseries']}" 
                     data-download-type="collection"
                     ${modal_attr}
@@ -573,10 +580,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             }
 
         };
-        const collection_col =  {"type": "text", "orderable": true, data: 'collection_id', render: function (data)
+        const collection_col =  {"type": "text", "orderable": true, data: 'collection_id', render: function (data, type, row)
             {
                 var projectNm = $('#' + data).filter('.collection_name')[0].innerText; return projectNm;}}
-        const case_col = {"type": "text", "orderable": true, data: 'PatientID', render: function (data) {
+        const case_col = {"type": "text", "orderable": true, data: 'PatientID', render: function (data, type, row) {
             return data +
             ' <a class="copy-this" role="button" content="' + data +
                 '" title="Copy Case ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
@@ -971,11 +978,11 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                             return '<span class="cartnum cartnum_style">'+cnt.toString()+'</span>'
                         }
                     }, {
-                        "type": "text", "orderable": true, data: 'PatientID', render: function (data) {
+                        "type": "text", "orderable": true, data: 'PatientID', render: function (data, type, row) {
                             return data.length > 26 ? pretty_print_id(data, 21) : data;
                         }
                     }, {
-                        "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
+                        "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data, type, row) {
                             return pretty_print_id(data) +
                             ' <a class="copy-this" role="button" content="' + data +
                                 '" title="Copy Study ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
@@ -985,7 +992,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                             return;
                         }
                     }, {
-                        "type": "text", "orderable": true, data: 'StudyDate', render: function (data) {
+                        "type": "text", "orderable": true, data: 'StudyDate', render: function (data, type, row) {
                             if(data === "" || data === undefined || data === null) {
                                 return "";
                             }
@@ -1317,7 +1324,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                        return '<i class="fa-solid fa-cart-shopping shopping-cart"></i>'
                   }
                 }, {
-                    "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
+                    "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data, type, row) {
                         return pretty_print_id(data) +
                             ' <a class="copy-this" role="button" content="' + data +
                                 '"  title="Copy Study ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
@@ -1326,7 +1333,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         return;
                     }
                 }, {
-                    "type": "text", "orderable": true, data: 'SeriesInstanceUID', render: function (data) {
+                    "type": "text", "orderable": true, data: 'SeriesInstanceUID', render: function (data, type, row) {
                         return pretty_print_id(data) +
                             ' <a class="copy-this" role="button" content="' + data +
                                 '"  title="Copy Series ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
@@ -1339,7 +1346,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                 {"type": "text", "orderable": true, data: 'Modality'},
                 {"type": "text", "orderable": true, data: 'BodyPartExamined'},
                 {
-                    "type": "text", "orderable": true, data: 'SeriesDescription', render: function (data) {
+                    "type": "text", "orderable": true, data: 'SeriesDescription', render: function (data, type, row) {
                         if (data.length > 1) {
                             return data[0] + ',...';
                         } else if (data.length === 1) {
