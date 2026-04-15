@@ -1736,20 +1736,20 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
          var items =["collections","cases","studies","series"];
          var mini = ids.length
          var mxi=4
-         if (tbl=="series_table"){
+         if (tbl === "series_table"){
              mini=3;
              mxi=4;
          }
-         for (var i = mini; i < mxi; i++) {
-             var lbl = items[i];
-             var lbl_mx= 'mx'+lbl;
-             var lbl_filter = lbl + '_in_filter';
-             var lbl_cart = lbl + '_in_cart';
-             var lbl_filter_cart = lbl + '_in_filter_and_cart';
-             var mx =0;
-             var in_cart=0;
-             var in_filter=0;
-             var in_filter_cart=0;
+         for (let i = mini; i < mxi; i++) {
+             let lbl = items[i];
+             let lbl_mx= 'mx'+lbl;
+             let lbl_filter = lbl + '_in_filter';
+             let lbl_cart = lbl + '_in_cart';
+             let lbl_filter_cart = lbl + '_in_filter_and_cart';
+             let mx =0;
+             let in_cart=0;
+             let in_filter=0;
+             let in_filter_cart=0;
              if (row.hasAttribute(lbl_mx)) {
                   mx = parseInt($(row).attr(lbl_mx));
              } else {
@@ -1776,7 +1776,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
              if (purge){
                  in_cart=0;
                  in_filter_cart =0;
-             } else if ((tbl =="series_table") && (lbl=="series")){
+             } else if ((tbl === "series_table") && (lbl === "series")){
                  if ((addingToCart)){
                      in_cart=1;
                      in_filter_cart =1;
@@ -1797,8 +1797,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
              $(row).attr(lbl + "_in_cart", in_cart);
              $(row).attr(lbl + "_in_filter_and_cart", in_filter_cart);
-             if (lbl =='series'){
-                 if (!(tbl=="series_table")) {
+             if (lbl === 'series'){
+                 if (!(tbl === "series_table")) {
                      $(row).find('.cartnum').text(in_cart);
                      let dataTableRow = $(row).closest('table').DataTable().row(row);
                      let rowData = dataTableRow.data();
@@ -1826,10 +1826,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
      }
 
     const clearCartSelectionsInCaches = function(){
-        var caches = ["", "casesCache", "studiesCache", "seriesCache"];
-        var rowsToClearUpstream = [["cart_series_in_collection","filter_cart_series_in_collection"], ["cart_series_in_case","filter_cart_series_in_case"], ["cart_series_in_study","filter_cart_series_in_study"]];
-        var rowsToClearDownstream = [["unique_cases_cart", "unique_cases_filter_and_cart"], ["unique_studies_cart", "unique_studies_filter_and_cart"], ["unique_series_cart", "unique_series_filter_and_cart"]];
-        for (var cacheNum = 1; cacheNum < 4; cacheNum++) {
+        let caches = ["", "casesCache", "studiesCache", "seriesCache"];
+        let rowsToClearUpstream = [["cart_series_in_collection","filter_cart_series_in_collection"], ["cart_series_in_case","filter_cart_series_in_case"], ["cart_series_in_study","filter_cart_series_in_study"]];
+        let rowsToClearDownstream = [["unique_cases_cart", "unique_cases_filter_and_cart"], ["unique_studies_cart", "unique_studies_filter_and_cart"], ["unique_series_cart", "unique_series_filter_and_cart"]];
+        for (let cacheNum = 1; cacheNum < 4; cacheNum++) {
             if ((caches[cacheNum] in window) && ('data' in window[caches[cacheNum]]) ) {
                 var curCache = window[caches[cacheNum]]['data'];
                 // iterate thru each row in the curCaceh
@@ -1862,25 +1862,25 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     }
 
     const updateTableCacheAfterCartSelection = function(ids,itemChng, addingToCart, cacheNum) {
-        var caches = ["", "casesCache", "studiesCache", "seriesCache"];
-        var ckids = ["collection_id", "PatientID", "StudyInstanceUID", "SeriesInstanceUID"];
-        var items = ["collection", "cases", "studies", "series"];
-        var upstream = [["cart_series_in_collection", "filter_cart_series_in_collection"], ["cart_series_in_case","filer_cart_series_in_case"], ["cart_series_in_study","filter_cart_series_in_study"]];
-        var downstream = [["unique_cases_cart", "unique_cases_filter_cart"], ["unique_studies_cart", "unique_studies_filter_cart"], ["unique_series_cart", "unique_series_filter_cart"]];
-        var chnglvl = ids.length
-        var curCache = window[caches[cacheNum]]['data'];
+        let caches = ["", "casesCache", "studiesCache", "seriesCache"];
+        let ckids = ["collection_id", "PatientID", "StudyInstanceUID", "SeriesInstanceUID"];
+        let items = ["collection", "cases", "studies", "series"];
+        let upstream = [["cart_series_in_collection", "filter_cart_series_in_collection"], ["cart_series_in_case","filer_cart_series_in_case"], ["cart_series_in_study","filter_cart_series_in_study"]];
+        let downstream = [["unique_cases_cart", "unique_cases_filter_cart"], ["unique_studies_cart", "unique_studies_filter_cart"], ["unique_series_cart", "unique_series_filter_cart"]];
+        let chnglvl = ids.length
+        let curCache = window[caches[cacheNum]]['data'];
         // iterate thru each row in the curCaceh
-        for (var rowid = 0; rowid < curCache.length; rowid++) {
-            var curRow = curCache[rowid]
-            var mtch_row_stats_update_ids = true;
+        for (let rowid = 0; rowid < curCache.length; rowid++) {
+            let curRow = curCache[rowid]
+            let mtch_row_stats_update_ids = true;
 
             //iterate through image levels higher than the
-            for (var upstreamlvl = 0; upstreamlvl < cacheNum; upstreamlvl++) {
+            for (let upstreamlvl = 0; upstreamlvl < cacheNum; upstreamlvl++) {
                 // if the lvl of change in collection, cases, study series hierarchy is lower than the current category being on considered, check for exact match
-                var newseries=0;
+                let newseries= 0;
                 if (mtch_row_stats_update_ids) {
                     if (chnglvl >= upstreamlvl) {
-                        var attToMtchId = curRow[ckids[upstreamlvl]];
+                        let attToMtchId = curRow[ckids[upstreamlvl]];
                         if (attToMtchId == ids[upstreamlvl]) {
                             newseries = itemChng['series']['added'];
                         } else {
@@ -1892,13 +1892,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     } else if(mtch_row_stats_update_ids) {
                         if(addingToCart) {
                             if (('series_filter_and_cart') in curRow) {
-                                var newseries = curRow['unique_series'] - curRow['series_filter_and_cart'];
+                                newseries = curRow['unique_series'] - curRow['series_filter_and_cart'];
                             } else {
-                                var newseries = curRow['unique_series']
+                                newseries = curRow['unique_series']
                             }
                         } else {
                             if (('series_filter_and_cart') in curRow) {
-                                var newseries= - curRow['series_filter_and_cart'];
+                                newseries = - curRow['series_filter_and_cart'];
                             }
                         }
                     }
@@ -1918,8 +1918,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                 var chnglvldownstreamcachelvl = false;
             } else if (mtch_row_stats_update_ids) {
                 var chnglvldownstreamcachelvl = true;
-                var attToMtchId = curRow[ckids[cacheNum]];
-                if (!(attToMtchId == ids[cacheNum])) {
+                let attToMtchId = curRow[ckids[cacheNum]];
+                if (!(attToMtchId === ids[cacheNum])) {
                     mtch_row_stats_update_ids = false;
                 }
             }
@@ -1971,16 +1971,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
     const updateTableCachesAfterCartSelection =function(ids,itemChng, addingToCart) {
         var caches = ["", "casesCache", "studiesCache", "seriesCache"];
-        var ckids = ["collection_id", "PatientID", "StudyInstanceUID", "SeriesInstanceUID"];
-        var items = ["collection", "cases", "studies", "series"];
-        var upstream = ["cart_series_in_collection", "cart_studies_in_case", "cart_studies_in_study"];
-        var downstream = [["unique_cases_cart", "unique_cases_filter_cart"], ["unique_studies_cart", "unique_studies_filter_cart"], ["unique_series_cart", "unique_series_filter_cart"]];
-        var chnglvl = ids.length
-        //var checkUpstream=false;
-        //var checkDownStream=false;
-
-        // iterate through each cache
-        for (var cacheNum = 1; cacheNum < 4; cacheNum++) {
+        for (let cacheNum = 1; cacheNum < 4; cacheNum++) {
            if ((caches[cacheNum] in window) && ('data' in window[caches[cacheNum]])){
                updateTableCacheAfterCartSelection(ids,itemChng, addingToCart, cacheNum);
            }
