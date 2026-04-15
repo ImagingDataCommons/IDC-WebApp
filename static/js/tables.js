@@ -616,7 +616,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         } else {
             pageRows = 10;
         }
-        var ord = [[4, 'asc'],[3, 'asc']];
+        let ord = [[4, 'asc'],[3, 'asc']];
 
         $('#cases_tab').DataTable().destroy();
         try {
@@ -624,7 +624,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                 "iDisplayLength": pageRows,
                 "autoWidth": false,
                 "dom": '<"dataTables_controls"ilp>rt<"bottom"><"clear">',
-                "order": [[4, 'asc'],[3, 'asc']],
+                "order": ord,
                 "createdRow": function (row, data, dataIndex) {
                     $(row).addClass('entity-table-row');
                     $(row).attr('id', 'case_' + data['PatientID'])
@@ -1642,15 +1642,14 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
          clearCartSelectionsInCaches();
     }
 
-     const propagateCartTableStatChanges = function(ids, itemChng, addingToCart,purge){
+     const propagateCartTableStatChanges = function(ids, itemChng, addingToCart, purge){
+        let tableset = ["projects_table","cases_table","studies_table","series_table"];
+        let lbl = ['data-projectid', 'data-caseid', 'data-studyid', 'data-seriesid']
+        for (let i=0;i<tableset.length;i++){
+            let tbl= tableset[i];
+            let rowsel = $("#"+tbl).find('tr');
 
-        var tableset = ["projects_table","cases_table","studies_table","series_table"];
-        var lbl = ['data-projectid', 'data-caseid', 'data-studyid', 'data-seriesid']
-        for (var i=0;i<4;i++){
-            var tbl= tableset[i];
-            var rowsel = $("#"+tbl).find('tr');
-
-             if ((ids.length ==4) && (tbl=="series_table")){
+             if ((ids.length === 4) && (tbl === "series_table")){
                  var serid="series_"+ids[3];
                  rowsel = $(document.getElementById(serid));
              } else {
@@ -1658,66 +1657,61 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                      rowsel = rowsel.filter('[' + lbl[j] + ' = "' + ids[j] + '"]');
                  }
              }
-
+             let addOrRemoveAll = false;
             if (purge || (i>=ids.length)){
-                var addOrRemoveAll = true;
-            } else {
-                var addOrRemoveAll = false
+                addOrRemoveAll = true;
             }
             rowsel.each(function() {
-                var row = this;
-                var curids= ids.slice(0,i+1)
+                let row = this;
+                let curids= ids.slice(0,i+1)
                updateTableRowCartStatsDownstream(row, itemChng, curids, addingToCart, addOrRemoveAll, tbl,purge);
             });
         }
-        for (var lvl=0;lvl<3;lvl++){
-            for (var tbli=lvl+1; tbli<4;tbli++){
-                var tbl= tableset[tbli];
-                var rowsel = $("#"+tbl).find('tr');
-                var mxIdsToCk=Math.min(ids.length,lvl+1)
-                for (var k=0;k<mxIdsToCk;k++){
+        for (let lvl=0;lvl<3;lvl++){
+            for (let tbli=lvl+1; tbli<4;tbli++){
+                let tbl= tableset[tbli];
+                let rowsel = $("#"+tbl).find('tr');
+                let mxIdsToCk=Math.min(ids.length,lvl+1)
+                for (let k=0;k<mxIdsToCk;k++){
                     rowsel =rowsel.filter('[' + lbl[k] + ' = "' + ids[k] + '"]');
                 }
                 rowsel.each(function() {
-                var row = this;
-                if ((lvl+1)<ids.length){
-                    var curids= ids.slice(0,lvl+1) ;
-                } else{
-                  var curids= ids.slice(0,ids.length) ;
-                }
-                 updateTableRowCartStatsUpstream(row, itemChng, curids, lvl, addingToCart,purge);
+                    let row = this;
+                    let curids = null;
+                    if ((lvl+1)<ids.length){
+                        curids = ids.slice(0,lvl+1) ;
+                    } else{
+                      curids = ids.slice(0,ids.length) ;
+                    }
+                     updateTableRowCartStatsUpstream(row, itemChng, curids, lvl, addingToCart,purge);
                 });
             }
         }
     }
 
      const updateTableRowCartStatsUpstream = function(row,itemChng,ids, lvl,addingToCart,purge){
-         var upstream =["collection","case","study"];
+         let upstream =["collection","case","study"];
          // update row attributes
 
-         var upstreamLblCrt = "cart_series_in_" + upstream[lvl];
+         let upstreamLblCrt = "cart_series_in_" + upstream[lvl];
+         let curcart = 0
          if (row.hasAttribute(upstreamLblCrt)) {
-             var curcart = parseInt($(row).attr(upstreamLblCrt))
-         } else {
-             var curcart = 0
+             curcart = parseInt($(row).attr(upstreamLblCrt))
          }
-
-         var upstreamLblFilt = "filter_series_in_" + upstream[lvl];
+         let upstreamLblFilt = "filter_series_in_" + upstream[lvl];
+         let curfilt = 0;
          if (row.hasAttribute(upstreamLblFilt)) {
-             var curfilt = parseInt($(row).attr(upstreamLblFilt))
-         } else {
-             var curfilt = 0
+             curfilt = parseInt($(row).attr(upstreamLblFilt))
          }
 
-         var upstreamLblFiltCrt = "filter_cart_series_in_" + upstream[lvl];
+         let upstreamLblFiltCrt = "filter_cart_series_in_" + upstream[lvl];
+         let curfiltcart = 0;
          if (row.hasAttribute(upstreamLblFiltCrt)) {
-             var curfiltcart = parseInt($(row).attr(upstreamLblFiltCrt))
-         } else {
-                 var curfiltcart = 0
+             curfiltcart = parseInt($(row).attr(upstreamLblFiltCrt))
          }
 
          // if selection was made at a higher level than level being looked at. Only some series added/deleted belong to the item
-         var newseries=0;
+         let newseries=0;
          if (ids.length<(lvl+1) && !purge){
             if (addingToCart){
                 newseries=curfilt-curfiltcart;
