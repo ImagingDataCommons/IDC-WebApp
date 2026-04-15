@@ -427,7 +427,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         $("#proj_table_wrapper").find('.dataTables_controls').remove();
         var colDefs = projectTableColDefs();
         var columns = projectTableColumns();
-        var ord = [[4, "asc"]]
+        let ord = [[3, "desc"], [4, "asc"]];
 
         $('#proj_table').DataTable(
             {
