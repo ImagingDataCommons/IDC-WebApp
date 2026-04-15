@@ -1808,6 +1808,11 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
              if (lbl =='series'){
                  if (!(tbl=="series_table")) {
                      $(row).find('.cartnum').text(in_cart);
+                     let dataTableRow = $(row).closest('table').DataTable().row(row);
+                     let rowData = dataTableRow.data();
+                     rowData[1] = in_cart;
+                     dataTableRow.data(rowData);
+
                  }
                if (in_cart>0){
                    $(row).addClass('someInCart');
@@ -1994,13 +1999,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
          let updateElems =["series", "studies","cases"];
          let addingToCart = true;
          if (tabletype==="series") {
-             if ($(elem).parentsUntil('tr').parent().hasClass('someInCart')) {
+             if ($(elem).closest('tr').hasClass('someInCart')) {
                  addingToCart = false;
              } else {
                  addingToCart = true;
              }
          } else {
-             if ($(elem).parentsUntil('tr').parent().hasClass('extraInFilter')) {
+             if ($(elem).closest('tr').hasClass('extraInFilter')) {
                  addingToCart = true;
              } else {
                  addingToCart = false;
