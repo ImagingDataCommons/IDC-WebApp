@@ -268,7 +268,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     // project(collection) table column definitions
     const projectTableColumns = function(){
         var caret_col= { "type": "html", "orderable": false, "data": 0, render: function (data, type, row) {
-            if (('state' in window.selProjects[data]) && ('view' in window.selProjects[data]['state']) && (window.selProjects[data]['state']['view'] )) {
+            if (data in window.openProjects) {
                 return '<a role="button" title="Display cases in this collection below.">'+
                     '<i class="fa fa-solid fa-folder is-hidden"></i>' +
                     '<i class="fa fa-solid fa-folder-open"></i></a>'
@@ -1800,11 +1800,12 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
              if (lbl === 'series'){
                  if (!(tbl === "series_table")) {
                      $(row).find('.cartnum').text(in_cart);
-                     let dataTableRow = $(row).closest('table').DataTable().row(row);
-                     let rowData = dataTableRow.data();
-                     rowData[1] = in_cart;
-                     dataTableRow.data(rowData);
-
+                     if(tbl === "projects_table") {
+                         let dataTableRow = $(row).closest('table').DataTable().row(row);
+                         let rowData = dataTableRow.data();
+                         rowData[1] = in_cart;
+                         dataTableRow.data(rowData);
+                     }
                  }
                if (in_cart>0){
                    $(row).addClass('someInCart');
