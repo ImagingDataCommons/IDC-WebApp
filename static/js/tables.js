@@ -91,18 +91,16 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
     // Update the rows in the Projects Table, clear the other tables.
     window.updateTablesAfterFilter = function (collFilt, collectionsData, collectionStats,cartStats){
-        var usedCollectionData = new Array();
-
-        var hasColl = collFilt.length>0 ? true : false;
-        for (var i=0;i<window.collectionData.length;i++){
-            var cRow = window.collectionData[i];
-            var projId=cRow[0];
+        let usedCollectionData = new Array();
+        let hasColl = Boolean(collFilt.length>0);
+        for (let i=0;i<window.collectionData.length;i++){
+            let cRow = window.collectionData[i];
+            let projId=cRow[0];
             if ( (projId in collectionsData) && (!hasColl || (collFilt.indexOf(projId)>-1)) ){
                 cRow[3] = collectionsData[projId]['count'];
             } else {
                cRow[3] = 0;
             }
-
             if (cRow[3]>0) {
                 usedCollectionData.push(cRow);
             }
@@ -150,9 +148,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
     // check if a cache of cases, studies, or series data needs to be updated with a server call
     const checkClientCache = function(request, type){
-        var cache;
-        var reorderNeeded = false;
-        var updateNeeded = true;
+        let cache = null;
+        let reorderNeeded = false;
+        let updateNeeded = true;
         if (request.draw ===1){
             updateNeeded = true;
         } else {
@@ -572,7 +570,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
         const cartnum_col= {
             "type": "html", "orderable": false, "data": "PatientID", render: function (data, type, row) {
-                var nm=0
+                let nm= 0;
                 if ('unique_series_cart' in row) {
                     nm=row['unique_series_cart']
                 }
@@ -612,7 +610,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     // across tables about which items are added to the cart, and which chevrons are selected
     window.updateCaseTable = function(rowsAdded,caseID, table_search) {
         let updatePromise = $.Deferred();
-        viewedProjects =Object.keys(window.openProjects);
+        viewedProjects = Object.keys(window.openProjects);
         if ($('#cases_tab_wrapper').find('.dataTables_controls').length>0){
             pageRows = parseInt($('#cases_tab_wrapper').find('.dataTables_length select').val());
         } else {
