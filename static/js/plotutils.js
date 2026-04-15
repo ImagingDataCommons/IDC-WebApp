@@ -232,9 +232,9 @@ define(['sliderutils','filterutils','jquery', 'base'], function(sliderutils,filt
                 }
 
                 if (i < inputList.length - 1) {
-                    filterutils.handleFilterSelectionUpdate(inputList[i], false, false);
+                    window.handleFilterSelectionUpdate(inputList[i], false, false);
                 } else {
-                    filterutils.handleFilterSelectionUpdate(inputList[i], true, true);
+                    window.handleFilterSelectionUpdate(inputList[i], true, true);
                 }
             }
         }
