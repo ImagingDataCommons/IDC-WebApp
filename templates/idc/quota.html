@@ -42,12 +42,22 @@
                 </div>
                 <div class="card-body text-left">
                   <p>
-                      Users are restricted to a quota of <b>{{ quota }} GB</b> per day of medical imaging files accessed via
-                      our DICOMweb interface and image viewers. You have reached your daily quota. Your quota will be reset at
-                      midnight UTC.
+                      Users are restricted to an egress quota of <b>{{ quota }} GB</b> per day while accessing IDC data via
+                      our DICOMweb proxy interface (either directly or via image viewers). You have reached your daily quota. 
+                      Your quota will be reset at midnight UTC.
                   </p>
                   <p>
-                      IDC images and data can be accessed in several alternative ways which do not have download quotas,
+                     For unrestricted DICOMweb access to IDC data you can use this DICOMweb authenticated endpoint:
+                     <em>https://healthcare.googleapis.com/v1/projects/nci-idc-data/locations/us-central1/datasets/idc/dicomStores/idc-store-v23/dicomWeb</em>.
+                     Google account authentication is required, but any Google account can access this interface, no whitelisting is necessary!
+                     For details see <a href="" url="https://learn.canceridc.dev/data/organization-of-data/dicom-stores#dicom-store-maintained-by-google-healthcare" 
+                                        title="DICOM store maintained by Google Healthcare"
+                        class="external-link" data-toggle="modal" data-target="#external-web-warning"
+                         data-bs-toggle="modal" data-bs-target="#external-web-warning"
+                      >this article <i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">.
+                  </p>
+                  <p>
+                      Alternative interfaces for data access, which do not have download quotas, are
                       detailed in <a href="" url="https://learn.canceridc.dev/data/downloading-data" title="Download options"
                         class="external-link" data-toggle="modal" data-target="#external-web-warning"
                          data-bs-toggle="modal" data-bs-target="#external-web-warning"
