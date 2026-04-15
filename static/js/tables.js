@@ -76,12 +76,12 @@ require([
 // Return an object for consts/methods used by most views
 
 define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils, filterutils, tippy, $, base) {
-    let all_tables = $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table');
-    all_tables.on('preInit.dt', function(){
+
+    $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table').on('preInit.dt', function(){
         window.show_spinner();
     });
 
-    all_tables.on('draw.dt', function(){
+    $('#proj_table, #cases_tab, #studies_tab, #series_tab, #cart-table').on('draw.dt', function(){
         window.hide_spinner();
         // Auto-width needing to be shut off at the table header level during draw time.
         $(this).children('th').each(function() {
@@ -93,7 +93,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     window.updateTablesAfterFilter = function (collFilt, collectionsData, collectionStats,cartStats){
         let usedCollectionData = new Array();
         let hasColl = Boolean(collFilt.length>0);
-
         for (let i=0;i<window.collectionData.length;i++){
             let cRow = window.collectionData[i];
             let projId=cRow[0];
@@ -102,7 +101,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             } else {
                cRow[3] = 0;
             }
-
             if (cRow[3]>0) {
                 usedCollectionData.push(cRow);
             }
@@ -123,6 +121,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         window.openStudies = {}
     }
     const initializeTableCacheData =  function() {
+
         window.casesTableCache = {
             "data": [],
             "recordLimit": -1,
@@ -149,9 +148,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
     // check if a cache of cases, studies, or series data needs to be updated with a server call
     const checkClientCache = function(request, type){
-        var cache = null;
-        var reorderNeeded = false;
-        var updateNeeded = true;
+        let cache = null;
+        let reorderNeeded = false;
+        let updateNeeded = true;
         if (request.draw ===1){
             updateNeeded = true;
         } else {
@@ -252,7 +251,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         return false;
     }
 
-    // classes for project(collection) table columns
+    // targets indicates the visual table columns associated with these definitions
+    // It does NOT map the data to the column; this is done below in the Column generator
     var projectTableColDefs = function(){
         return [
             {className: "ckbx text_data viewbx caseview table-interactive", "targets": [0]},
@@ -267,8 +267,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
     // project(collection) table column definitions
     const projectTableColumns = function(){
-        var caret_col= { "type": "html", "orderable": false, render: function (data) {
-            if (('state' in window.selProjects[data]) && ('view' in window.selProjects[data]['state']) && (window.selProjects[data]['state']['view'] )) {
+        var caret_col= { "type": "html", "orderable": false, "data": 0, render: function (data, type, row) {
+            if (data in window.openProjects) {
                 return '<a role="button" title="Display cases in this collection below.">'+
                     '<i class="fa fa-solid fa-folder is-hidden"></i>' +
                     '<i class="fa fa-solid fa-folder-open"></i></a>'
@@ -291,38 +291,34 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                return '<i class="fa-solid fa-cart-shopping shopping-cart"></i>'
           }
        };
-        var cartnum_col={"type": "html", "orderable": true, render: function(data, type)
-            {
-                if(type === 'display') {
-                    return ('<span class="cartnum cartnum_style">' + data + '</span>');
-                }
-                return data;
-            }};
-        var collection_col = {"type": "html", "orderable": true, render: function (data, type) {
-                if (type === 'display') {
-                    return '<span id="' + data[0] + '" class="collection_name value">' + data[1] + '</span>\n' +
-                        '<span><i class="collection_info fa-solid fa-info-circle" value="' + data[0] + '" data-filter-display-val="' + data[1] + '"></i></span>' +
-                        ' <a class="copy-this" role="button" content="' + data[0] +
+        var cartnum_col={"type": "html-num", "orderable": true, "data": 1, render: function (data, type, row){
+            if(type === "display") {
+                return ('<span class="cartnum cartnum_style">'+data+'</span>');
+            }
+            return data;
+        }};
+        var collection_col = {"type": "html", "orderable": true, "data": 3, render: function (data, type, row) {
+                if (type === "display") {
+                    return '<span id="' + row[0] + '" class="collection_name value">' + data + '</span>\n' +
+                        '<span><i class="collection_info fa-solid fa-info-circle" value="' + row[0] + '" data-filter-display-val="' + data + '"></i></span>' +
+                        ' <a class="copy-this" role="button" content="' + row[0] +
                         '" title="Copy the IDC collection_id to the clipboard"><i class="fa-solid fa-copy"></i></a>';
                 }
-                return data[1];
-            }};
-        var case_col = { "type": "num", 'orderable': true, "createdCell": function (td, data, row) {
+                return data;
+            }
+        };
+        var case_col = { "type": "num", orderable: true, "data": 4, "createdCell": function (td, data, row) {
                 $(td).attr('id', 'patient_col_' + row[0]);
-                $(td).attr('data-order', data[0]);
-            }, render: function(data,type) {
-                if(type === 'display') {
-                    return `${data[0]} / ${data[1]}`;
-                }
-                return data[0];
+            }, render: function (data, type, row) {
+                return `${data} / ${row[5]}`;
             }};
-        var license_col = { "type": "html", 'orderable': true, "createdCell": function (td, data, row) {
+        var license_col = { "type": "html", orderable: true, "data": 7, "createdCell": function (td, data, row) {
                 $(td).attr('id', 'license_col_' + row[0]);
-            }, render: function(data) {
-                return `${data}`;
+            }, render: function (data, type, row) {
+                return data;
             }};
-        const download_col = {"type": "html", "orderable": false, 'data': 'collection_id', render: function(data, type, row) {
-            let download_size = window.collection[row[0]]['total_size_with_ar'];
+        const download_col = {"type": "html", "orderable": false, "data": 0, render: function(data, type, row) {
+            let download_size = window.collection[data]['total_size_with_ar'];
             if ("showDirectoryPicker" in window && download_size < 3) {
                 let download_classes = "download-collection download-instances";
                 download_classes = (download_size > 1) ? `${download_classes} download-size-warning` : `${download_classes} download-all-instances`;
@@ -331,8 +327,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     modal_attr = ` data-toggle="modal" data-target="#download-warning"`;
                 }
                 return `<i class="fa fa-download ${download_classes}"   
-                    data-collection="${row[0]}" 
-                    data-total-series="${row[7]['mxseries']}" 
+                    data-collection="${data}" 
+                    data-total-series="${row[6]['mxseries']}" 
                     data-download-type="collection"
                     ${modal_attr}
                     ></i>`;
@@ -421,60 +417,61 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                   //stats[item + '_in_filter'] = 0;
               }
             }
-//            var ncur=[projid, lclstats["series_in_cart"], projid, cur[1],cur[2],cur[3],lclstats, cur[4]];
-            //console.log(ncur);
-            let ncur = [projid, null, null, lclstats["series_in_cart"], [projid,cur[1]],[cur[2],cur[3]], cur[4], lclstats];
-            //return [caret_col, download_col, cart_col, cartnum_col, collection_col, case_col, license_col];
+            var ncur=[projid, lclstats["series_in_cart"], projid, cur[1],cur[2],cur[3],lclstats, cur[4]];
             newCollectionData.push(ncur);
         }
 
         $('#proj_table').DataTable().destroy();
         $("#proj_table_wrapper").find('.dataTables_controls').remove();
-        let colDefs = projectTableColDefs();
-        let columns = projectTableColumns();
-        let ord = [[3,'desc'],[4, "asc"]];
+        var colDefs = projectTableColDefs();
+        var columns = projectTableColumns();
+        let ord = [[3, "desc"], [4, "asc"]];
 
-        $('#proj_table').DataTable({
-            "dom": '<"dataTables_controls"ilpf>rt<"bottom"><"clear">',
-            "order": ord,
-            "data": newCollectionData,
-            "createdRow": function (row, data, dataIndex) {
-                let projid = data[0];
-                // stats is created from the explorer data page when the page is first created
-                // collectionStats are stats for the current filter
-                //cartStats where applicable are cart related stats
-                let stats = data[7];
-                $(row).addClass('entity-table-row');
-                $(row).data('projectid', projid);
-                $(row).attr('data-projectid', projid);
-                $(row).data('totalcases', data[5][1]);
-                $(row).attr('totalcases', data[5][1]);
-                $(row).attr('data-total-series', stats['mxseries'])
-                $(row).attr('id', 'project_row_' + projid);
+        $('#proj_table').DataTable(
+            {
+                "dom": '<"dataTables_controls"ilpf>rt<"bottom"><"clear">',
+                "order": ord,
+                "data": newCollectionData,
+                "createdRow": function (row, data, dataIndex) {
+                    $(row).addClass('entity-table-row');
+                    $(row).data('projectid', data[0]);
+                    $(row).attr('data-projectid', data[0]);
+                    $(row).data('totalcases', data[5]);
+                    $(row).attr('totalcases', data[5]);
+                    $(row).attr('data-total-series', data[6]['mxseries'])
+                    $(row).attr('id', 'project_row_' + data[0]);
+                    var projid = data[0];
+                    // stats is created from the explorer data page when the page is first created
+                    // collectionStats are stats for the current filter
+                    //cartStats where applicable are cart related stats
+                    var stats = data[6];
 
-                for (var stat in stats){
-                    $(row).attr(stat,stats[stat]);
-                }
-                setRowCartClasses(row);
-                rowIsOpen(data[0], "project") && $(row).addClass('open');
 
-                $(row).on('click', function(event) {
-                    handleRowClick("collections", row, event, [projid])
-                });
+                    for (var stat in stats){
+                        $(row).attr(stat,stats[stat]);
+                    }
+                    setRowCartClasses(row);
 
-                $(row).find('.collection_info').on("mouseenter", function(e){
-                    $(e.target).addClass('fa-lg');
-                    $(e.target).parent().parent().data("clickForInfo",false);
-                });
+                    rowIsOpen(data[0], "project") && $(row).addClass('open');
 
-                $(row).find('.collection_info').on("mouseleave", function(e){
-                    $(e.target).parent().parent().data("clickForInfo",false);
-                    $(e.target).removeClass('fa-lg');
-                });
-            },
-            "columnDefs":[ ...colDefs],
-            "columns":[...columns]
-        });
+                    $(row).on('click', function(event) {
+                        handleRowClick("collections", row, event, [projid])
+                    });
+
+                     $(row).find('.collection_info').on("mouseenter", function(e){
+                        $(e.target).addClass('fa-lg');
+                        $(e.target).parent().parent().data("clickForInfo",false);;
+                      });
+
+                   $(row).find('.collection_info').on("mouseleave", function(e){
+                      $(e.target).parent().parent().data("clickForInfo",false);
+                      $(e.target).removeClass('fa-lg');
+                    });
+                },
+                "columnDefs":[ ...colDefs],
+                "columns":[...columns]
+            }
+        );
         let collex_input = $('#proj_table_filter input');
         collex_input.after(`<button class="clear"><i class="fa fa-solid fa-circle-xmark"></i></button>`);
         collex_input.addClass("table-search-box");
@@ -572,8 +569,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         };
 
         const cartnum_col= {
-            "type": "html", "orderable": true, "data": "PatientID", render: function (data, type, row) {
-                let nm=0
+            "type": "html", "orderable": false, "data": "PatientID", render: function (data, type, row) {
+                let nm= 0;
                 if ('unique_series_cart' in row) {
                     nm=row['unique_series_cart']
                 }
@@ -581,10 +578,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             }
 
         };
-        const collection_col =  {"type": "text", "orderable": true, data: 'collection_id', render: function (data)
+        const collection_col =  {"type": "text", "orderable": true, data: 'collection_id', render: function (data, type, row)
             {
                 var projectNm = $('#' + data).filter('.collection_name')[0].innerText; return projectNm;}}
-        const case_col = {"type": "text", "orderable": true, data: 'PatientID', render: function (data) {
+        const case_col = {"type": "text", "orderable": true, data: 'PatientID', render: function (data, type, row) {
             return data +
             ' <a class="copy-this" role="button" content="' + data +
                 '" title="Copy Case ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
@@ -613,12 +610,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     // across tables about which items are added to the cart, and which chevrons are selected
     window.updateCaseTable = function(rowsAdded,caseID, table_search) {
         let updatePromise = $.Deferred();
-        viewedProjects =Object.keys(window.openProjects);
+        viewedProjects = Object.keys(window.openProjects);
         if ($('#cases_tab_wrapper').find('.dataTables_controls').length>0){
             pageRows = parseInt($('#cases_tab_wrapper').find('.dataTables_length select').val());
         } else {
             pageRows = 10;
         }
+        let ord = [[4, 'asc'],[3, 'asc']];
 
         $('#cases_tab').DataTable().destroy();
         try {
@@ -626,7 +624,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                 "iDisplayLength": pageRows,
                 "autoWidth": false,
                 "dom": '<"dataTables_controls"ilp>rt<"bottom"><"clear">',
-                "order": [[3, 'desc'],[4, 'asc']],
+                "order": ord,
                 "createdRow": function (row, data, dataIndex) {
                     $(row).addClass('entity-table-row');
                     $(row).attr('id', 'case_' + data['PatientID'])
@@ -978,11 +976,11 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                             return '<span class="cartnum cartnum_style">'+cnt.toString()+'</span>'
                         }
                     }, {
-                        "type": "text", "orderable": true, data: 'PatientID', render: function (data) {
+                        "type": "text", "orderable": true, data: 'PatientID', render: function (data, type, row) {
                             return data.length > 26 ? pretty_print_id(data, 21) : data;
                         }
                     }, {
-                        "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
+                        "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data, type, row) {
                             return pretty_print_id(data) +
                             ' <a class="copy-this" role="button" content="' + data +
                                 '" title="Copy Study ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
@@ -992,7 +990,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                             return;
                         }
                     }, {
-                        "type": "text", "orderable": true, data: 'StudyDate', render: function (data) {
+                        "type": "text", "orderable": true, data: 'StudyDate', render: function (data, type, row) {
                             if(data === "" || data === undefined || data === null) {
                                 return "";
                             }
@@ -1187,10 +1185,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         } else {
             pageRows = 10;
         }
-        let seriesTable = null;
         $('#series_tab').DataTable().destroy();
         try {
-            seriesTable = $('#series_tab').DataTable({
+            $('#series_tab').DataTable({
                 "iDisplayLength": pageRows,
                  "autoWidth": false,
                  "dom": '<"dataTables_controls"ilp>rt<"bottom"><"clear">',
@@ -1206,6 +1203,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     $(row).attr('data-aws',  data['aws_bucket']);
                     $(row).attr('data-gcs',  data['gcs_bucket']);
                     $(row).addClass('text_head');
+
                     $(row).attr('data-aws',  data['aws_bucket'])
 
                      if ('cart_series_in_collection' in data){
@@ -1276,7 +1274,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                             if ($(elem).hasClass('ckbx')){
                                 elem=$(elem).find('.shopping-cart')[0];
                             }
-                             handleCartClick("series", row, elem, [collection_id,PatientID,studyid, seriesid], "series_table");
+                             handleCartClick("series", row, elem, [collection_id,PatientID,studyid, seriesid]);
 
                     });
                  },
@@ -1324,7 +1322,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                        return '<i class="fa-solid fa-cart-shopping shopping-cart"></i>'
                   }
                 }, {
-                    "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data) {
+                    "type": "text", "orderable": true, data: 'StudyInstanceUID', render: function (data, type, row) {
                         return pretty_print_id(data) +
                             ' <a class="copy-this" role="button" content="' + data +
                                 '"  title="Copy Study ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
@@ -1333,7 +1331,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         return;
                     }
                 }, {
-                    "type": "text", "orderable": true, data: 'SeriesInstanceUID', render: function (data) {
+                    "type": "text", "orderable": true, data: 'SeriesInstanceUID', render: function (data, type, row) {
                         return pretty_print_id(data) +
                             ' <a class="copy-this" role="button" content="' + data +
                                 '"  title="Copy Series ID to the clipboard"><i class="fa-solid fa-copy"></i></a>';
@@ -1346,7 +1344,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                 {"type": "text", "orderable": true, data: 'Modality'},
                 {"type": "text", "orderable": true, data: 'BodyPartExamined'},
                 {
-                    "type": "text", "orderable": true, data: 'SeriesDescription', render: function (data) {
+                    "type": "text", "orderable": true, data: 'SeriesDescription', render: function (data, type, row) {
                         if (data.length > 1) {
                             return data[0] + ',...';
                         } else if (data.length === 1) {
@@ -1645,13 +1643,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     }
 
      const propagateCartTableStatChanges = function(ids, itemChng, addingToCart, purge){
-        var tableset = ["projects_table","cases_table","studies_table","series_table"];
-        var lbl = ['data-projectid', 'data-caseid', 'data-studyid', 'data-seriesid']
-        for (var i=0;i<4;i++){
-            var tbl= tableset[i];
-            var rowsel = $("#"+tbl).find('tr');
+        let tableset = ["projects_table","cases_table","studies_table","series_table"];
+        let lbl = ['data-projectid', 'data-caseid', 'data-studyid', 'data-seriesid']
+        for (let i=0;i<tableset.length;i++){
+            let tbl= tableset[i];
+            let rowsel = $("#"+tbl).find('tr');
 
-             if ((ids.length ==4) && (tbl=="series_table")){
+             if ((ids.length === 4) && (tbl === "series_table")){
                  var serid="series_"+ids[3];
                  rowsel = $(document.getElementById(serid));
              } else {
@@ -1659,13 +1657,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                      rowsel = rowsel.filter('[' + lbl[j] + ' = "' + ids[j] + '"]');
                  }
              }
-            let addOrRemoveAll = false
+             let addOrRemoveAll = false;
             if (purge || (i>=ids.length)){
                 addOrRemoveAll = true;
             }
             rowsel.each(function() {
-                var row = this;
-                var curids= ids.slice(0,i+1)
+                let row = this;
+                let curids= ids.slice(0,i+1)
                updateTableRowCartStatsDownstream(row, itemChng, curids, addingToCart, addOrRemoveAll, tbl,purge);
             });
         }
@@ -1674,7 +1672,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                 let tbl= tableset[tbli];
                 let rowsel = $("#"+tbl).find('tr');
                 let mxIdsToCk=Math.min(ids.length,lvl+1)
-                for (var k=0;k<mxIdsToCk;k++){
+                for (let k=0;k<mxIdsToCk;k++){
                     rowsel =rowsel.filter('[' + lbl[k] + ' = "' + ids[k] + '"]');
                 }
                 rowsel.each(function() {
@@ -1682,10 +1680,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     let curids = null;
                     if ((lvl+1)<ids.length){
                         curids = ids.slice(0,lvl+1) ;
-                    } else {
-                        curids = ids.slice(0,ids.length) ;
+                    } else{
+                      curids = ids.slice(0,ids.length) ;
                     }
-                    updateTableRowCartStatsUpstream(row, itemChng, curids, lvl, addingToCart, purge);
+                     updateTableRowCartStatsUpstream(row, itemChng, curids, lvl, addingToCart,purge);
                 });
             }
         }
@@ -1694,19 +1692,30 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
      const updateTableRowCartStatsUpstream = function(row,itemChng,ids, lvl,addingToCart,purge){
          let upstream =["collection","case","study"];
          // update row attributes
+
          let upstreamLblCrt = "cart_series_in_" + upstream[lvl];
+         let curcart = 0
+         if (row.hasAttribute(upstreamLblCrt)) {
+             curcart = parseInt($(row).attr(upstreamLblCrt))
+         }
          let upstreamLblFilt = "filter_series_in_" + upstream[lvl];
+         let curfilt = 0;
+         if (row.hasAttribute(upstreamLblFilt)) {
+             curfilt = parseInt($(row).attr(upstreamLblFilt))
+         }
+
          let upstreamLblFiltCrt = "filter_cart_series_in_" + upstream[lvl];
-         let curcart = row.hasAttribute(upstreamLblCrt) ? parseInt($(row).attr(upstreamLblCrt)) : 0;
-         let curfilt = row.hasAttribute(upstreamLblFilt) ? parseInt($(row).attr(upstreamLblFilt)) : 0;
-         let curfiltcart = row.hasAttribute(upstreamLblFiltCrt) ? parseInt($(row).attr(upstreamLblFiltCrt)): 0;
+         let curfiltcart = 0;
+         if (row.hasAttribute(upstreamLblFiltCrt)) {
+             curfiltcart = parseInt($(row).attr(upstreamLblFiltCrt))
+         }
 
          // if selection was made at a higher level than level being looked at. Only some series added/deleted belong to the item
          let newseries=0;
          if (ids.length<(lvl+1) && !purge){
             if (addingToCart){
                 newseries=curfilt-curfiltcart;
-            } else {
+            } else{
                 newseries=-curfiltcart;
             }
          // else they all belong here
@@ -1727,20 +1736,20 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
          var items =["collections","cases","studies","series"];
          var mini = ids.length
          var mxi=4
-         if (tbl=="series_table"){
+         if (tbl === "series_table"){
              mini=3;
              mxi=4;
          }
-         for (var i = mini; i < mxi; i++) {
-             var lbl = items[i];
-             var lbl_mx= 'mx'+lbl;
-             var lbl_filter = lbl + '_in_filter';
-             var lbl_cart = lbl + '_in_cart';
-             var lbl_filter_cart = lbl + '_in_filter_and_cart';
-             var mx =0;
-             var in_cart=0;
-             var in_filter=0;
-             var in_filter_cart=0;
+         for (let i = mini; i < mxi; i++) {
+             let lbl = items[i];
+             let lbl_mx= 'mx'+lbl;
+             let lbl_filter = lbl + '_in_filter';
+             let lbl_cart = lbl + '_in_cart';
+             let lbl_filter_cart = lbl + '_in_filter_and_cart';
+             let mx =0;
+             let in_cart=0;
+             let in_filter=0;
+             let in_filter_cart=0;
              if (row.hasAttribute(lbl_mx)) {
                   mx = parseInt($(row).attr(lbl_mx));
              } else {
@@ -1767,7 +1776,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
              if (purge){
                  in_cart=0;
                  in_filter_cart =0;
-             } else if ((tbl =="series_table") && (lbl=="series")){
+             } else if ((tbl === "series_table") && (lbl === "series")){
                  if ((addingToCart)){
                      in_cart=1;
                      in_filter_cart =1;
@@ -1788,9 +1797,15 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
              $(row).attr(lbl + "_in_cart", in_cart);
              $(row).attr(lbl + "_in_filter_and_cart", in_filter_cart);
-             if (lbl =='series'){
-                 if (!(tbl=="series_table")) {
+             if (lbl === 'series'){
+                 if (!(tbl === "series_table")) {
                      $(row).find('.cartnum').text(in_cart);
+                     if(tbl === "projects_table") {
+                         let dataTableRow = $(row).closest('table').DataTable().row(row);
+                         let rowData = dataTableRow.data();
+                         rowData[1] = in_cart;
+                         dataTableRow.data(rowData);
+                     }
                  }
                if (in_cart>0){
                    $(row).addClass('someInCart');
@@ -1812,10 +1827,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
      }
 
     const clearCartSelectionsInCaches = function(){
-        var caches = ["", "casesCache", "studiesCache", "seriesCache"];
-        var rowsToClearUpstream = [["cart_series_in_collection","filter_cart_series_in_collection"], ["cart_series_in_case","filter_cart_series_in_case"], ["cart_series_in_study","filter_cart_series_in_study"]];
-        var rowsToClearDownstream = [["unique_cases_cart", "unique_cases_filter_and_cart"], ["unique_studies_cart", "unique_studies_filter_and_cart"], ["unique_series_cart", "unique_series_filter_and_cart"]];
-        for (var cacheNum = 1; cacheNum < 4; cacheNum++) {
+        let caches = ["", "casesCache", "studiesCache", "seriesCache"];
+        let rowsToClearUpstream = [["cart_series_in_collection","filter_cart_series_in_collection"], ["cart_series_in_case","filter_cart_series_in_case"], ["cart_series_in_study","filter_cart_series_in_study"]];
+        let rowsToClearDownstream = [["unique_cases_cart", "unique_cases_filter_and_cart"], ["unique_studies_cart", "unique_studies_filter_and_cart"], ["unique_series_cart", "unique_series_filter_and_cart"]];
+        for (let cacheNum = 1; cacheNum < 4; cacheNum++) {
             if ((caches[cacheNum] in window) && ('data' in window[caches[cacheNum]]) ) {
                 var curCache = window[caches[cacheNum]]['data'];
                 // iterate thru each row in the curCaceh
@@ -1848,25 +1863,25 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     }
 
     const updateTableCacheAfterCartSelection = function(ids,itemChng, addingToCart, cacheNum) {
-        var caches = ["", "casesCache", "studiesCache", "seriesCache"];
-        var ckids = ["collection_id", "PatientID", "StudyInstanceUID", "SeriesInstanceUID"];
-        var items = ["collection", "cases", "studies", "series"];
-        var upstream = [["cart_series_in_collection", "filter_cart_series_in_collection"], ["cart_series_in_case","filer_cart_series_in_case"], ["cart_series_in_study","filter_cart_series_in_study"]];
-        var downstream = [["unique_cases_cart", "unique_cases_filter_cart"], ["unique_studies_cart", "unique_studies_filter_cart"], ["unique_series_cart", "unique_series_filter_cart"]];
-        var chnglvl = ids.length
-        var curCache = window[caches[cacheNum]]['data'];
+        let caches = ["", "casesCache", "studiesCache", "seriesCache"];
+        let ckids = ["collection_id", "PatientID", "StudyInstanceUID", "SeriesInstanceUID"];
+        let items = ["collection", "cases", "studies", "series"];
+        let upstream = [["cart_series_in_collection", "filter_cart_series_in_collection"], ["cart_series_in_case","filer_cart_series_in_case"], ["cart_series_in_study","filter_cart_series_in_study"]];
+        let downstream = [["unique_cases_cart", "unique_cases_filter_cart"], ["unique_studies_cart", "unique_studies_filter_cart"], ["unique_series_cart", "unique_series_filter_cart"]];
+        let chnglvl = ids.length
+        let curCache = window[caches[cacheNum]]['data'];
         // iterate thru each row in the curCaceh
-        for (var rowid = 0; rowid < curCache.length; rowid++) {
-            var curRow = curCache[rowid]
-            var mtch_row_stats_update_ids = true;
+        for (let rowid = 0; rowid < curCache.length; rowid++) {
+            let curRow = curCache[rowid]
+            let mtch_row_stats_update_ids = true;
 
             //iterate through image levels higher than the
-            for (var upstreamlvl = 0; upstreamlvl < cacheNum; upstreamlvl++) {
+            for (let upstreamlvl = 0; upstreamlvl < cacheNum; upstreamlvl++) {
                 // if the lvl of change in collection, cases, study series hierarchy is lower than the current category being on considered, check for exact match
-                var newseries=0;
+                let newseries= 0;
                 if (mtch_row_stats_update_ids) {
                     if (chnglvl >= upstreamlvl) {
-                        var attToMtchId = curRow[ckids[upstreamlvl]];
+                        let attToMtchId = curRow[ckids[upstreamlvl]];
                         if (attToMtchId == ids[upstreamlvl]) {
                             newseries = itemChng['series']['added'];
                         } else {
@@ -1878,13 +1893,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     } else if(mtch_row_stats_update_ids) {
                         if(addingToCart) {
                             if (('series_filter_and_cart') in curRow) {
-                                var newseries = curRow['unique_series'] - curRow['series_filter_and_cart'];
+                                newseries = curRow['unique_series'] - curRow['series_filter_and_cart'];
                             } else {
-                                var newseries = curRow['unique_series']
+                                newseries = curRow['unique_series']
                             }
                         } else {
                             if (('series_filter_and_cart') in curRow) {
-                                var newseries= - curRow['series_filter_and_cart'];
+                                newseries = - curRow['series_filter_and_cart'];
                             }
                         }
                     }
@@ -1904,8 +1919,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                 var chnglvldownstreamcachelvl = false;
             } else if (mtch_row_stats_update_ids) {
                 var chnglvldownstreamcachelvl = true;
-                var attToMtchId = curRow[ckids[cacheNum]];
-                if (!(attToMtchId == ids[cacheNum])) {
+                let attToMtchId = curRow[ckids[cacheNum]];
+                if (!(attToMtchId === ids[cacheNum])) {
                     mtch_row_stats_update_ids = false;
                 }
             }
@@ -1929,6 +1944,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         var infiltercart = 0;
                     }
                     var incartlbl = "unique_" + curitem + "_cart"
+
 
                     if (chnglvldownstreamcachelvl) {
                         newitems = itemChng[curitem]['added'];
@@ -1956,33 +1972,24 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
     const updateTableCachesAfterCartSelection =function(ids,itemChng, addingToCart) {
         var caches = ["", "casesCache", "studiesCache", "seriesCache"];
-        var ckids = ["collection_id", "PatientID", "StudyInstanceUID", "SeriesInstanceUID"];
-        var items = ["collection", "cases", "studies", "series"];
-        var upstream = ["cart_series_in_collection", "cart_studies_in_case", "cart_studies_in_study"];
-        var downstream = [["unique_cases_cart", "unique_cases_filter_cart"], ["unique_studies_cart", "unique_studies_filter_cart"], ["unique_series_cart", "unique_series_filter_cart"]];
-        var chnglvl = ids.length
-        //var checkUpstream=false;
-        //var checkDownStream=false;
-
-        // iterate through each cache
-        for (var cacheNum = 1; cacheNum < 4; cacheNum++) {
+        for (let cacheNum = 1; cacheNum < 4; cacheNum++) {
            if ((caches[cacheNum] in window) && ('data' in window[caches[cacheNum]])){
                updateTableCacheAfterCartSelection(ids,itemChng, addingToCart, cacheNum);
            }
        }
     }
 
-    const handleCartClick = function(tabletype, row, elem, ids, table){
+    const handleCartClick = function(tabletype, row, elem, ids){
          let updateElems =["series", "studies","cases"];
          let addingToCart = true;
          if (tabletype==="series") {
-             if ($(elem).parentsUntil('tr').parent().hasClass('someInCart')) {
+             if ($(elem).closest('tr').hasClass('someInCart')) {
                  addingToCart = false;
              } else {
                  addingToCart = true;
              }
          } else {
-             if ($(elem).parentsUntil('tr').parent().hasClass('extraInFilter')) {
+             if ($(elem).closest('tr').hasClass('extraInFilter')) {
                  addingToCart = true;
              } else {
                  addingToCart = false;
@@ -2045,11 +2052,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
              } else {
                  var upstreamlbl = "cart_series_in_" + upstream[i];
              }
-             let curseries = 0;
+
              if (row.hasAttribute(upstreamlbl)) {
-                 curseries = parseInt($(row).attr(upstreamlbl));
+                 var curseries = parseInt($(row).attr(upstreamlbl));
+             } else {
+                 var curseries = 0;
              }
-             let seriesadded = itemChng['series']['added'];
+             var seriesadded = itemChng['series']['added'];
              if ((curseries>0)  && ((curseries+seriesadded)==0)){
                  itemChng[curitem]['added']=-1;
              } else if ((curseries==0)  && (seriesadded>0)){
@@ -2075,12 +2084,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
          cartutils.updateCartCounts();
          propagateCartTableStatChanges(ids, itemChng, addingToCart,false);
          updateTableCachesAfterCartSelection(ids,itemChng,addingToCart);
-
-         if(!$(elem).hasClass('.shopping-cart-holder')) {
-             elem = $(elem).closest('.shopping-cart-holder')[0];
-         }
-         let countHolder = $(elem).siblings('.cartnumholder')[0];
-         $(`#${table}`).DataTable().cell(countHolder).data($(countHolder).find('.cartnum').text());
     };
 
     $('.addMult').on('click', function() {
@@ -2221,7 +2224,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         || $(elem).parentsUntil('tr').hasClass('manifest-col')) {
             // Handled by delegates
         } else if ($(elem).hasClass('shopping-cart') || $(elem).hasClass('shopping-cart-holder')) {
-             handleCartClick(tabletype, row, elem, ids, $(elem).closest('table').attr('id'));
+             handleCartClick(tabletype, row, elem, ids);
          }
          // click anywhere else, open tables below
          else {

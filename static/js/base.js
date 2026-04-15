@@ -121,11 +121,6 @@ require([
     // Radio button controls bootstrap collapse
     toggleRadio('upload');
 
-    function csrfSafeMethod(method) {
-        // these HTTP methods do not require CSRF protection
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    };
-
     $.createMessage = function(message, messageType) {
         var message_obj = $('<div class="row">' +
                             '<div class="col-lg-12">' +
@@ -256,6 +251,11 @@ define(['jquery', 'utils'], function($, utils) {
     $.getCookie = utils.getCookie;
     $.setCookie = utils.setCookie;
     $.removeCookie = utils.removeCookie;
+
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    };
 
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
