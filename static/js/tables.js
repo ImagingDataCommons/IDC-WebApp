@@ -1006,6 +1006,14 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         "type": "html",
                         "orderable": false,
                         data: 'StudyInstanceUID',
+                        createdCell: function(td, data, row) {
+                            let modality = row['Modality'];
+                            let viewer_type = "OHIF_VV";
+                            if(modality === 'SM' ||  (Array.isArray(modality) && modality.includes("SM"))) {
+                                viewer_type = 'SLIM';
+                            }
+                            $(td).attr("data-viewer-type", viewer_type);
+                        },
                         render: function (data, type, row) {
                             var coll_id="";
                             if (Array.isArray(row['collection_id'])){
@@ -1357,8 +1365,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         if (data.length > 1) {
                             $(td).attr('data-description', data);
                             $(td).addClass('description-tip');
-                            return;
-
                         }
                     },
                 }, {
@@ -1376,27 +1382,30 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                         }
                         if (row['access'].includes('Limited') ) {
                             return '<i class="fa-solid fa-circle-minus coll-explain"></i>';
-                        } else if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){
-                            return nonViewAbleModality.has(el);
-                        }) ) || nonViewAbleModality.has(row['Modality']) )   {
-                            let tooltip = "no-viewer-tooltip";
-                            return `<a href="/" onclick="return false;"><i class="fa-solid fa-eye-slash ${tooltip}"></i>`;
                         } else if (  ( Array.isArray(row['Modality']) && row['Modality'].some(function(el){
                             return slimViewAbleModality.has(el)}
-                        ) ) || (slimViewAbleModality.has(row['Modality']))) {
+                        ) ) || (slimViewAbleModality.has(row['Modality'])) || $(`tr[data-studyid="${row['StudyInstanceUID']}"]`).find('td.open-viewer').attr("data-viewer-type") === 'SLIM') {
                             return '<a href="' + SLIM_VIEWER_PATH + row['StudyInstanceUID'] + '/series/' + data +
                                 '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>';
                         } else {
-                            let v2_link = is_xc ? "" : OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' + data;
-                            let v3_link = OHIF_V3_PATH + "=" + row['StudyInstanceUID'] + '&SeriesInstanceUIDs=' + data;
+                            let is_v2_vv_modality = true;
+                            let v2_vv_tooltip_add = "";
+                            if ( (Array.isArray(row['Modality']) && row['Modality'].some(function(el){
+                                return nonViewAbleModality.has(el);
+                            }) ) || nonViewAbleModality.has(row['Modality']) ) {
+                                is_v2_vv_modality = false;
+                                v2_vv_tooltip_add = " Open this image series at the study level."
+                            }
+                            let v2_link = (is_xc || !is_v2_vv_modality) ? "" : OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' + data;
+                            let v3_link = OHIF_V3_PATH + "=" + row['StudyInstanceUID'] + '&initialSeriesInstanceUID=' + data;
                             let default_viewer = v3_link;
-                            let volView_link = is_xc ? "" : VOLVIEW_PATH + "=[s3://" + row['aws_bucket'] + '/' + row['crdc_series_uuid']+']"';
-                            let v2_element = '<li title="Not available for this modality."><a class="disabled" href="'
+                            let volView_link = (is_xc || !is_v2_vv_modality) ? "" : VOLVIEW_PATH + "=[s3://" + row['aws_bucket'] + '/' + row['crdc_series_uuid']+']"';
+                            let v2_element = '<li title="Not available for this modality.'+v2_vv_tooltip_add+'"><a class="disabled" href="'
                                 + v2_link + '" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
-                            let volView_element = '<li title="VolView is disabled for this Study."><a class="disabled">VolView ' +
+                            let volView_element = '<li title="VolView is disabled for this series.'+v2_vv_tooltip_add+'"><a class="disabled">VolView ' +
                                         '<i class="fa-solid fa-external-link external-link-icon" aria-hidden="true">' +
                                         '</a></li>';
-                            if(!is_xc) {
+                            if(!is_xc && is_v2_vv_modality) {
                                 v2_element = '<li><a href="' + v2_link + '" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
                                 volView_element = '<li><a class="external-link" href="" url="' + volView_link + '" ' +
                                     'data-toggle="modal" data-target="#external-web-warning">VolView ' +
