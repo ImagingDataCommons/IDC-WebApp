@@ -10,6 +10,8 @@ if [ -n "$CI" ]; then
     echo "python3 and python --version:"
     python3 --version
     python --version
+    echo "Which python:"
+    which python
 
     echo "OS:"
     cat /etc/os-release

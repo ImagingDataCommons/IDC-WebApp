@@ -139,6 +139,8 @@ jobs:
             echo "python3 and python --version:"
             python3 --version
             python --version
+            echo "which python:"
+            which python
       - checkout
       - run:
           name: Fix for bug with Git and Ubuntu 20+
