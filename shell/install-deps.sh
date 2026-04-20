@@ -1,17 +1,7 @@
 if [ -n "$CI" ]; then
+    echo $PATH
     echo "[STATUS] Check our Python and OS versions:"
 
-    echo "/user/bin/py* contents:"
-    ls -l /usr/bin/py*
-    echo "py3versions -ids:"
-    py3versions -i
-    py3versions -d
-    py3versions -s
-    echo "python3 and python --version:"
-    python3 --version
-    python --version
-    echo "Which python:"
-    which python
 
     echo "OS:"
     cat /etc/os-release

@@ -127,22 +127,6 @@ jobs:
           MYSQL_ROOT_PASSWORD: "idc"
           MYSQL_DATABASE: "build_database"
     steps:
-      - run:
-          name: Checking on Python
-          command: |
-            echo "/user/bin contents:"
-            ls -l /usr/bin/python*
-            echo "py3versions -ids:"
-            py3versions -i
-            py3versions -d
-            py3versions -s
-            echo "python3 and python --version:"
-            python3 --version
-            python --version
-            echo "which python:"
-            which python
-            ls -l /home/circleci/.pyenv/shims/
-            echo $PATH
       - checkout
       - run:
           name: Fix for bug with Git and Ubuntu 20+
