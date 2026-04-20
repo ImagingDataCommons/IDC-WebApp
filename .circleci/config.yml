@@ -137,6 +137,7 @@ jobs:
           name: Set Python Path
           command: |
             echo "export PYTHONPATH=/home/circleci/${CIRCLE_PROJECT_REPONAME}:/home/circleci/${CIRCLE_PROJECT_REPONAME}/lib:/home/circleci/${CIRCLE_PROJECT_REPONAME}/IDC-Common" >> $BASH_ENV
+            echo "export PATH=/home/circleci/.pyenv/shims:$PATH" >> $BASH_ENV
       - restore_cache:
           keys:
             - idc-webapp-lib-{{ checksum "requirements.txt" }}
@@ -144,7 +145,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: |
-            echo "export PATH=/home/circleci/.pyenv/shims:$PATH" >> $BASH_ENV
             sudo -E /bin/bash ./shell/install-deps.sh
       - save_cache:
           key: idc-webapp-lib-{{ checksum "requirements.txt" }}
