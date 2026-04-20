@@ -233,8 +233,11 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         window.proj_in_cart = shared_cart['proj_in_cart'];
         window.partitions = shared_cart['partitions'];
         window.filtergrp_list = shared_cart['filtergrp_list'];
+        window.hidePanel();
+        base.showJsMessage(null,"Loading the shared cart...",true,);
         await window.handleFilterSelectionUpdate(null, true, true);
         await updateCartCounts();
+        $('#js-messages').hide();
     };
 
     // make partitions from table selections
