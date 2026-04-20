@@ -5,6 +5,8 @@ if [ -n "$CI" ]; then
     python3 --version
     which python3
 
+    ls -l /usr/local/bin/
+
     echo "OS:"
     cat /etc/os-release
 
