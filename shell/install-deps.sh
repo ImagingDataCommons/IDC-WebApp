@@ -4,7 +4,6 @@ if [ -n "$CI" ]; then
     update-alternatives --install /usr/local/bin/python3 python /home/circleci/.pyenv/shims/python3 6
     echo "[STATUS] Check our Python and OS versions:"
     python3 --version
-
     echo "OS:"
     cat /etc/os-release
 
