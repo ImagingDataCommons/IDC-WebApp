@@ -120,6 +120,7 @@ jobs:
     working_directory: ~/IDC-WebApp
     docker:
       - image: cimg/python:3.11
+      - image: cimg/mysql:8.0
         environment:
           MYSQL_ROOT_HOST: "%"
           MYSQL_USER: ubuntu
@@ -127,6 +128,12 @@ jobs:
           MYSQL_ROOT_PASSWORD: "idc"
           MYSQL_DATABASE: "build_database"
     steps:
+      - run:
+          name: Checking on Python
+          command: |
+            python --version
+            python3 --version
+            ls -l /usr/bin/py*
       - checkout
       - run:
           name: Fix for bug with Git and Ubuntu 20+

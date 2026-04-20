@@ -5,6 +5,7 @@ if [ -n "$CI" ]; then
     whereis python
     python3 --version
     python --version
+
     cat /etc/os-release
 
     export HOME=/home/circleci/${CIRCLE_PROJECT_REPONAME}
