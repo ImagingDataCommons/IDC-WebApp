@@ -1,12 +1,9 @@
 if [ -n "$CI" ]; then
-    # Force CircleCI's .pyenv back into the path
+    # Force CircleCI's .pyenv back into the path and use update alternatives to require python 3.11
     export PATH=/home/circleci/.pyenv/shims:$PATH
-    ls -l /usr/local/bin
-    ls -l /usr/local/sbin
     update-alternatives --install /usr/local/bin/python3 python /home/circleci/.pyenv/shims/python3 6
     echo "[STATUS] Check our Python and OS versions:"
     python3 --version
-    which python3
 
     echo "OS:"
     cat /etc/os-release
