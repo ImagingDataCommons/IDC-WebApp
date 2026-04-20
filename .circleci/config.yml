@@ -144,6 +144,7 @@ jobs:
       - run:
           name: Install Dependencies
           command: |
+            echo "export PATH=/home/circleci/.pyenv/shims:$PATH" >> $BASH_ENV
             sudo -E /bin/bash ./shell/install-deps.sh
       - save_cache:
           key: idc-webapp-lib-{{ checksum "requirements.txt" }}
