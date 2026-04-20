@@ -1,11 +1,10 @@
 if [ -n "$CI" ]; then
     # Force CircleCI's .pyenv back into the path
     export PATH=/home/circleci/.pyenv/shims:$PATH
+    update-alternatives --install /usr/local/bin/python3 python /home/circleci/.pyenv/shims/python3 6
     echo "[STATUS] Check our Python and OS versions:"
     python3 --version
     which python3
-
-    ls -l /usr/local/bin/
 
     echo "OS:"
     cat /etc/os-release
