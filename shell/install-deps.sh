@@ -2,6 +2,7 @@ if [ -n "$CI" ]; then
     echo "[STATUS] Check our Python and OS versions since they keep getting updated without warning..."
 
     ls -l /usr/bin/python*
+    whereis python
     cat /etc/os-release
 
     export HOME=/home/circleci/${CIRCLE_PROJECT_REPONAME}
