@@ -1,4 +1,6 @@
 if [ -n "$CI" ]; then
+    # Force CircleCI's .pyenv back into the path
+    export PATH=/home/circleci/.pyenv/shims:$PATH
     export HOME=/home/circleci/${CIRCLE_PROJECT_REPONAME}
     export HOMEROOT=/home/circleci/${CIRCLE_PROJECT_REPONAME}
     # Set test database settings; this database will be thrown away at the end
