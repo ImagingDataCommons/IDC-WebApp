@@ -295,7 +295,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             if(type === "display") {
                 return ('<span class="cartnum cartnum_style">'+data+'</span>');
             }
-            return data;
+            return data.toString();
         }};
         var collection_col = {"type": "html", "orderable": true, "data": 3, render: function (data, type, row) {
                 if (type === "display") {
@@ -420,14 +420,14 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             var ncur=[projid, lclstats["series_in_cart"], projid, cur[1],cur[2],cur[3],lclstats, cur[4]];
             newCollectionData.push(ncur);
         }
-
-        $('#proj_table').DataTable().destroy();
+        let $projTable = $('#proj_table');
+        $projTable.DataTable().destroy();
         $("#proj_table_wrapper").find('.dataTables_controls').remove();
         var colDefs = projectTableColDefs();
         var columns = projectTableColumns();
         let ord = [[3, "desc"], [4, "asc"]];
 
-        $('#proj_table').DataTable(
+        $projTable.DataTable(
             {
                 "dom": '<"dataTables_controls"ilpf>rt<"bottom"><"clear">',
                 "order": ord,
@@ -476,7 +476,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         collex_input.after(`<button class="clear"><i class="fa fa-solid fa-circle-xmark"></i></button>`);
         collex_input.addClass("table-search-box");
         collex_input.attr("data-search-type", "collection");
-        $('#proj_table').children('tbody').attr('id', 'projects_table');
+        $projTable.children('tbody').attr('id', 'projects_table');
         $('#projects_table_head').find('th').each(function() {
             this.style.width = null;
         });
@@ -569,14 +569,12 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         };
 
         const cartnum_col= {
-            "type": "html", "orderable": false, "data": "PatientID", render: function (data, type, row) {
-                let nm= 0;
-                if ('unique_series_cart' in row) {
-                    nm=row['unique_series_cart']
+            "type": "html-num", "orderable": false, "data": "unique_series_cart", render: function (data, type, row) {
+                if(type === "display") {
+                    return ('<span class="cartnum cartnum_style">'+data+'</span>');
                 }
-                return ('<span class="cartnum cartnum_style">'+nm+'</span>');
+                return data.toString();
             }
-
         };
         const collection_col =  {"type": "text", "orderable": true, data: 'collection_id', render: function (data, type, row)
             {
@@ -616,7 +614,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         } else {
             pageRows = 10;
         }
-        let ord = [[4, 'asc'],[3, 'asc']];
+        let ord = [[4, 'asc'],[5, 'asc']];
 
         $('#cases_tab').DataTable().destroy();
         try {
@@ -697,9 +695,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     if (viewedProjects.length === 0) {
                         callback({"data": [], "recordsTotal": "0", "recordsFiltered": "0"})
                     } else {
-                        var ret = checkClientCache(request, 'cases');
-                        var ssCallNeeded = ret[0];
-                        var reorderNeeded = ret[1];
+                        let ret = checkClientCache(request, 'cases');
+                        ssCallNeeded = ret[0];
+                        let reorderNeeded = ret[1];
                         if (ssCallNeeded) {
                             var curFilterObj = JSON.parse(JSON.stringify(filterutils.parseFilterObj()));
                             curFilterObj.collection_id = viewedProjects;
@@ -707,11 +705,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 curFilterObj.PatientID = [caseID];
                             }
                             var filterStr = JSON.stringify(curFilterObj);
-
-
                             let url = '/tables/cases/';
                             url = encodeURI(url);
-                            ndic = {'filters': filterStr, 'limit': 500}
+                            let ndic = {'filters': filterStr, 'limit': 500}
                             ndic['partitions'] = JSON.stringify(window.partitions);
                             ndic['filtergrp_list'] = JSON.stringify(window.filtergrp_list);
 
@@ -726,7 +722,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 }
                             }
                         ndic['table_search'] = table_search;
-                        var csrftoken = $.getCookie('csrftoken');
+                        let csrftoken = $.getCookie('csrftoken');
                         $.ajax({
                             url: url,
                             dataType: 'json',
@@ -737,7 +733,12 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                             success: function (data) {
                                 try {
                                 window.casesCache = new Object();
-                                colSort = ["", "", "", "collection_id", "PatientID", "unique_studies", "unique_series"];
+                                let colSort = ["", "", "", "", "collection_id", "PatientID", "unique_studies", "unique_series"];
+                                data['res'].forEach(function(row) {
+                                    if(!('unique_series_cart' in row)) {
+                                        row['unique_series_cart'] = 0;
+                                    }
+                                });
                                 updateCache(window.casesCache, request, backendReqStrt, backendReqLength, data, colSort);
                                 dataset = data['res'].slice(request.start - backendReqStrt, request.start - backendReqStrt + request.length);
 
@@ -753,8 +754,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                    }
                                    updatePromise.reject();
                                 },
-                                error: function () {
+                                error: function (err) {
                                     console.log("problem getting data");
+                                    console.log(err);
                                     alert("There was an error fetching server data. Please alert the systems administrator")
                                     $('#cases_tab').children('thead').children('tr').children('.ckbx').addClass('notVis');
                                     callback({"data": [], "recordsTotal": "0", "recordsFiltered": "0"})
@@ -967,13 +969,11 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
                        }
                     }, {
-                        "type": "html", "orderable": false, "data": "StudyInstanceUID", render: function (data, type, row) {
-                            var cnt =0;
-                           if ('unique_series_cart' in row) {
-                              cnt =row['unique_series_cart']
-                           }
-
-                            return '<span class="cartnum cartnum_style">'+cnt.toString()+'</span>'
+                        "type": "html-num", "orderable": false, "data": "unique_series_cart", render: function (data, type, row) {
+                            if(type === "display") {
+                                return '<span class="cartnum cartnum_style">'+data+'</span>';
+                            }
+                            return data.toString();
                         }
                     }, {
                         "type": "text", "orderable": true, data: 'PatientID', render: function (data, type, row) {
@@ -1801,7 +1801,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                  if (!(tbl === "series_table")) {
                      $(row).find('.cartnum').text(in_cart);
                      if(tbl === "projects_table") {
-                         let dataTableRow = $(row).closest('table').DataTable().row(row);
+                         // Project table data is not reloaded off the backend so must be updated in place
+                         let dataTable = $(row).closest('table').DataTable();
+                         let dataTableRow = dataTable.row(row);
                          let rowData = dataTableRow.data();
                          rowData[1] = in_cart;
                          dataTableRow.data(rowData);
