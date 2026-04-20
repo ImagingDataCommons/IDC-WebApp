@@ -131,9 +131,11 @@ jobs:
       - run:
           name: Checking on Python
           command: |
-            python --version
+            ls -l /usr/bin/python*
+            py3versions -i
+            py3versions -d
             python3 --version
-            ls -l /usr/bin/py*
+            python --version
       - checkout
       - run:
           name: Fix for bug with Git and Ubuntu 20+
