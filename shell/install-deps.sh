@@ -2,7 +2,8 @@ if [ -n "$CI" ]; then
     echo "[STATUS] Check our Python and OS versions..."
 
     ls -l /usr/bin/python*
-    py3versions
+    py3versions -i
+    py3versions -d
     python3 --version
     python --version
 
