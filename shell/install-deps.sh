@@ -1,8 +1,10 @@
 if [ -n "$CI" ]; then
-    echo "[STATUS] Check our Python and OS versions since they keep getting updated without warning..."
+    echo "[STATUS] Check our Python and OS versions..."
 
     ls -l /usr/bin/python*
     whereis python
+    python3 --version
+    python --version
     cat /etc/os-release
 
     export HOME=/home/circleci/${CIRCLE_PROJECT_REPONAME}
