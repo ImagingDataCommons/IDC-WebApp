@@ -38,6 +38,7 @@ apt-get update -qq
 echo "[STATUS] Preparing System..."
 apt-get -y --force-yes install software-properties-common ca-certificates gnupg
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv B7B3B788A8D3785C
+apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9D769D5183E7DDC8
 wget "https://repo.mysql.com/mysql-apt-config_0.8.35-1_all.deb" -P /tmp
 dpkg --install /tmp/mysql-apt-config_0.8.35-1_all.deb
 
