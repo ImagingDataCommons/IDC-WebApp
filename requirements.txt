@@ -31,3 +31,6 @@ six==1.13.0
 #
 # If you are seeing an error about setuptools, the error is likely in your
 # VM's build. Do not correct it with changes to requirements.txt!
+#
+# If you need to invalidate the CircleCI cache, edit the line below:
+# ffdfghgh
