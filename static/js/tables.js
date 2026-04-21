@@ -482,6 +482,34 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         });
     }
 
+    $('body').on('click','.filter-not-in-cart', function(event){
+        let is_checked = $(event.target).is(':checked');
+        let $table = $(`${$(event.target).attr('data-table-control')}`);
+        let table_id = $table.attr("id");
+        if(table_id !== "proj_table") {
+            switch(table_id) {
+                case "cases_tab":
+                    window.updateCaseTable(false,"",false);
+                    break;
+                case "studies_tab":
+                    window.updateStudyTable(false,"",false);
+                    break;
+                case "series_tab":
+                    window.updateSeriesTable(false,"",false);
+                    break;
+                default:
+                    console.error("Table not found.")
+            }
+        } else {
+            if(is_checked) {
+                $table.DataTable().column('.cartnumholder').search("^[1-9]\d*", true, false).draw();
+            } else {
+                $table.DataTable().column('.cartnumholder').search("").draw();
+            }
+        }
+
+    });
+
     window.getProjectCartStats = function(projidArr){
         var parsedFiltObj = filterutils.parseFilterObj();
         parsedFiltObj.collection_id = projidArr;
