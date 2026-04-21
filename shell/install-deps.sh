@@ -42,6 +42,7 @@ apt-get update -qq
 echo "[STATUS] Preparing System..."
 apt-get -y --force-yes install software-properties-common ca-certificates gnupg
 gpg --recv-keys b7b3b788a8d3785c
+gpg --recv-keys 9D769D5183E7DDC8
 wget "https://repo.mysql.com/mysql-apt-config_0.8.36-1_all.deb" -P /tmp
 dpkg --install /tmp/mysql-apt-config_0.8.36-1_all.deb
 
