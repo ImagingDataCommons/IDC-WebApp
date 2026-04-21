@@ -41,10 +41,7 @@ apt-get update -qq
 # Install and update apt-get info
 echo "[STATUS] Preparing System..."
 apt-get -y --force-yes install software-properties-common ca-certificates gnupg
-curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xB7B3B788A8D3785C" -o /tmp/fresh.asc
-gpg --import /tmp/fresh.asc
-rm -f /usr/share/keyrings/mysql-apt-config.gpg
-gpg --output /usr/share/keyrings/mysql-apt-config.gpg --export BCA43417C3B485DD128EC6D4B7B3B788A8D3785C
+gpg --recv-keys b7b3b788a8d3785c
 wget "https://repo.mysql.com/mysql-apt-config_0.8.36-1_all.deb" -P /tmp
 dpkg --install /tmp/mysql-apt-config_0.8.36-1_all.deb
 
