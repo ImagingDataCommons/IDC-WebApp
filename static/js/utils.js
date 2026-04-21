@@ -112,6 +112,7 @@ define(['jquery', 'jqueryui'], function($, jqueryui) {
     //  (the DIV present on all pages which shows document-level JS messages)
     function _showJsMessage(type,text,withEmpty,rootSelector, add_classes) {
         rootSelector = rootSelector || '#js-messages';
+        type = type || "info";
         withEmpty && $(rootSelector).empty();
         let msg = "";
         if (text instanceof Array) {

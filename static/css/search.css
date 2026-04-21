@@ -484,10 +484,10 @@ td.license, th.license {
 #studies_table td.download-col, #cases_table_head th.download-col,
 #cases_table td.download-col, #series_table_head th.download-col,
 #series_table td.download-col, #proj_table th.download-col, #proj_table td.download-col {
-    width:4%;
+    width:6%;
     /* This is necessary to make sure the 2 icons remain together, lined up. */
     min-width: 70px;
-    padding: 10px 0px 10px 0px;
+    padding: 10px 0px 10px 10px;
 }
 
 .download-col a:hover, .filter-activated-controls.download-toggle a:hover {
