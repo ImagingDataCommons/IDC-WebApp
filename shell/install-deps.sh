@@ -41,9 +41,10 @@ apt-get update -qq
 # Install and update apt-get info
 echo "[STATUS] Preparing System..."
 apt-get -y --force-yes install software-properties-common ca-certificates gnupg
+echo "[STATUS] Installing mysql-client."
 gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys b7b3b788a8d3785c
-wget "https://repo.mysql.com/mysql-apt-config_0.8.33-1_all.deb" -P /tmp
-dpkg --install /tmp/mysql-apt-config_0.8.33-1_all.deb
+wget "https://repo.mysql.com/mysql-apt-config_0.8.35-1_all.deb" -P /tmp
+dpkg --install /tmp/mysql-apt-config_0.8.35-1_all.deb
 
 apt-get update -qq
 
