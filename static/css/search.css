@@ -877,12 +877,3 @@ li.cartlist {
     top: 2px;
     margin-left: -1px;
 }
-
-.filter-not-in-cart-control label {
-    margin-top: 8px;
-}
-
-.filter-not-in-cart-control input {
-    vertical-align: middle;
-    margin-top: -2px;
-}
