@@ -1,5 +1,6 @@
+# coding=utf-8
 ###
-# Copyright 2015-2021, Institute for Systems Biology
+# Copyright 2015-2026, Institute for Systems Biology
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -351,7 +352,7 @@ def load_citations(filename):
 
 def load_collections(filename, data_version="8.0"):
     try:
-        collection_file = open(filename, "r")
+        collection_file = open(filename, "r", encoding="utf-8")
         new_collection_set = []
         updated_collection_set = {}
         exact_collection_fields = [

@@ -87,7 +87,9 @@ def landing_page(request):
         "Adrenal Glands": "Adrenal Gland",
         "Adrenal": "Adrenal Gland",
         "Lymph Node": "Lymph Nodes",
-        "Bone Marrow": "Blood"
+        "Bone Marrow": "Blood",
+        "prostate gland": "Prostate",
+        "lung": "Lung"
     }
 
     skip = [
@@ -104,7 +106,11 @@ def landing_page(request):
         "Blood, Bone",
         "Esophagus, Lung, Pancreas, Thymus",
         "Esophagus, Head-Neck, Lung, Pancreas, Rectum, Thymus",
-        "Arm, Bladder, Buttock, Colon, Liver, Myometrium, Pancreas, Rectum, Shoulder, Scapula"
+        "Arm, Bladder, Buttock, Colon, Liver, Myometrium, Pancreas, Rectum, Shoulder, Scapula",
+        "uterine cervix",
+        "Marrow, TSpine, LSpine, Bone",
+        "colon, pancreas, esophagus, breast, rectum, brain, skin of body, lung, stomach, ovary, bladder organ, body of uterus, kidney, liver",
+
     ]
 
     for collection in collex:
