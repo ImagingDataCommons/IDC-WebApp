@@ -970,6 +970,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                        }
                     }, {
                         "type": "html-num", "orderable": false, "data": "unique_series_cart", render: function (data, type, row) {
+                            data = data || 0;
                             if(type === "display") {
                                 return '<span class="cartnum cartnum_style">'+data+'</span>';
                             }

@@ -110,7 +110,6 @@ def landing_page(request):
         "uterine cervix",
         "Marrow, TSpine, LSpine, Bone",
         "colon, pancreas, esophagus, breast, rectum, brain, skin of body, lung, stomach, ovary, bladder organ, body of uterus, kidney, liver",
-
     ]
 
     for collection in collex:
