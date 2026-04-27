@@ -48,7 +48,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.signals import user_login_failed
 from django.dispatch import receiver
-from idc.models import User_Data
+from idc.models import User_Data, SharedCart
 from solr_helpers import build_solr_query, query_solr_and_format_result
 
 from idc.settings import MAX_FILE_LIST_REQUEST
@@ -87,7 +87,9 @@ def landing_page(request):
         "Adrenal Glands": "Adrenal Gland",
         "Adrenal": "Adrenal Gland",
         "Lymph Node": "Lymph Nodes",
-        "Bone Marrow": "Blood"
+        "Bone Marrow": "Blood",
+        "prostate gland": "Prostate",
+        "lung": "Lung"
     }
 
     skip = [
@@ -104,7 +106,10 @@ def landing_page(request):
         "Blood, Bone",
         "Esophagus, Lung, Pancreas, Thymus",
         "Esophagus, Head-Neck, Lung, Pancreas, Rectum, Thymus",
-        "Arm, Bladder, Buttock, Colon, Liver, Myometrium, Pancreas, Rectum, Shoulder, Scapula"
+        "Arm, Bladder, Buttock, Colon, Liver, Myometrium, Pancreas, Rectum, Shoulder, Scapula",
+        "uterine cervix",
+        "Marrow, TSpine, LSpine, Bone",
+        "colon, pancreas, esophagus, breast, rectum, brain, skin of body, lung, stomach, ovary, bladder organ, body of uterus, kidney, liver",
     ]
 
     for collection in collex:
@@ -332,6 +337,7 @@ def explore_data_page(request, filter_path=False, path_filters=None):
     try:
         req = request.GET if request.method == 'GET' else request.POST
         is_dicofdic = (req.get('is_dicofdic', "False").lower() == "true")
+        shared_cart = req.get('shared_cart', None)
         source = req.get('data_source_type', DataSource.SOLR)
         versions = json.loads(req.get('versions', '[]'))
         filters = json.loads(req.get('filters', '{}'))
@@ -424,12 +430,17 @@ def explore_data_page(request, filter_path=False, path_filters=None):
                 else:
                     filters_for_load = None
                 context['filters_for_load'] = filters_for_load
+                if shared_cart:
+                    try:
+                        this_cart = SharedCart.objects.get(cart_id=shared_cart)
+                        context['shared_cart'] = json.loads(this_cart.definition)
+                        context['shared_cart']['cart_id'] = shared_cart
+                        context['shared_cart']['active_version'] = bool(this_cart.idc_version.active == 1)
+                    except ObjectDoesNotExist:
+                        logger.error("[ERROR] That cart does not exist!")
+                        del context['shared_cart']
+
             context['hist'] = ''
-            try:
-                user_data = User_Data.objects.get(user_id=request.user.id)
-                context['history'] = json.loads(user_data.history)
-            except ObjectDoesNotExist:
-                pass
 
     except JSONDecodeError as e:
         logger.error("[ERROR] While attempting to load the search page:")
@@ -618,7 +629,7 @@ def cart_data(request):
     return JsonResponse(response, status=status)
 
 
-def get_series(request, collection_id=None, patient_id=None, study_uid=None):
+def get_series(request, collection_id=None, patient_id=None, study_uid=None, series_ids_only=False, resp_as_dict=False):
     status = 200
     response = {"result": []}
     req = request.GET if request.method == 'GET' else request.POST
@@ -627,7 +638,7 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None):
         result = {}
         if not collection_id:
             # This is a request for filters and/or a cart
-            body_unicode = req.body.decode('utf-8')
+            body_unicode = request.body.decode('utf-8')
             body = json.loads(body_unicode)
             partitions = body.get("partitions", {})
             filtergrp_list = body.get("filtergrp_list", {})
@@ -684,41 +695,86 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None):
                 }
             )
 
-        test_series = {}
-        for doc in result['docs']:
-            collection_id = doc['collection_id'][0] if isinstance(doc['collection_id'], list) else doc['collection_id']
-            response['result'].append({
-                "series_id": doc['SeriesInstanceUID'],
-                "crdc_series_id": doc['crdc_series_uuid'],
-                "bucket": doc['aws_bucket'][0] if isinstance(doc['aws_bucket'], list) else doc['aws_bucket'],
-                "series_size": doc['instance_size'][0] if isinstance(doc['instance_size'], list) else doc['instance_size'],
-                "modality": doc['Modality'][0] if isinstance(doc['Modality'], list) else doc['Modality'],
-                "study_id": doc['StudyInstanceUID'],
-                "patient_id": doc["PatientID"],
-                "collection_id": collection_id
-            })
-            if not collection_id in test_series:
-                test_series[collection_id] = {
+        if series_ids_only:
+            response = {'series_ids': []}
+            for doc in result['docs']:
+                response['series_ids'].append(doc['SeriesInstanceUID'])
+        else:
+            test_series = {}
+            for doc in result['docs']:
+                collection_id = doc['collection_id'][0] if isinstance(doc['collection_id'], list) else doc['collection_id']
+                response['result'].append({
                     "series_id": doc['SeriesInstanceUID'],
+                    "crdc_series_id": doc['crdc_series_uuid'],
+                    "bucket": doc['aws_bucket'][0] if isinstance(doc['aws_bucket'], list) else doc['aws_bucket'],
+                    "series_size": doc['instance_size'][0] if isinstance(doc['instance_size'], list) else doc['instance_size'],
+                    "modality": doc['Modality'][0] if isinstance(doc['Modality'], list) else doc['Modality'],
                     "study_id": doc['StudyInstanceUID'],
                     "patient_id": doc["PatientID"],
                     "collection_id": collection_id
+                })
+                if not collection_id in test_series:
+                    test_series[collection_id] = {
+                        "series_id": doc['SeriesInstanceUID'],
+                        "study_id": doc['StudyInstanceUID'],
+                        "patient_id": doc["PatientID"],
+                        "collection_id": collection_id
+                    }
+            if 'facets' in result:
+                response['download_stats'] = {
+                    'series_count': result['facets']['total_SeriesInstanceUID'],
+                    'study_count': result['facets']['total_StudyInstanceUID'],
+                    'collection_count': result['facets']['total_collection_id'],
+                    'case_count': result['facets']['total_PatientID'],
+                    'queue_byte_size': result['facets']['instance_size'],
                 }
-        if 'facets' in result:
-            response['download_stats'] = {
-                'series_count': result['facets']['total_SeriesInstanceUID'],
-                'study_count': result['facets']['total_StudyInstanceUID'],
-                'collection_count': result['facets']['total_collection_id'],
-                'case_count': result['facets']['total_PatientID'],
-                'queue_byte_size': result['facets']['instance_size'],
-            }
-        response['test_series'] = list(test_series.values())
+            response['test_series'] = list(test_series.values())
 
     except Exception as e:
         logger.error("[ERROR] While fetching series per study ID:")
         logger.exception(e)
         response['message'] = "Error while retrieving series IDs"
         status = 400
+
+    # Return a dict if that's what was requested
+    if resp_as_dict:
+        return response
+    return JsonResponse(response, status=status)
+
+def get_shared_cart(request):
+    response = {'message': 'Invalid shared cart request.'}
+    status = 400
+    try:
+        req = request.GET if request.method == "GET" else request.POST
+        req_ip = request.META['REMOTE_ADDR']
+        ip_carts = SharedCart.get_carts_this_ip(req_ip)
+        if ip_carts['carts_per_min'] > SharedCart.CART_PER_MIN_MAX or ip_carts['total_carts'] > SharedCart.CART_MAX_PER_IP:
+            return JsonResponse({'message': 'Too many carts being made--please wait.'}, status=400)
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        partitions = body.get("partitions", {})
+        if len(partitions) <= 0:
+            return JsonResponse({'message': 'No cart was provided.'}, status=400)
+        cart_result = get_series(request, series_ids_only=True, resp_as_dict=True)
+        if len(cart_result['series_ids']) > SharedCart.SERIES_IDS_MAX:
+            series_ids = ""
+        else:
+            series_ids = ";".join(cart_result['series_ids'])
+        filtergrp_list = body.get("filtergrp_list", {})
+        cart_history = body.get("cart_hist", {})
+        proj_in_cart = body.get("proj_in_cart", [])
+        new_cart = SharedCart.objects.create(
+            source_ip=req_ip, series_ids=series_ids,
+            definition=json.dumps({'partitions': partitions, 'filtergrp_list': filtergrp_list, 'cart_hist': cart_history, 'proj_in_cart': proj_in_cart}),
+            idc_version=ImagingDataCommonsVersion.objects.get(active=True)
+        )
+        response = {'cart_id': new_cart.cart_id}
+        status = 200
+    except Exception as e:
+        logger.error("[ERROR] While trying to make a shared cart:")
+        logger.exception(e)
+        response = {'message': 'Encountered an error while trying to make this shared cart.'}
+        status = 500
 
     return JsonResponse(response, status=status)
 

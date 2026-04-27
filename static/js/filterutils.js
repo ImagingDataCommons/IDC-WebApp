@@ -83,7 +83,7 @@ define(['jquery', 'base'], function($, base) {
                 $('#export-manifest-form').data('uri-base')
             );
             $('.filter-url').html("");
-            $('.copy-url').removeAttr("content");
+            $('.copy-filter-url').removeAttr("content");
             $('#export-manifest').attr("data-no-filters", "true");
             $('#export-manifest-form input[name="filters"]').val("");
         } else {
@@ -116,7 +116,7 @@ define(['jquery', 'base'], function($, base) {
             url.length > 2048 && $('.url-too-long').show();
             url.length <= 2048 && $('.url-too-long').hide();
             $('.filter-url').html(url);
-            $('.copy-url').attr("content",url);
+            $('.copy-filter-url').attr("content",url);
         }
     };
 
@@ -124,8 +124,7 @@ define(['jquery', 'base'], function($, base) {
       $('#program_set').find('.search-checkbox-list').find('input:checkbox').prop('checked', false);
       $('#program_set').find('.search-checkbox-list').find('input:checkbox').prop('indeterminate', false);
       $('#analysis_set').find('.search-checkbox-list').find('input:checkbox').prop('checked', false);
-        $('#search_orig_set').find('.search-checkbox-list').find('input:checkbox').prop('checked', false);
-
+      $('#search_orig_set').find('.search-checkbox-list').find('input:checkbox').prop('checked', false);
     }
 
     window.load_filters = function(filters) {
@@ -204,7 +203,7 @@ define(['jquery', 'base'], function($, base) {
 
      };
 
-    const load_preset_filters = function() {
+    const load_preset_filters = async function() {
         let loadPending = null;
         if (is_cohort && !cohort_loaded) {
              loadPending = load_filters(cohort_filters);
@@ -233,11 +232,8 @@ define(['jquery', 'base'], function($, base) {
              if (!(has_filters || has_sliders)) {
                  // No anonymous filters seen--check for filter URI
                 if (filters_for_load && Object.keys(filters_for_load).length > 0) {
-                     loadPending = load_filters(filters_for_load, );
-                     loadPending.then(function () {
-                         //console.debug("External filter load done.");
-                     });
-                 }
+                     loadPending = await load_filters(filters_for_load);
+                }
              } else {
                  if (has_sliders) {
                      loadPending = load_sliders(ANONYMOUS_SLIDERS, !has_filters);
@@ -293,9 +289,7 @@ define(['jquery', 'base'], function($, base) {
                 }
                 window.filterObj[id]['none'] = true;
                 //$(elem).parent().parent().addClass('isActive');
-            }
-
-            else {
+            } else {
                 if ((id in window.filterObj) && ('none' in window.filterObj[id])){
                     delete window.filterObj[id]['none'];
                     if (!('rng' in window.filterObj[id])){
@@ -314,23 +308,22 @@ define(['jquery', 'base'], function($, base) {
         }
 
         const updateCollectionTotals = function(listId, progDic){
-        var reformDic = new Object();
-        reformDic[listId] = new Object();
-        for (item in progDic){
-            if ((item !=='All') && (item !=='None') && (item in window.programs) && (Object.keys(progDic[item]['projects']).length>0)){
-
-                reformDic[listId][item]=new Object();
-                reformDic[listId][item]['count'] = progDic[item]['val'];
-                reformDic[item] =  new Object();
-                for (project in progDic[item]['projects']){
-                    reformDic[item][project]=new Object();
-                    reformDic[item][project]['count']=progDic[item]['projects'][project]['val'];
+            var reformDic = new Object();
+            reformDic[listId] = new Object();
+            for (item in progDic){
+                if ((item !=='All') && (item !=='None') && (item in window.programs) && (Object.keys(progDic[item]['projects']).length>0)){
+                    reformDic[listId][item]=new Object();
+                    reformDic[listId][item]['count'] = progDic[item]['val'];
+                    reformDic[item] =  new Object();
+                    for (project in progDic[item]['projects']){
+                        reformDic[item][project]=new Object();
+                        reformDic[item][project]['count']=progDic[item]['projects'][project]['val'];
+                    }
                 }
             }
+            updateFilterSelections('program_set', {'unfilt':reformDic});
+            updateColl(false);
         }
-        updateFilterSelections('program_set', {'unfilt':reformDic});
-        updateColl(false);
-    }
 
     const parseFilterObj = function () {
         var hasTcgaCol = false;
@@ -679,7 +672,6 @@ define(['jquery', 'base'], function($, base) {
             $('.spinner').show();
             //$.when.apply(undefined, serverdata).then(function(ret)
             promise = Promise.all(serverdata).then(function(ret) {
-
                 var collFilt = ret[0][0];
                 var collectionData = ret[0][1];
                 var collectionStats = ret[0][2];
@@ -711,8 +703,6 @@ define(['jquery', 'base'], function($, base) {
                 updateTablesAfterFilter(collFilt, collectionData, collectionStats,cartStats);
                 $('.spinner').hide();
             });
-
-
         }
         return promise
     };
