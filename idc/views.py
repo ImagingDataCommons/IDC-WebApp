@@ -108,6 +108,7 @@ def landing_page(request):
         "Esophagus, Head-Neck, Lung, Pancreas, Rectum, Thymus",
         "Arm, Bladder, Buttock, Colon, Liver, Myometrium, Pancreas, Rectum, Shoulder, Scapula",
         "uterine cervix",
+        "Lung, abdomen",
         "Marrow, TSpine, LSpine, Bone",
         "colon, pancreas, esophagus, breast, rectum, brain, skin of body, lung, stomach, ovary, bladder organ, body of uterus, kidney, liver",
     ]
