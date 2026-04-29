@@ -877,3 +877,7 @@ li.cartlist {
     top: 2px;
     margin-left: -1px;
 }
+
+.collection_info, .analysis_info {
+    padding-left: 3px;
+}
