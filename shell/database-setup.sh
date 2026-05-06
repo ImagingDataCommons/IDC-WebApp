@@ -1,4 +1,8 @@
 if [ -n "$CI" ]; then
+    # Force CircleCI's .pyenv back into the path and use update alternatives to require python 3.11
+    export PATH=/home/circleci/.pyenv/shims:$PATH
+    update-alternatives --install /usr/local/bin/python3 python /home/circleci/.pyenv/shims/python3 6
+    python3 --version
     export HOME=/home/circleci/${CIRCLE_PROJECT_REPONAME}
     export HOMEROOT=/home/circleci/${CIRCLE_PROJECT_REPONAME}
     # Set test database settings; this database will be thrown away at the end

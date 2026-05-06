@@ -1,7 +1,11 @@
 if [ -n "$CI" ]; then
-    echo "[STATUS] Check our Python and OS versions since they keep getting updated without warning..."
+    # Force CircleCI's .pyenv back into the path and use update alternatives to require python 3.11
+    export PATH=/home/circleci/.pyenv/shims:$PATH
+    update-alternatives --install /usr/local/bin/python3 python /home/circleci/.pyenv/shims/python3 6
+    echo "[STATUS] Check our Python and OS versions:"
+    python3 --version
 
-    ls -l /usr/bin/python3*
+    echo "OS:"
     cat /etc/os-release
 
     export HOME=/home/circleci/${CIRCLE_PROJECT_REPONAME}
@@ -37,7 +41,8 @@ apt-get update -qq
 # Install and update apt-get info
 echo "[STATUS] Preparing System..."
 apt-get -y --force-yes install software-properties-common ca-certificates gnupg
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv B7B3B788A8D3785C
+echo "[STATUS] Installing mysql-client."
+gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys b7b3b788a8d3785c
 wget "https://repo.mysql.com/mysql-apt-config_0.8.35-1_all.deb" -P /tmp
 dpkg --install /tmp/mysql-apt-config_0.8.35-1_all.deb
 
@@ -48,7 +53,7 @@ apt-get install mysql-client
 # Install apt-get dependencies
 echo "[STATUS] Installing Dependencies..."
 apt-get install -y --force-yes unzip libffi-dev libssl-dev git g++ curl dos2unix pkg-config
-apt-get install -y --force-yes python3-distutils python3-mysqldb libmysqlclient-dev libpython3-dev build-essential
+apt-get install -y --force-yes python3-distutils python3-mysqldb libmysqlclient-dev libpython3.11-dev build-essential
 apt-get install -y --force-yes python3-pip
 
 echo "[STATUS] Dependencies Installed"
