@@ -700,7 +700,7 @@ require([
             await cartutils.load_shared_cart(shared_cart);
             let cart_url = $('.cart-share-url');
             cart_url.attr('data-cart-id', shared_cart['cart_id']);
-            !shared_cart['active_version'] && cart_url.parent().addClass('.cart-old-version');
+            !shared_cart['active_version'] && cart_url.parent().addClass('cart-old-version');
             await update_shared_cart();
         } else {
             var cartSel = new Object();

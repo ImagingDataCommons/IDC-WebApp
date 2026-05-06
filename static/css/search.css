@@ -587,8 +587,7 @@ td.license, th.license {
 
 .icon-stale {
     display: none;
-    height: 36px;
-    padding-top: 4px;
+    padding-top: 10px;
     color: #db5d00
 }
 
@@ -602,7 +601,6 @@ td.license, th.license {
 
 .icon-old {
     display: none;
-    height: 36px;
     padding-top: 4px;
     color: #0045af;
 }
