@@ -27,7 +27,7 @@
 {% endblock %}
 
 
-<div id="secondary-nav" class="navbar-fixed-top" onpageshow="alert('here')">
+<div id="secondary-nav" class="navbar-fixed-top">
 
 </div>
 {% block link_page_name %}help{% endblock %}
@@ -41,10 +41,10 @@
                     <div class="row ">
                         <div class="col-xs-1"></div>
                         <div class="col-xs-10">
-                            <b>Need personalized help? Sign up for a 1-on-1 meeting with an IDC team member here:
-                                <a class="external-link" href="" url="https://tinyurl.com/idc-help-request"
+                            <b>Natural language interface to IDC:
+                                <a class="external-link" href="" url="https://github.com/ImagingDataCommons/idc-claude-skill"
                                    data-toggle="modal" data-target="#external-web-warning">
-                                    https://tinyurl.com/idc-help-request
+                                    https://github.com/ImagingDataCommons/idc-claude-skill
                                 </a> <i class="fa-solid fa-external-link external-link-icon" aria-hidden="true"></i></b>.
                         </div>
                         <div class="col-xs-1">
@@ -95,6 +95,7 @@
     {{ collection_tooltips|json_script:"collection_tooltips" }}
     {{ analysis_results_tooltips|json_script:"analysis_results_tooltips" }}
     {{ filters_for_load|json_script:"filters_for_load" }}
+    {{ shared_cart|json_script:"shared_cart" }}
     {{ collections|json_script:"collections" }}
     {{ stats|json_script:"stats" }}
     {{ programs|json_script:"programs" }}
@@ -108,6 +109,7 @@
         const collection_tooltips = JSON.parse(document.getElementById('collection_tooltips').textContent);
         const analysis_results_tooltips = JSON.parse(document.getElementById('analysis_results_tooltips').textContent);
         const filters_for_load = JSON.parse(document.getElementById('filters_for_load').textContent);
+        const shared_cart = JSON.parse(document.getElementById('shared_cart').textContent);
         const stats = JSON.parse(document.getElementById('stats').textContent);
         const set_attributes =JSON.parse(document.getElementById('set_attributes').textContent);
         const urlParams = new URLSearchParams(window.location.search);
