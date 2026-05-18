@@ -879,3 +879,7 @@ li.cartlist {
 .collection_info, .analysis_info {
     padding-left: 3px;
 }
+
+.less-checks {
+    display: flow-root;
+}
