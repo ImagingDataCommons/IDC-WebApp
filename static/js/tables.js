@@ -482,15 +482,22 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         });
     }
 
-    window.getProjectCartStats = function(projidArr){
+    window.getProjectCartStats = function(projidArr) {
         var parsedFiltObj = filterutils.parseFilterObj();
         parsedFiltObj.collection_id = projidArr;
-        var ndic={'filters':JSON.stringify(parsedFiltObj),}
+        var ndic = {
+            'filters': JSON.stringify(parsedFiltObj),
+            'filtergrp_list': JSON.stringify(window.filtergrp_list),
+            'sort': 'collection_id',
+            'sortdir': 'asc'
+        }
 
-        ndic['partitions'] = JSON.stringify(window.partitions);
-        ndic['filtergrp_list'] = JSON.stringify(window.filtergrp_list);
-        ndic['sort'] = 'collection_id';
-        ndic['sortdir']='asc';
+        if (shared_cart !== null && shared_cart !== undefined) {
+            ndic['shared_cart'] = shared_cart['cart_id'];
+            ndic['partitions'] = null;
+        } else {
+            ndic['partitions'] = JSON.stringify(window.partitions);
+        }
 
         var url = encodeURI('/tables/collections/')
         var csrftoken = $.getCookie('csrftoken');
@@ -512,7 +519,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     deferred.resolve(ret);
 
                 }
-            }, error: function () {
+            }, error: function (xhr,status,err) {
+                console.error(xhr,status,err);
                 console.log("problem getting data");
             }
         });
@@ -707,12 +715,19 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                             var filterStr = JSON.stringify(curFilterObj);
                             let url = '/tables/cases/';
                             url = encodeURI(url);
-                            let ndic = {'filters': filterStr, 'limit': 500}
-                            ndic['partitions'] = JSON.stringify(window.partitions);
-                            ndic['filtergrp_list'] = JSON.stringify(window.filtergrp_list);
-
-                            ndic['offset'] = backendReqStrt;
-                            ndic['limit'] = backendReqLength;
+                            let ndic = {
+                                'filters': filterStr,
+                                'limit': 500,
+                                'filtergrp_list': JSON.stringify(window.filtergrp_list),
+                                'offset': backendReqStrt,
+                                'limit': backendReqLength
+                            };
+                            if(shared_cart !== null && shared_cart !== undefined) {
+                                ndic['shared_cart'] = shared_cart['cart_id'];
+                                ndic['partitions'] = null;
+                            } else {
+                                ndic['partitions'] = JSON.stringify(window.partitions);
+                            }
                             if (typeof (request.order) !== 'undefined') {
                                 if (typeof (request.order[0].column) !== 'undefined') {
                                     ndic['sort'] = cols[request.order[0].column];
@@ -1094,9 +1109,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                             var filterStr = JSON.stringify(curFilterObj);
                             let url = '/tables/studies/';
                             url = encodeURI(url);
-                            ndic = {'filters': filterStr, 'limit': 2000}
-                            ndic['offset'] = backendReqStrt;
-                            ndic['limit'] = backendReqLength;
+                            let ndic = {
+                                'filters': filterStr,
+                                'offset': backendReqStrt,
+                                'limit': backendReqLength,
+                                'filtergrp_list': JSON.stringify(window.filtergrp_list),
+                                'table_search': table_search
+                            }
                             if (typeof (request.order) !== 'undefined') {
                                 if (typeof (request.order[0].column) !== 'undefined') {
                                     ndic['sort'] = cols[request.order[0].column];
@@ -1105,9 +1124,12 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                    ndic['sortdir'] = request.order[0].dir;
                                }
                             }
-                            ndic['partitions'] = JSON.stringify(window.partitions);
-                            ndic['filtergrp_list'] = JSON.stringify(window.filtergrp_list);
-                            ndic['table_search'] = table_search;
+                            if(shared_cart !== null && shared_cart !== undefined) {
+                                ndic['shared_cart'] = shared_cart['cart_id'];
+                                ndic['partitions'] = null;
+                            } else {
+                                ndic['partitions'] = JSON.stringify(window.partitions);
+                            }
                             let csrftoken = $.getCookie('csrftoken');
 
                             $.ajax({
@@ -1455,10 +1477,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
                         let url = '/tables/series/';
                         url = encodeURI(url);
-                        ndic = {'filters': filterStr, 'limit': 2000}
-
-                        ndic['offset'] = backendReqStrt;
-                        ndic['limit'] = backendReqLength;
+                        let ndic = {
+                            'filters': filterStr,
+                            'offset': backendReqStrt,
+                            'limit': backendReqLength,
+                            'filtergrp_list': JSON.stringify(window.filtergrp_list),
+                            'table_search': table_search
+                        }
 
                         if (typeof (request.order) !== 'undefined') {
                             if (typeof (request.order[0].column) !== 'undefined') {
@@ -1468,9 +1493,13 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 ndic['sortdir'] = request.order[0].dir;
                             }
                         }
-                         ndic['partitions'] = JSON.stringify(window.partitions);
-                        ndic['filtergrp_list'] = JSON.stringify(window.filtergrp_list);
-                        ndic['table_search'] = table_search;
+                        if(shared_cart !== null && shared_cart !== undefined) {
+                            ndic['shared_cart'] = shared_cart['cart_id'];
+                            ndic['partitions'] = null;
+                        } else {
+                            ndic['partitions'] = JSON.stringify(window.partitions);
+                        }
+
                         var csrftoken = $.getCookie('csrftoken');
                         $.ajax({
                             url: url,

@@ -147,21 +147,27 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                 $(this).removeClass('disabled');
                 !$(this).hasClass('tip-titled') && $(this).attr("title",$(this).attr("data-default-title"));
             });
-            let shared_cart = $('.cart-share-url');
-            let container = $('.cart-share-url-container')
-            let has_id = shared_cart.attr('data-cart-id') !== "" && shared_cart.attr('data-cart-id') !== undefined && shared_cart.attr('data-cart-id') !== null;
+            let shared_cart_url = $('.cart-share-url');
+            let container = $('.cart-share-url-container');
+            let has_id = shared_cart_url.attr('data-cart-id') !== "" && shared_cart_url.attr('data-cart-id') !== undefined && shared_cart_url.attr('data-cart-id') !== null;
             if(has_id) {
                 container.addClass('is-stale');
             }
             let cart_disk_size = 0;
             let cart_disk_display_size = "(Calculating...)";
+            let params = {
+                'filtergrp_list': JSON.stringify(window.filtergrp_list ? window.filtergrp_list : [{}]),
+                'size_only': 'true'
+            };
+            if(shared_cart !== null && shared_cart !== undefined) {
+                params['shared_cart'] = shared_cart['cart_id'];
+                params['partitions'] = null;
+            } else {
+                params['partitions'] = JSON.stringify(window.partitions);
+            }
             let cart_disk_resp = await fetch(`${BASE_URL}/cart_data/`, {
                     method: "POST",
-                    body: new URLSearchParams({
-                        'filtergrp_list': JSON.stringify(window.filtergrp_list ? window.filtergrp_list : [{}]),
-                        'partitions': JSON.stringify(window.partitions),
-                        'size_only': 'true'
-                    }),
+                    body: new URLSearchParams(params),
                     headers: {"X-CSRFToken": $.getCookie('csrftoken'), "content-type": 'application/x-www-form-urlencoded'}
             });
             if(!cart_disk_resp.ok) {
