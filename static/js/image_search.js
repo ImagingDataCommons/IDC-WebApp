@@ -194,10 +194,11 @@ require([
                         );
                         base.updateDownloadBtns("cohort", true, data.totals.disk_size_tb, data.totals.SeriesInstanceUID);
                     } else if(isFiltered && data.total <= 0) {
-                        $('#search_def_stats').html('<span style="color:red">There are no cases matching the selected set of filters</span>');
+                        let msg = 'There are no cases containing studies which match the selected set of filters.';
+                        $('#search_def_stats').html(`<span style="color:red">${msg}</span>`);
                         base.updateDownloadBtns("cohort", false, 0, 0);
                         $('.citations-button').attr("disabled","disabled");
-                        $('.citations-button').attr("title", "There are no cases matching the selected set of filters");
+                        $('.citations-button').attr("title", msg);
                     } else {
                         $('#search_def_stats').html("&nbsp;");
                         base.updateDownloadBtns("cohort", false, 0, 0);
@@ -700,7 +701,7 @@ require([
             await cartutils.load_shared_cart(shared_cart);
             let cart_url = $('.cart-share-url');
             cart_url.attr('data-cart-id', shared_cart['cart_id']);
-            !shared_cart['active_version'] && cart_url.parent().addClass('.cart-old-version');
+            !shared_cart['active_version'] && cart_url.parent().addClass('cart-old-version');
             await update_shared_cart();
         } else {
             var cartSel = new Object();
