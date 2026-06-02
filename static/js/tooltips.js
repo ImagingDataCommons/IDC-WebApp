@@ -260,6 +260,9 @@ require([
 
     const cart_tooltip = {
         dynamicTip: function(ref){
+            if($(ref).hasClass('is-disabled')) {
+                return "This cart's contents cannot be adjusted."
+            }
             if($(ref).parentsUntil('tbody').filter('tr').hasClass('extraInFilter') || !($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart'))) {
                 return "add series to cart"
             }
@@ -340,6 +343,9 @@ require([
 
     tippy.delegate('.series-table', {
         dynamicTip: function(ref){
+            if($(ref).hasClass('is-disabled')) {
+                return "This cart's contents cannot be adjusted."
+            }
             if ($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart')) {
                 return "remove from cart"
             }

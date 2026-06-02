@@ -254,10 +254,11 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     // targets indicates the visual table columns associated with these definitions
     // It does NOT map the data to the column; this is done below in the Column generator
     var projectTableColDefs = function(){
+        let disabled_cart = (window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['type'] === 'manifest') ? " is-disabled" : "";
         return [
             {className: "ckbx text_data viewbx caseview table-interactive", "targets": [0]},
             {className: "download-collection download-col table-interactive", "targets": [1]},
-            {className: "ckbx shopping-cart-holder table-interactive", "targets": [2]},
+            {className: `ckbx shopping-cart-holder table-interactive${disabled_cart}`, "targets": [2]},
             {className: "ckbx cartnumholder table-interactive", "targets": [3]},
             {className: "collex_name", "targets": [4]},
             {className: "collex-case-count projects_table_num_cohort table-count", "targets": [5]},
@@ -492,8 +493,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
             'sortdir': 'asc'
         }
 
-        if (shared_cart !== null && shared_cart !== undefined) {
-            ndic['shared_cart'] = shared_cart['cart_id'];
+        if (window.shared_cart !== null && window.shared_cart !== undefined) {
+            ndic['shared_cart'] = window.shared_cart['cart_id'];
             ndic['partitions'] = null;
         } else {
             ndic['partitions'] = JSON.stringify(window.partitions);
@@ -528,10 +529,11 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
     }
 
     const caseTableColDefs = function(){
+        let disabled_cart = (window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['type'] === 'manifest') ? " is-disabled" : "";
         return [
             {className: "ckbx studyview table-interactive","targets": [0]},
             {className: "col1 download-case download-col table-interactive", "targets": [1]},
-            {className: "ckbx shopping-cart-holder table-interactive", "targets": [2]},
+            {className: `ckbx shopping-cart-holder table-interactive${disabled_cart}`, "targets": [2]},
             {className: "ckbx cartnumholder table-interactive", "targets":[3]},
             {className: "col1 project-name wide", "targets": [4]},
             {className: "col1 case-id", "targets": [5]},
@@ -722,8 +724,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 'offset': backendReqStrt,
                                 'limit': backendReqLength
                             };
-                            if(shared_cart !== null && shared_cart !== undefined) {
-                                ndic['shared_cart'] = shared_cart['cart_id'];
+                            if(window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['type'] === 'manifest') {
+                                ndic['shared_cart'] = window.shared_cart['cart_id'];
                                 ndic['partitions'] = null;
                             } else {
                                 ndic['partitions'] = JSON.stringify(window.partitions);
@@ -822,6 +824,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         let updatePromise = $.Deferred();
         let nonViewAbleModality= new Set(["REG"]);
         var viewCases = [];
+        let disabled_cart = (window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['type'] === 'manifest') ? " is-disabled" : "";
         for (projid in window.openCases) {
             viewCases = viewCases.concat(Object.keys(window.openCases[projid]));
         }
@@ -917,7 +920,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                 "columnDefs": [
                     {className: "ckbx seriesview table-interactive", "targets": [0]},
                     {className: "download-col download-study table-interactive", "targets": [1]},
-                    {className: "ckbx shopping-cart-holder table-interactive", "targets": [2]},
+                    {className: `ckbx shopping-cart-holder table-interactive${disabled_cart}`, "targets": [2]},
                     {className: "ckbx cartnumholder table-interactive", "targets": [3]},
                     {className: "col1 case-id", "targets": [4]},
                     {className: "col2 study-id study-id-col study-id-tltp", "targets": [5]},
@@ -1124,8 +1127,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                    ndic['sortdir'] = request.order[0].dir;
                                }
                             }
-                            if(shared_cart !== null && shared_cart !== undefined) {
-                                ndic['shared_cart'] = shared_cart['cart_id'];
+                            if(window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['type'] === 'manifest') {
+                                ndic['shared_cart'] = window.shared_cart['cart_id'];
                                 ndic['partitions'] = null;
                             } else {
                                 ndic['partitions'] = JSON.stringify(window.partitions);
@@ -1216,6 +1219,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         } else {
             pageRows = 10;
         }
+        let disabled_cart = (window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['type'] === 'manifest') ? " is-disabled" : "";
+
         $('#series_tab').DataTable().destroy();
         try {
             $('#series_tab').DataTable({
@@ -1300,6 +1305,10 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     }
                     $(row).attr('series_in_filter','1');
                      $(row).find('.shopping-cart').parent().on('click', function(event){
+                         if($(row).find('.shopping-cart-holder').hasClass('is-disabled')) {
+                             event.stopPropagation();
+                             return false;
+                         }
                          $(row).find('.shopping-cart-holder').trigger('shopping-cart:update-started');
                             var elem = event.target;
                             if ($(elem).hasClass('ckbx')){
@@ -1311,7 +1320,7 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                  },
                 "columnDefs": [
                     {className: "download-col download-series table-interactive", "targets": [0]},
-                    {className: "ckbx shopping-cart-holder table-interactive", "targets": [1]},
+                    {className: `ckbx shopping-cart-holder table-interactive${disabled_cart}`, "targets": [1]},
                     {className: "col1 study-id study-id-col study-id-tltp", "targets": [2]},
                     {className: "series-id series-id-tltp", "targets": [3]},
                     {className: "series-number", "targets": [4]},
@@ -1493,8 +1502,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 ndic['sortdir'] = request.order[0].dir;
                             }
                         }
-                        if(shared_cart !== null && shared_cart !== undefined) {
-                            ndic['shared_cart'] = shared_cart['cart_id'];
+                        if(window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['type'] === 'manifest') {
+                            ndic['shared_cart'] = window.shared_cart['cart_id'];
                             ndic['partitions'] = null;
                         } else {
                             ndic['partitions'] = JSON.stringify(window.partitions);
@@ -2265,7 +2274,11 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         || $(elem).parentsUntil('tr').hasClass('manifest-col')) {
             // Handled by delegates
         } else if ($(elem).hasClass('shopping-cart') || $(elem).hasClass('shopping-cart-holder')) {
-             handleCartClick(tabletype, row, elem, ids);
+            if($(elem).hasClass('is-disabled') || $(elem).parent().hasClass('is-disabled')) {
+                 event.stopPropagation();
+                 return false;
+            }
+            handleCartClick(tabletype, row, elem, ids);
          }
          // click anywhere else, open tables below
          else {

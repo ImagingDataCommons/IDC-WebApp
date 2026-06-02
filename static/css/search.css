@@ -737,6 +737,10 @@ tr:not(.someInCart).ckbx:has(.fa-cart-shopping) {
     background-color:transparent;
 }
 
+.shopping-cart-holder.is-disabled>.shopping-cart {
+    opacity: 60%;
+}
+
 #projects_table tr.someInCart:not(.extraInItem) .ckbx .fa-cart-shopping {
     background-color:green;
 }

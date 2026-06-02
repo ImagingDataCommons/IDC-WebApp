@@ -159,8 +159,8 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
                 'filtergrp_list': JSON.stringify(window.filtergrp_list ? window.filtergrp_list : [{}]),
                 'size_only': 'true'
             };
-            if(shared_cart !== null && shared_cart !== undefined) {
-                params['shared_cart'] = shared_cart['cart_id'];
+            if(window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['type'] === 'manifest') {
+                params['shared_cart'] = window.shared_cart['cart_id'];
                 params['partitions'] = null;
             } else {
                 params['partitions'] = JSON.stringify(window.partitions);
@@ -201,6 +201,8 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         cartSel['filter']= parsedFiltObj;
         cartSel['selections']= new Array();
         cartSel['partitions']= new Array();
+        window.shared_cart = null;
+        $('.shopping-cart-holder').removeClass('is-disabled');
         window.cartHist.push(cartSel);
         window.updatePartitionsFromScratch();
         var ret = formcartdata();
@@ -213,14 +215,14 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
 
          $('#cart_stats').addClass('empty-cart');
          $('#cart_stats').html("Your cart is currently empty.");
-         let shared_cart = $('.share-cart-url');
+         let shared_cart_url = $('.share-cart-url');
          let container = $('.cart-share-url-container');
          $('.cart-activated-controls').attr('disabled','disabled');
          $('.copy-cart-share-url').removeAttr('content');
-         shared_cart.html("");
+         shared_cart_url.html("");
          container.hide();
          container.removeClass('is-stale');
-         shared_cart.removeAttr('data-cart-id');
+         shared_cart_url.removeAttr('data-cart-id');
     }
 
     //as user makes selections in the tables, record the selections in the cartHist object. Make new partitions from the selections
@@ -231,14 +233,17 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         window.cartHist[curInd]['partitions'] = mkOrderedPartitions(window.cartHist[curInd]['selections']);
     }
 
-    const load_shared_cart = async function(shared_cart){
+    const load_shared_cart = async function(this_cart){
         if(window.cartHist !== null && window.cartHist !== undefined && window.cartHist.length > 0) {
             console.debug("Cart erasure warning here.");
         }
-        window.cartHist = shared_cart['cart_hist'];
-        window.proj_in_cart = shared_cart['proj_in_cart'];
-        window.partitions = shared_cart['partitions'];
-        window.filtergrp_list = shared_cart['filtergrp_list'];
+        if(this_cart['type'] === 'manifest') {
+            $('.shopping-cart-holder').addClass('is-disabled');
+        }
+        window.cartHist = this_cart['cart_hist'];
+        window.proj_in_cart = this_cart['proj_in_cart'];
+        window.partitions = this_cart['partitions'];
+        window.filtergrp_list = this_cart['filtergrp_list'];
         window.hidePanel();
         base.showJsMessage(null,"Loading the shared cart...",true,);
         await window.handleFilterSelectionUpdate(null, true, true);
