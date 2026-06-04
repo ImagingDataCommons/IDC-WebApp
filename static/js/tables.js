@@ -457,16 +457,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                     $(row).on('click', function(event) {
                         handleRowClick("collections", row, event, [projid])
                     });
-
-                     $(row).find('.collection_info').on("mouseenter", function(e){
-                        $(e.target).addClass('fa-lg');
-                        $(e.target).parent().parent().data("clickForInfo",false);;
-                      });
-
-                   $(row).find('.collection_info').on("mouseleave", function(e){
-                      $(e.target).parent().parent().data("clickForInfo",false);
-                      $(e.target).removeClass('fa-lg');
-                    });
                 },
                 "columnDefs":[ ...colDefs],
                 "columns":[...columns]
