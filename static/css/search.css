@@ -876,8 +876,23 @@ li.cartlist {
     margin-left: -1px;
 }
 
-.collection_info, .analysis_info {
+.filter-panel .collection_info, .filter-panel .analysis_info {
     padding-left: 3px;
+    padding-top: 2px;
+    position: absolute;
+}
+
+.collection_info:hover, .analysis_info:hover {
+    color: #389e00;
+    font-size: 1.25em;
+}
+
+.collex-tbl-btn-span {
+    position: absolute;
+}
+
+.collex-tbl-btn-span i {
+    padding-left: 5px;
 }
 
 .less-checks {
