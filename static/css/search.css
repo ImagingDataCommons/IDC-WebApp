@@ -896,6 +896,10 @@ li.cartlist {
     position: absolute;
     padding-top: 2px;
 }
+.collex-tbl-btn-span .copy-this:hover {
+    color: #0a53be;
+}
+
 
 .less-checks {
     display: flow-root;
