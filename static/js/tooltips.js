@@ -358,6 +358,27 @@ require([
     tippy.delegate('.cases-table', copy_tip);
 
     tippy.delegate('#body', {
+        content: 'The current cart is out of synch with this saved cart. Click \'Share\' to update the link.',
+        theme: 'dark',
+        placement: 'right',
+        arrow: false,
+        interactive:true,
+        target: '.icon-stale',
+        maxWidth: 200
+    });
+
+    tippy.delegate('#body', {
+        content: 'This cart was made under a prior version of IDC. Its contents under the current version may be '
+            +'different than when it was originally made.',
+        theme: 'dark',
+        placement: 'right',
+        arrow: false,
+        interactive:true,
+        target: '.icon-old',
+        maxWidth: 200
+    });
+
+    tippy.delegate('#body', {
         content: 'View citation(s) in Vancouver Elsevier format.',
         theme: 'dark',
         placement: 'left',

@@ -129,8 +129,7 @@
                                                                                                class="collection_value"
                                                                                                type="checkbox"
                                                                                                value="{{ proj }}">
-                                                                                                  <span id="{{ proj }}"class="collection_name value">{{ projD.display }} </span>
-                                                                                                  <span><i class="collection_info fa-solid fa-info-circle"></i></span>
+                                                                                                  <span id="{{ proj }}"class="collection_name value">{{ projD.display }} <i class="collection_info fa-solid fa-info-circle"></i></span>
                                                                                                    <span class="float-right case_count count plotit">{{ projD.val }}</span>
                                                                                     </label>
                                                                                 </li>
@@ -197,8 +196,7 @@
                                                                                    data-filter-attr-id="{{ attr.id }}"
                                                                                    data-filter-display-attr="{{ attr.display_name }}"
                                                                                    data-filter-display-val="{{ display_value }}">
-                                                                            <span class="value">{{ display_value }}</span>
-                                                                            <span><i class="analysis_info fa-solid fa-info-circle"></i></span>
+                                                                            <span class="value">{{ display_value }} <i class="analysis_info fa-solid fa-info-circle"></i></span>
                                                                             <span class="float-right plot_count count plotit">{{ val.count }}</span>
                                                                             <span class="float-right case_count count">{{ val.count }}</span>
                                                                         </label>
@@ -681,7 +679,7 @@
                             </button>
                         </div>
                         <div class="filter-url-container space-top-10 is-hidden">
-                            <button role="button" class="btn btn-primary copy-this copy-url"
+                            <button role="button" class="btn btn-primary copy-this copy-url copy-filter-url"
                                     title="Copy Filter URL to clipboard" style=""
                                     content="">
                                 <i class="fa-solid fa-copy" aria-hidden="true"></i>
@@ -729,6 +727,11 @@
                                     </li>
                                 </ul>
                             </div>
+                            <button class="btn btn-small btn-default cart-share cart-activated-controls" role="button"
+                                data-default-title="Get a shareable link for this cart."
+                                title="Add items to the cart to enable this feature." disabled
+                            > Share <i class="fa-solid fa-share"></i>
+                            </button>
                             <button class="btn btn-small btn-special citations-button cart-activated-controls for-cart"
                                 disabled data-toggle="modal" data-target="#citations-modal" role="button"
                                 data-default-title=""
@@ -741,6 +744,15 @@
                                 onclick="viewcart()"
                             > View <i class="fa-solid fa-cart-shopping"></i>
                             </button>
+                        </div>
+                        <div class="cart-share-url-container space-top-10 is-hidden">
+                            <button role="button" class="btn btn-primary copy-this copy-url copy-cart-share-url"
+                                    title="Copy Cart Share URL to clipboard" style=""
+                                    content="">
+                                <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                            </button>
+                            <pre class="cart-share-url code"></pre> <i class="fa-solid fa-warning icon-stale"></i> <i class="fa-solid fa-eye-low-vision icon-old"></i>
+
                         </div>
                     </div>
                 </div>
@@ -897,7 +909,7 @@
 
                                 </div>
                                 <div id="projects_panel" class="panel-body">
-                                    <table id="proj_table" class="table table-striped projects-table" data-table-type="collection">
+                                    <table id="proj_table" class="table table-striped projects-table" data-table-type="collection" style="width: 100%;">
                                         <thead id="projects_table_head">
                                         <tr>
                                             <th class="ckbx text_data viewbx" style="width:30px">

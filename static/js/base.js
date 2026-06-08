@@ -26,9 +26,18 @@ require.config({
         underscore: 'libs/underscore-min',
         assetscore: 'libs/assets.core',
         assetsresponsive: 'libs/assets.responsive',
-        tablesorter:'libs/jquery.tablesorter.min'
+        tablesorter:'libs/jquery.tablesorter.min',
+        tippy: 'libs/tippy-bundle.umd.min',
+        '@popperjs/core': 'libs/popper.min'
     },
     shim: {
+        '@popperjs/core': {
+          exports: "@popperjs/core"
+        },
+        'tippy': {
+          exports: 'tippy',
+            deps: ['@popperjs/core']
+        },
         'bootstrap': ['jquery'],
         'jqueryui': ['jquery'],
         'session_security': ['jquery'],
@@ -111,20 +120,6 @@ require([
 
     // Radio button controls bootstrap collapse
     toggleRadio('upload');
-
-    function csrfSafeMethod(method) {
-        // these HTTP methods do not require CSRF protection
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    };
-
-    $.ajaxSetup({
-        beforeSend: function(xhr, settings) {
-            var csrftoken = $.getCookie('csrftoken');
-            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                xhr.setRequestHeader("X-CSRFToken", csrftoken);
-            }
-        }
-    });
 
     $.createMessage = function(message, messageType) {
         var message_obj = $('<div class="row">' +
@@ -244,7 +239,6 @@ define(['jquery', 'utils'], function($, utils) {
         }
     };
 
-
     // Resets forms in modals on hide. Suppressed warning when leaving page with dirty forms
     $('.modal').on('hide.bs.modal', function () {
         if(!$(this).prop("saving")) {
@@ -257,6 +251,20 @@ define(['jquery', 'utils'], function($, utils) {
     $.getCookie = utils.getCookie;
     $.setCookie = utils.setCookie;
     $.removeCookie = utils.removeCookie;
+
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    };
+
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            let csrftoken = $.getCookie('csrftoken');
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
 
     return {
         blacklist: /<script>|<\/script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|<iframe>|<\/iframe>/ig,

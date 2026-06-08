@@ -1,6 +1,6 @@
 ###
 #
-# Copyright 2025, Institute for Systems Biology
+# Copyright 2026, Institute for Systems Biology
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt-get install -y wget
 # TODO: we need to start using the keyring instead
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv A8D3785C
-RUN wget "http://repo.mysql.com/mysql-apt-config_0.8.35-1_all.deb" -P /tmp
+RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys b7b3b788a8d3785c
+RUN wget "https://repo.mysql.com/mysql-apt-config_0.8.35-1_all.deb" -P /tmp
 
 # install lsb-release (a dependency of mysql-apt-config), since dpkg doesn't
 # do dependency resolution

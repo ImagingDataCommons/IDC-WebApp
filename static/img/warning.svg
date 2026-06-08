@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 608 512" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+<desc>CopyRight:SVG Design Editor;
+configurationStart;Unit=smInches;Dpi=96;Division=4;Grid=True;Zoom=1;CanvasW=608;CanvasH=512;configurationEnd;</desc>
+
+
+! Font Awesome Free 7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc. <g isVisble = "True" inkscape:label = "warning Default Layer" inkscape:groupmode = "layer" ><g id="group_1">
+<path style="fill:#FFC400;stroke:none; stroke-width:1" d="m256,0c14.7,0 28.2,8.1 35.2,21l216,400c6.7,12.4 6.4,27.4 -0.8,39.5s-20.3,19.5 -34.4,19.5l-432,0c-14.1,0 -27.2,-7.4 -34.4,-19.5s-7.5,-27.1 -0.8,-39.5l216,-400c7,-12.9 20.5,-21 35.2,-21l0,0l0,0zm0,352a32 32,0 1,0 0,64a32 32,0 1,0 0,-64zm0,-192c-18.2,0 -32.7,15.5 -31.4,33.7l7.4,104c0.9,12.5 11.4,22.3 23.9,22.3c12.6,0 23,-9.7 23.9,-22.3l7.4,-104c1.3,-18.2 -13.1,-33.7 -31.4,-33.7l0.2,0l0,0l0,0z" transform = "matrix(1,0,0,1,9.000031,7)" vector-effect="non-scaling-stroke" pen = "1,1" />
+<path style="fill:#FFC400;stroke:none; stroke-width:1" d="m315,334l-134,2l12,-194l111,16l5,169l-7,4l11,3l2,0z" transform = "matrix(1.394833,0,0,1.701034,-73.42523,-113.5477)" vector-effect="non-scaling-stroke" pen = "1.394836,1.701038" />
+</g>
+<path style="fill:#000000;stroke:none; stroke-width:1" d="m7.23,86.52q0,-24.61 -3.91,-47.85q-3.32,-20.51 -3.32,-25.78q0.2,-12.5 10.35,-12.89q0.98,0 1.76,0.2q8.4,0.78 8.4,12.3q0,6.25 -2.15,18.56q-5.27,30.47 -5.27,55.47l-5.86,0l0,0l0,-0.01l0,0l0,0zm12.7,23.63q0,2.15 -0.98,4.3q-2.73,5.66 -8.98,5.66q-2.15,0 -4.3,-0.98q-5.66,-2.74 -5.66,-8.99q0,-2.15 0.98,-4.3q2.54,-5.86 8.98,-5.86q2.15,0 4.1,0.98q5.86,2.73 5.86,9.18l0,0l0,0.01l0,0z" transform = "matrix(1.881614,0,0,1.881614,242.9765,154.9994)" vector-effect="non-scaling-stroke" pen = "1.881627,1.881627" />
+</g>
+</svg>

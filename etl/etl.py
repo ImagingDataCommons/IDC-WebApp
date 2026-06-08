@@ -1,5 +1,6 @@
+# coding=utf-8
 ###
-# Copyright 2015-2021, Institute for Systems Biology
+# Copyright 2015-2026, Institute for Systems Biology
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -351,7 +352,7 @@ def load_citations(filename):
 
 def load_collections(filename, data_version="8.0"):
     try:
-        collection_file = open(filename, "r")
+        collection_file = open(filename, "r", encoding="utf-8")
         new_collection_set = []
         updated_collection_set = {}
         exact_collection_fields = [
@@ -680,14 +681,32 @@ def deactivate_data_versions(versions, idc_version):
 
 def load_programs(filename):
     try:
-        attr_vals_file = open(filename, "r")
-        for line in csv_reader(attr_vals_file):
+        prog_vals_file = open(filename, "r")
+        new_prog = []
+        upd_prog = {}
+        for line in csv_reader(prog_vals_file):
+            prog_data = {
+                'short_name': line[0], 'display_name': line[1], 'description': line[2], 'full_name': line[3]
+            }
             try:
-                Program.objects.get(short_name=line[0])
-                logger.info("[STATUS] Program {} already exists: skipping.".format(line[0]))
+                obj = Program.objects.get(short_name=prog_data['short_name'])
+                logger.info("[STATUS] Program {} already exists--updating only.".format(prog_data['short_name']))
+                upd_prog[obj.id] = prog_data
             except ObjectDoesNotExist as e:
-                obj = Program.objects.update_or_create(short_name=line[0],display_name=line[1],is_public=True,active=True,owner=idc_superuser)
-                logger.info("[STATUS] Program {} added.".format(obj))
+                logger.info("[STATUS] Saw new Program: {}".format(prog_data['short_name']))
+                prog_data.update({'is_public': True, 'active': True, 'owner': idc_superuser})
+                new_prog.append(Program(**prog_data))
+        if len(upd_prog):
+            updated_progs = Program.objects.filter(id__in=list(upd_prog.keys()))
+            fields = []
+            for prog in updated_progs:
+                vals = upd_prog[prog.id]
+                fields = list(vals.keys())
+                for key in vals:
+                    setattr(prog, key, vals[key])
+            Program.objects.bulk_update(updated_progs, fields)
+        if len(new_prog):
+            Program.objects.bulk_create(new_prog)
 
     except Exception as e:
         ERRORS_SEEN.append("Error seen while attempting to add a program, check logs.")

@@ -63,6 +63,7 @@
         const CHECK_MANIFEST_URL = "{% url 'check_user_manifest_base' %}";
         const SERIES_IDS_URL = "{% url 'get_series_ids_base' %}";
         const SERIES_IDS_FILTER_URL = "{% url 'get_series_ids_filter' %}";
+        const SHARED_CART_URL = "{% url 'get_shared_cart' %}";
     </script>
     <!-- OCPL Banner -->
     <script async src="https://assets.adobedtm.com/6a4249cd0a2c/785de09de161/launch-70d67a6a40a8.min.js"></script>
@@ -221,6 +222,7 @@
 </div>
 
 <script>
+    var showWarning = true;
     var warningSeen = {% if request.session.seenWarning %}true{% else %}false{% endif %};
     var user_is_auth = {% if request.user.is_authenticated %}true{% else %}false{% endif %};
     var user_is_social = {% if request.user.is_authenticated and request.user|has_social %}true{% else %}false{% endif %};
@@ -239,8 +241,6 @@
         var expireAfter = {{ request|expire_after|unlocalize }};
         var confirmFormDiscard = "{% trans 'You have unsaved changes in a form of this page.' %}";
         var returnToUrl = '{% url 'landing_page' %}';
-
-        var showWarning = false;
     </script>
     {% endlocalize %}
 {% endif %}
