@@ -4,7 +4,7 @@ django-anymail[mailgun]
 django-axes==5.40.0
 django-dotenv==1.4.2
 django-finalware==1.0.0
-django-redis==5.2.0
+django-redis==5.4.0
 djangorestframework==3.14.0
 django-session-security==2.6.7
 future==1.0.0
@@ -20,6 +20,7 @@ oauth2client==4.1.3
 pyjwt # For django-allauth
 pyopenssl # For oauth2client TODO: factor out old services helpers
 pytz==2025.2
+redis==7.4.0 # Until we update the redis cache we have to use this version
 requests==2.33.0
 requests-oauthlib # For django-allauth
 six==1.13.0
