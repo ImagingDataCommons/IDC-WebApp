@@ -301,9 +301,9 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
         var collection_col = {"type": "html", "orderable": true, "data": 3, render: function (data, type, row) {
                 if (type === "display") {
                     return '<span id="' + row[0] + '" class="collection_name value">' + data + '</span>\n' +
-                        '<span><i class="collection_info fa-solid fa-info-circle" value="' + row[0] + '" data-filter-display-val="' + data + '"></i></span>' +
-                        ' <a class="copy-this" role="button" content="' + row[0] +
-                        '" title="Copy the IDC collection_id to the clipboard"><i class="fa-solid fa-copy"></i></a>';
+                        '<span class="collex-tbl-btn-span"><a class="copy-this" role="button" content="' + row[0] +
+                        '" title="Copy the IDC collection_id to the clipboard"><i class="fa-solid fa-copy"></i></a> <i class="collection_info fa-solid fa-info-circle" value="' + row[0] + '" data-filter-display-val="' + data + '"></i> ' +
+                        '</span>';
                 }
                 return data;
             }
@@ -457,16 +457,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
 
                     $(row).on('click', function(event) {
                         handleRowClick("collections", row, event, [projid])
-                    });
-
-                     $(row).find('.collection_info').on("mouseenter", function(e){
-                        $(e.target).addClass('fa-lg');
-                        $(e.target).parent().parent().data("clickForInfo",false);;
-                      });
-
-                   $(row).find('.collection_info').on("mouseleave", function(e){
-                      $(e.target).parent().parent().data("clickForInfo",false);
-                      $(e.target).removeClass('fa-lg');
                     });
                 },
                 "columnDefs":[ ...colDefs],
