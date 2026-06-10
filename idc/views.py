@@ -268,12 +268,17 @@ def populate_tables(request):
         path_arr = [nstr for nstr in request.path.split('/') if nstr]
         table_type = path_arr[len(path_arr)-1]
         table_search = req.get("table_search", "false").lower() == 'true'
+        shared_cart = req.get("shared_cart", None)
         fields = None
         collapse_on = None
         filters = json.loads(req.get('filters', '{}'))
 
         filtergrp_list = json.loads(req.get('filtergrp_list', '{}'))
-        partitions = json.loads(req.get('partitions', '{}'))
+        partitions = None
+        if shared_cart:
+            partitions = json.loads(SharedCart.objects.get(cart_id=shared_cart).definition)['partitions']
+        else:
+            partitions = json.loads(req.get('partitions', '{}'))
 
         offset = int(req.get('offset', '0'))
         limit = int(req.get('limit', '500'))
@@ -437,9 +442,12 @@ def explore_data_page(request, filter_path=False, path_filters=None):
                         context['shared_cart'] = json.loads(this_cart.definition)
                         context['shared_cart']['cart_id'] = shared_cart
                         context['shared_cart']['active_version'] = bool(this_cart.idc_version.active == 1)
+                        context['shared_cart']['type'] = context['shared_cart'].get('cart_type','user')
                     except ObjectDoesNotExist:
                         logger.error("[ERROR] That cart does not exist!")
-                        del context['shared_cart']
+                        context['shared_cart'] = None
+                else:
+                    context['shared_cart'] = None
 
             context['hist'] = ''
 
@@ -591,8 +599,12 @@ def cart_data(request):
         results_level = req.get('results_level', 'StudyInstanceUID')
         dois_only = bool(req.get('dois_only', 'false').lower() == 'true')
         size_only = bool(req.get('size_only', 'false').lower() == 'true')
+        shared_cart = req.get('shared_cart',None)
 
-        partitions = json.loads(req.get('partitions', '{}'))
+        if shared_cart:
+            partitions = json.loads(SharedCart.objects.get(cart_id=shared_cart).definition)['partitions']
+        else:
+            partitions = json.loads(req.get('partitions', '{}'))
 
         limit = min(int(req.get('limit', 500)),500)
         offset = int(req.get('offset', 0))
@@ -625,7 +637,7 @@ def cart_data(request):
     except Exception as e:
         logger.error("[ERROR] While loading cart:")
         logger.exception(e)
-        status = 400
+        status = 500
 
     return JsonResponse(response, status=status)
 
