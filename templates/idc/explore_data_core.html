@@ -624,22 +624,21 @@
                             collections are not publicly available
                         </div>
                         <div class="space-top-10">
-                            <div class="dropdown filter-download-menu-container filter-activated-controls"
-                                title="Select a filter to enable this feature."
+                            <div class="filter-activated-span">
+                                <div class="dropdown filter-download-menu-container filter-activated-controls"
                                  data-default-title="Save this cohort's image files."
                                  disabled="disabled"
                             >
                                 <a class="disabled dropdown-toggle btnGroupDropViewers filter-activated-controls filter-download-menu-toggle download-toggle btn btn-primary btn-small"
                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                                   title="Select a filter to enable this feature."
                                    data-default-title="Save this cohort's image files."
                                 >
                                     Download <i class="fa-solid fa-download"></i>
                                 </a>
                                 <ul class="dropdown-menu filter-download-menu" role="menu">
                                     <li>
-                                        <a id="export-manifest" class="export-filter-manifest" data-toggle="modal"
-                                            title="Export this cohort's series as a manifest for download."
+                                        <a id="export-manifest" class="export-filter-manifest export-button" data-toggle="modal"
+                                           data-default-title="Export this cohort's series as a manifest for download."
                                             data-target="#export-manifest-modal"
                                         ><i class="fa fa-solid fa-list"></i> Manifest
                                         </a>
@@ -655,33 +654,30 @@
                                     </li>
                                 </ul>
                             </div>
-                            <button class="btn btn-small btn-special citations-button filter-activated-controls" disabled
+                            </div>
+                            <span class="filter-activated-span"><button class="btn btn-small btn-special citations-button filter-activated-controls" disabled
                                 data-toggle="modal" data-target="#citations-modal" role="button"
-                                data-default-title=""
-                                title="Select a filter to enable this feature."
+                                data-default-title="View citation(s) in Vancouver Elsevier format."
                             > Citations <i class="smaller-icon fa fa-quote-left"></i><i class="smaller-icon fa fa-quote-right"></i>
-                            </button>
-                            <button class="btn btn-small btn-default bq-string-display filter-activated-controls" disabled data-toggle="modal"
+                            </button></span>
+                            <span class="filter-activated-span"><button class="btn btn-small btn-default bq-string-display filter-activated-controls" disabled data-toggle="modal"
                                 data-default-title="Display this cohort's filter as a BQ SQL string."
                                 data-target="#bq-string-display" title= "Select a filter to enable this feature."
                             > SQL
-                            </button>
-                            <button
+                            </button></span>
+                            <span class="filter-activated-span"><button
                                 class="btn btn-small btn-special get-filter-uri filter-activated-controls" disabled role="button"
                                 data-default-title="Display this cohort's filter query URL."
-                                title="Select a filter to enable this feature."
                             > URL <i class="fa fa-angles-right"></i>
-                            </button>
-                            <button class="btn btn-small btn-special hide-filter-uri filter-activated-controls" role="button"
+                            </button></span>
+                            <span class="filter-activated-span"><button class="btn btn-small btn-special hide-filter-uri filter-activated-controls" role="button"
                                 data-default-title="Hide the filter query URL."
-                                title="Hide the filter query URL." style="display: none;"
+                                style="display: none;"
                             > URL <i class="fa fa-angles-down"></i>
-                            </button>
+                            </button></span>
                         </div>
                         <div class="filter-url-container space-top-10 is-hidden">
-                            <button role="button" class="btn btn-primary copy-this copy-url copy-filter-url"
-                                    title="Copy Filter URL to clipboard" style=""
-                                    content="">
+                            <button role="button" class="btn btn-primary copy-this copy-url copy-filter-url">
                                 <i class="fa-solid fa-copy" aria-hidden="true"></i>
                             </button>
                             <pre class="filter-url code"></pre>
@@ -696,22 +692,21 @@
                     <div class="panel-body">
                         <p id="cart_stats_holder"><span id="cart_stats" class="empty-cart">Your cart is currently empty.</span></p>
                         <div class="cart-container space-top-10">
-                            <div class="dropdown cart-download-menu-container cart-activated-controls"
-                                title="Select a filter to enable this feature."
+                            <div class="cart-activated-span">
+                                <div class="dropdown cart-download-menu-container cart-activated-controls"
                                  data-default-title="Save this cart's image files."
                                  disabled="disabled"
                             >
                                 <a class="disabled dropdown-toggle btnGroupDropViewers cart-activated-controls cart-download-menu-toggle download-toggle btn btn-primary btn-small"
                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                                   title="Select a filter to enable this feature."
                                    data-default-title="Save this cart's image files."
                                 >
                                     Download <i class="fa-solid fa-download"></i>
                                 </a>
                                 <ul class="dropdown-menu cart-download-menu" role="menu">
                                     <li>
-                                        <a id="export-manifest-cart" class="export-cart-manifest cart-export" data-toggle="modal"
-                                            title="Export this cart's series as a manifest for download."
+                                        <a id="export-manifest-cart" class="export-cart-manifest cart-export export-button" data-toggle="modal"
+                                            data-default-title="Export this cart's series as a manifest for download."
                                             data-target="#export-manifest-modal"
                                         ><i class="fa fa-solid fa-list"></i> Manifest
                                         </a>
@@ -727,27 +722,27 @@
                                     </li>
                                 </ul>
                             </div>
-                            <button class="btn btn-small btn-default cart-share cart-activated-controls" role="button"
+                            </div>
+                            <span class="cart-activated-span"><button class="btn btn-small btn-default cart-share cart-activated-controls" role="button"
                                 data-default-title="Get a shareable link for this cart."
-                                title="Add items to the cart to enable this feature." disabled
+                                disabled
                             > Share <i class="fa-solid fa-share"></i>
-                            </button>
-                            <button class="btn btn-small btn-special citations-button cart-activated-controls for-cart"
+                            </button></span>
+                            <span class="cart-activated-span"><button class="btn btn-small btn-special citations-button cart-activated-controls for-cart"
                                 disabled data-toggle="modal" data-target="#citations-modal" role="button"
-                                data-default-title=""
-                                title="Add items to the cart to enable this feature."
+                                data-default-title="View citation(s) in Vancouver Elsevier format."
                             > Citations <i class="smaller-icon fa fa-quote-left"></i><i class="smaller-icon fa fa-quote-right"></i>
-                            </button>
-                            <button class="btn btn-small btn-default cart-view cart-activated-controls" role="button"
+                            </button></span>
+                            <span class="cart-activated-span"><button class="btn btn-small btn-default cart-view cart-activated-controls" role="button"
                                 data-default-title="View this cart's complete contents."
-                                title="Add items to the cart to enable this feature." disabled
+                                disabled
                                 onclick="viewcart()"
                             > View <i class="fa-solid fa-cart-shopping"></i>
-                            </button>
+                            </button></span>
                         </div>
                         <div class="cart-share-url-container space-top-10 is-hidden">
                             <button role="button" class="btn btn-primary copy-this copy-url copy-cart-share-url"
-                                    title="Copy Cart Share URL to clipboard" style=""
+                                    data-default-title="Copy Cart Share URL to clipboard" style=""
                                     content="">
                                 <i class="fa-solid fa-copy" aria-hidden="true"></i>
                             </button>
