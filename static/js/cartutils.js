@@ -227,6 +227,10 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
          container.hide();
          container.removeClass('is-stale');
          shared_cart_url.removeAttr('data-cart-id');
+
+        $('.search-scope .manifest-disabled input, .search-configuration .manifest-disabled input').removeAttr('disabled');
+        $('.search-scope .manifest-disabled, .search-configuration .manifest-disabled').removeClass('manifest-disabled');
+        $('.check-all, .uncheck-all').removeClass('disabled');
     }
 
     //as user makes selections in the tables, record the selections in the cartHist object. Make new partitions from the selections
@@ -243,6 +247,11 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         }
         if(this_cart['type'] === 'manifest') {
             $('.shopping-cart-holder').addClass('is-disabled');
+            // Disable the input element, but attach the 'manifest-disabled' class to its parent so the tooltip
+            // will still display
+            $('.search-scope input, .search-configuration input').not('.value-search, .sort_val, .hide-zeros').attr('disabled', 'disabled');
+            $('.search-scope input, .search-configuration input').not('.value-search, .sort_val, .hide-zeros').parent().addClass('manifest-disabled');
+            $('.check-all, .uncheck-all').addClass('disabled');
         }
         window.cartHist = this_cart['cart_hist'];
         window.proj_in_cart = this_cart['proj_in_cart'];
