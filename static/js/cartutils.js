@@ -145,7 +145,10 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
             cart_controls.each(function(){
                 $(this).removeAttr('disabled');
                 $(this).removeClass('disabled');
-                !$(this).hasClass('tip-titled') && $(this).attr("title",$(this).attr("data-default-title"));
+                $(this).removeClass('cart-empty');
+                // Manifest carts cannot be reshared - re-add the disabled attribute in that case
+                (window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['cart_type'] === 'manifest' &&
+                    $(this).hasClass('cart-share')) && $(this).attr('disabled', 'disabled');
             });
             let shared_cart_url = $('.cart-share-url');
             let container = $('.cart-share-url-container');
@@ -188,7 +191,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
             cart_controls.each(function(){
                 !$(this).hasClass('dropdown-toggle') && $(this).attr('disabled', 'disabled');
                 $(this).hasClass('dropdown-toggle') && $(this).addClass('disabled');
-                !$(this).hasClass('tip-titled') && $(this).attr("title","Add items to the cart to enable this feature.");
+                $(this).addClass('cart-empty');
             });
         }
     }
@@ -218,6 +221,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
          let shared_cart_url = $('.share-cart-url');
          let container = $('.cart-share-url-container');
          $('.cart-activated-controls').attr('disabled','disabled');
+         $('.cart-activated-controls').addClass('cart-empty');
          $('.copy-cart-share-url').removeAttr('content');
          shared_cart_url.html("");
          container.hide();

@@ -692,7 +692,13 @@ svg {
     color: #fff;
 }
 
-.filter-download-menu-container[disabled="disabled"], .cart-download-menu-container[disabled="disabled"] {
+.filter-activated-span, .cart-activated-span {
+    display: inline;
+}
+
+.filter-download-menu-container[disabled="disabled"], .cart-download-menu-container[disabled="disabled"],
+.filter-activated-controls[disabled="disabled"],.cart-activated-controls[disabled="disabled"],
+.filter-activated-controls.disabled,.cart-activated-controls.disabled{
     cursor: not-allowed;
 }
 
