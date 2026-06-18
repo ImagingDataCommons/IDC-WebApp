@@ -754,6 +754,161 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None, ser
         return response
     return JsonResponse(response, status=status)
 
+
+def validate_cart(partitions, filter_group_list, cart_history, projects):
+    cart_schema = {
+        "type": "object",
+        "properties": {
+            "partitions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "filt": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "id": {
+                            "type":"array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "not": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "null": {
+                            "type": "boolean"
+                        }
+                    }
+                }
+            },
+            "cart_history": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "filter": {
+                            "type": "object",
+                            "properties": {
+                                "Modality": {
+                                    "type": "object",
+                                    "properties": {
+                                        "values": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "op": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "patternProperties": {
+                                "^[A-Za-z\d\_\-\.]+": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "partitions": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "selections": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "added": {
+                                        "type": "boolean"
+                                    },
+                                    "sel": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "filter_group_list": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "Modality": {
+                            "type": "object",
+                            "properties": {
+                                "values": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                "op": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "patternProperties": {
+                        "^[A-Za-z\d\_\-\.]+": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "projects": {
+                "type": "object",
+                "patternProperties": {
+                    "^[a-z\d\_]+": {
+                        "type": "object",
+                        "properties": {
+                            "cases": {
+                                "type": "number"
+                            },
+                            "studies": {
+                                "type": "number"
+                            },
+                            "series": {
+                                "type": "number"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return True
+
+
 def get_shared_cart(request):
     response = {'message': 'Invalid shared cart request.'}
     status = 400
@@ -776,6 +931,8 @@ def get_shared_cart(request):
         filtergrp_list = body.get("filtergrp_list", {})
         cart_history = body.get("cart_hist", {})
         proj_in_cart = body.get("proj_in_cart", [])
+        if not validate_cart(partitions, filtergrp_list, cart_history, proj_in_cart):
+            return JsonResponse({'message': 'A valid cart was not provided.'}, status=400)
         new_cart = SharedCart.objects.create(
             source_ip=req_ip, series_ids=series_ids,
             definition=json.dumps({'partitions': partitions, 'filtergrp_list': filtergrp_list, 'cart_hist': cart_history, 'proj_in_cart': proj_in_cart}),
