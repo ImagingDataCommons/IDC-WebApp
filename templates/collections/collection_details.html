@@ -22,7 +22,8 @@
     </p>
     <div class="collection-buttons">
         <div id="collex-download-options" class="dropdown">
-            <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="collex-download-options-link"
+            <a class="btn btn-secondary dropdown-toggle default-tip" href="#" role="button" id="collex-download-options-link"
+               data-default-tip="Download this collection's images."
                data-toggle="dropdown" data-bs-toggle="dropdown" aria-expanded="false">
                 Download
             </a>
@@ -49,7 +50,8 @@
             {% endwith %}
             </ul>
         </div>
-        <a type="button" role="button" target="_blank" class="btn btn-special explore-images action-button"
+        <a type="button" role="button" target="_blank" class="btn btn-special explore-images action-button default-tip"
+           data-default-tip="View this collections images in the IDC data explorer."
            href="{% if collection_type == "Collection" %}{% url 'parse_explore_filters' %}/?collection_id={{ collection_id }}{% else %}{% url 'parse_explore_filters' %}/?analysis_results_id={{ collection_id }}{% endif %}">
             Explore Images
         </a>
@@ -144,7 +146,10 @@
                     </ul></p>
                 {% endif %}
                   <p>
-                    <button type="button" role="button" class="btn btn-small btn-primary citations-button for-collection" data-bs-toggle="modal" data-bs-target="#citations-modal" data-toggle="modal" data-target="#citations-modal" aria-expanded="false" data-citations=""> View Citations
+                    <button type="button" role="button" class="btn btn-small btn-primary citations-button for-collection default-tip"
+                            data-bs-toggle="modal" data-bs-target="#citations-modal" data-toggle="modal"
+                            data-default-tip="View this collection's citations in Vancouver Elsevier format."
+                            data-target="#citations-modal" aria-expanded="false" data-citations=""> View Citations
                     </button>
                   </p>
               </div>

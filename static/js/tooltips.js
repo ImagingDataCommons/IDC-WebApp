@@ -260,6 +260,9 @@ require([
 
     const cart_tooltip = {
         dynamicTip: function(ref){
+            if($(ref).hasClass('is-disabled')) {
+                return "This cart's contents cannot be adjusted."
+            }
             if($(ref).parentsUntil('tbody').filter('tr').hasClass('extraInFilter') || !($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart'))) {
                 return "add series to cart"
             }
@@ -276,9 +279,14 @@ require([
 
     const manifest_tooltip = {
         dynamicTip: function(ref){
+            // Body/page level tooltips
             if($(ref).hasClass('idc-index')) {
                 return `View instructions for downloading this ${$(ref).attr("data-download-type-display")} using the idc-index tool.`;
             }
+            if($(ref).hasClass('export-filter-manifest') || $(ref).hasClass('export-cart-manifest')) {
+                return $(ref).attr('data-default-title');
+            }
+            // Table tooltips
             let table_type = $(ref).parents('table').attr('data-table-type');
             if(table_type === 'series') {
                 return 'Download a manifest file for this series to use with a download tool.'
@@ -340,6 +348,9 @@ require([
 
     tippy.delegate('.series-table', {
         dynamicTip: function(ref){
+            if($(ref).hasClass('is-disabled')) {
+                return "This cart's contents cannot be adjusted."
+            }
             if ($(ref).parentsUntil('tbody').filter('tr').hasClass('someInCart')) {
                 return "remove from cart"
             }
@@ -356,6 +367,56 @@ require([
     tippy.delegate('.studies-table', cart_tooltip);
 
     tippy.delegate('.cases-table', copy_tip);
+
+    tippy.delegate
+
+    tippy.delegate('#body', {
+        dynamicTip: function(ref){
+            let btn = $(ref).find('button, div');
+            if(btn.hasClass('cart-empty')) {
+                return "Add items to the cart to enable this feature.";
+            }
+            if(btn.hasClass('filters-empty')) {
+                return "Select a filter to enable this feature.";
+            }
+            if(btn.attr('disabled') === 'disabled' && btn.hasClass('cart-share')) {
+                return "This cart's contents cannot be re-shared.";
+            }
+            return btn.attr('data-default-title');
+        },
+        content: 'Placeholder',
+        theme: 'dark',
+        placement: 'top',
+        arrow: false,
+        interactive:true,
+        target: ['.cart-activated-span', '.filter-activated-span'],
+        maxWidth: 200,
+        plugins: [dynamicTipFunc]
+    });
+
+    tippy.delegate('#body', {
+        content: 'Filters cannot be applied while this shared cart is displayed. Clear the cart to enable filtering.',
+        theme: 'dark',
+        placement: 'top',
+        arrow: false,
+        interactive:true,
+        target: '.manifest-disabled',
+        maxWidth: 200
+    });
+
+    tippy.delegate('#body', {
+        dynamicTip: function(ref){
+            return $(ref).attr('data-default-tip');
+        },
+        content: 'Placeholder',
+        theme: 'dark',
+        placement: 'top',
+        arrow: false,
+        interactive:true,
+        target: '.default-tip',
+        maxWidth: 200,
+        plugins: [dynamicTipFunc]
+    });
 
     tippy.delegate('#body', {
         content: 'The current cart is out of synch with this saved cart. Click \'Share\' to update the link.',
@@ -375,16 +436,6 @@ require([
         arrow: false,
         interactive:true,
         target: '.icon-old',
-        maxWidth: 200
-    });
-
-    tippy.delegate('#body', {
-        content: 'View citation(s) in Vancouver Elsevier format.',
-        theme: 'dark',
-        placement: 'left',
-        arrow: false,
-        interactive:true,
-        target: '.citations-button',
         maxWidth: 200
     });
 
@@ -429,6 +480,7 @@ require([
     tippy.delegate('#body', disabled_download_tooltip);
     tippy.delegate('#body', download_tooltip);
     tippy.delegate("#collection_details", manifest_tooltip);
+    tippy.delegate(".data-tab-content-panel", manifest_tooltip);
 
     tippy.delegate('#body', {
         content: function(reference) {
