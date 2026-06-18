@@ -445,7 +445,8 @@ def explore_data_page(request, filter_path=False, path_filters=None):
                         context['shared_cart']['type'] = context['shared_cart'].get('cart_type','user')
                     except ObjectDoesNotExist:
                         logger.error("[ERROR] That cart does not exist!")
-                        context['shared_cart'] = None
+                        messages.warning(request,"No cart with that ID was found!")
+                        return redirect(reverse('explore_data'))
                 else:
                     context['shared_cart'] = None
 

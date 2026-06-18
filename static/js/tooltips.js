@@ -395,6 +395,16 @@ require([
     });
 
     tippy.delegate('#body', {
+        content: 'Filters cannot be applied while this shared cart is displayed. Clear the cart to enable filtering.',
+        theme: 'dark',
+        placement: 'top',
+        arrow: false,
+        interactive:true,
+        target: '.manifest-disabled',
+        maxWidth: 200
+    });
+
+    tippy.delegate('#body', {
         dynamicTip: function(ref){
             return $(ref).attr('data-default-tip');
         },
