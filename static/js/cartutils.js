@@ -145,23 +145,32 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
             cart_controls.each(function(){
                 $(this).removeAttr('disabled');
                 $(this).removeClass('disabled');
-                !$(this).hasClass('tip-titled') && $(this).attr("title",$(this).attr("data-default-title"));
+                $(this).removeClass('cart-empty');
+                // Manifest carts cannot be reshared - re-add the disabled attribute in that case
+                (window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['cart_type'] === 'manifest' &&
+                    $(this).hasClass('cart-share')) && $(this).attr('disabled', 'disabled');
             });
-            let shared_cart = $('.cart-share-url');
-            let container = $('.cart-share-url-container')
-            let has_id = shared_cart.attr('data-cart-id') !== "" && shared_cart.attr('data-cart-id') !== undefined && shared_cart.attr('data-cart-id') !== null;
+            let shared_cart_url = $('.cart-share-url');
+            let container = $('.cart-share-url-container');
+            let has_id = shared_cart_url.attr('data-cart-id') !== "" && shared_cart_url.attr('data-cart-id') !== undefined && shared_cart_url.attr('data-cart-id') !== null;
             if(has_id) {
                 container.addClass('is-stale');
             }
             let cart_disk_size = 0;
             let cart_disk_display_size = "(Calculating...)";
+            let params = {
+                'filtergrp_list': JSON.stringify(window.filtergrp_list ? window.filtergrp_list : [{}]),
+                'size_only': 'true'
+            };
+            if(window.shared_cart !== null && window.shared_cart !== undefined && window.shared_cart['type'] === 'manifest') {
+                params['shared_cart'] = window.shared_cart['cart_id'];
+                params['partitions'] = null;
+            } else {
+                params['partitions'] = JSON.stringify(window.partitions);
+            }
             let cart_disk_resp = await fetch(`${BASE_URL}/cart_data/`, {
                     method: "POST",
-                    body: new URLSearchParams({
-                        'filtergrp_list': JSON.stringify(window.filtergrp_list ? window.filtergrp_list : [{}]),
-                        'partitions': JSON.stringify(window.partitions),
-                        'size_only': 'true'
-                    }),
+                    body: new URLSearchParams(params),
                     headers: {"X-CSRFToken": $.getCookie('csrftoken'), "content-type": 'application/x-www-form-urlencoded'}
             });
             if(!cart_disk_resp.ok) {
@@ -182,7 +191,7 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
             cart_controls.each(function(){
                 !$(this).hasClass('dropdown-toggle') && $(this).attr('disabled', 'disabled');
                 $(this).hasClass('dropdown-toggle') && $(this).addClass('disabled');
-                !$(this).hasClass('tip-titled') && $(this).attr("title","Add items to the cart to enable this feature.");
+                $(this).addClass('cart-empty');
             });
         }
     }
@@ -195,6 +204,8 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         cartSel['filter']= parsedFiltObj;
         cartSel['selections']= new Array();
         cartSel['partitions']= new Array();
+        window.shared_cart = null;
+        $('.shopping-cart-holder').removeClass('is-disabled');
         window.cartHist.push(cartSel);
         window.updatePartitionsFromScratch();
         var ret = formcartdata();
@@ -207,14 +218,19 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
 
          $('#cart_stats').addClass('empty-cart');
          $('#cart_stats').html("Your cart is currently empty.");
-         let shared_cart = $('.share-cart-url');
+         let shared_cart_url = $('.share-cart-url');
          let container = $('.cart-share-url-container');
          $('.cart-activated-controls').attr('disabled','disabled');
+         $('.cart-activated-controls').addClass('cart-empty');
          $('.copy-cart-share-url').removeAttr('content');
-         shared_cart.html("");
+         shared_cart_url.html("");
          container.hide();
          container.removeClass('is-stale');
-         shared_cart.removeAttr('data-cart-id');
+         shared_cart_url.removeAttr('data-cart-id');
+
+        $('.search-scope .manifest-disabled input, .search-configuration .manifest-disabled input').removeAttr('disabled');
+        $('.search-scope .manifest-disabled, .search-configuration .manifest-disabled').removeClass('manifest-disabled');
+        $('.check-all, .uncheck-all').removeClass('disabled');
     }
 
     //as user makes selections in the tables, record the selections in the cartHist object. Make new partitions from the selections
@@ -225,14 +241,22 @@ define(['filterutils','jquery', 'tippy', 'base' ], function(filterutils, $,  tip
         window.cartHist[curInd]['partitions'] = mkOrderedPartitions(window.cartHist[curInd]['selections']);
     }
 
-    const load_shared_cart = async function(shared_cart){
+    const load_shared_cart = async function(this_cart){
         if(window.cartHist !== null && window.cartHist !== undefined && window.cartHist.length > 0) {
             console.debug("Cart erasure warning here.");
         }
-        window.cartHist = shared_cart['cart_hist'];
-        window.proj_in_cart = shared_cart['proj_in_cart'];
-        window.partitions = shared_cart['partitions'];
-        window.filtergrp_list = shared_cart['filtergrp_list'];
+        if(this_cart['type'] === 'manifest') {
+            $('.shopping-cart-holder').addClass('is-disabled');
+            // Disable the input element, but attach the 'manifest-disabled' class to its parent so the tooltip
+            // will still display
+            $('.search-scope input, .search-configuration input').not('.value-search, .sort_val, .hide-zeros').attr('disabled', 'disabled');
+            $('.search-scope input, .search-configuration input').not('.value-search, .sort_val, .hide-zeros').parent().addClass('manifest-disabled');
+            $('.check-all, .uncheck-all').addClass('disabled');
+        }
+        window.cartHist = this_cart['cart_hist'];
+        window.proj_in_cart = this_cart['proj_in_cart'];
+        window.partitions = this_cart['partitions'];
+        window.filtergrp_list = this_cart['filtergrp_list'];
         window.hidePanel();
         base.showJsMessage(null,"Loading the shared cart...",true,);
         await window.handleFilterSelectionUpdate(null, true, true);
