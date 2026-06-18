@@ -907,6 +907,7 @@ def validate_cart(partitions, filter_group_list, cart_history, projects):
             }
         }
     }
+    # TODO: validate cart JSON
     return True
 
 
