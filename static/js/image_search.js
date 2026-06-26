@@ -79,7 +79,6 @@ require([
 
 ], function(plotutils,filterutils,sliderutils, tables, cartutils, tippy,$, _, base) {
 
-
     const FLOAT_SLIDERS = sliderutils.FLOAT_SLIDERS;
 
     $('.manifest-size-warning').hide();
@@ -194,10 +193,11 @@ require([
                         );
                         base.updateDownloadBtns("cohort", true, data.totals.disk_size_tb, data.totals.SeriesInstanceUID);
                     } else if(isFiltered && data.total <= 0) {
-                        $('#search_def_stats').html('<span style="color:red">There are no cases matching the selected set of filters</span>');
+                        let msg = 'There are no cases containing studies which match the selected set of filters.';
+                        $('#search_def_stats').html(`<span style="color:red">${msg}</span>`);
                         base.updateDownloadBtns("cohort", false, 0, 0);
                         $('.citations-button').attr("disabled","disabled");
-                        $('.citations-button').attr("title", "There are no cases matching the selected set of filters");
+                        $('.citations-button').attr("title", msg);
                     } else {
                         $('#search_def_stats').html("&nbsp;");
                         base.updateDownloadBtns("cohort", false, 0, 0);
@@ -329,78 +329,76 @@ require([
         let height=collex_modal.find('.modal-content').outerHeight();
         collex_modal.height(height);
         collex_modal.width(width);
-        collex_modal.css({position:"absolute", top: Math.max((pos.top-height),0), left: pos.left })
+        collex_modal.css({position:"absolute", top: Math.max((pos.top-height),0), left: pos.left });
     }
 
-    var filterItemBindings = function (filterId) {
-        let selFilter = $(`#${filterId}`);
-        selFilter.find('.join_val').on('click', function () {
-            let attribute = $(this).closest('.list-group-item__body, .list-group-sub-item__body','.colections-list')[0].id;
-            if (filterObj.hasOwnProperty(attribute) && (window.filterObj[attribute]['values'].length >= 1)){
-                filterutils.mkFiltText();
-                filterObj[attribute]['op']=$(this).attr('value');
-                updateFacetsData(true);
-            }
-        });
+    // Search Scope and Search Config event bindings (delegates)
+    let filter_panel = $('.filter-panel');
+    filter_panel.on('click','.analysis_info,.collection_info',function(event){
+        window.displayInfo($(`input[value="${$(this).attr('data-info-value')}"]`)[0]);
+        event.stopPropagation();
+        event.preventDefault();
+    });
 
-        selFilter.find('.collection_info, .analysis_info').on("mouseenter", function(e){
-            $(e.target).addClass('fa-lg');
-         });
+    filter_panel.on('click','input:checkbox', function (e) {
+        if(!$(this).hasClass('hide-zeros')) {
+            handleFilterSelectionUpdate(this, true, true);
+            e.stopPropagation();
+        }
+    });
 
-       selFilter.find('.collection_info, .analysis_info').on("mouseleave", function(e){
-           $(e.target).removeClass('fa-lg');
-       });
+    filter_panel.on('click', '.show-more', function (e) {
+        $(this).parent().parent().children('.less-checks').show();
+        $(this).parent().parent().children('.less-checks').removeClass('is-hidden');
+        $(this).parent().parent().children('.more-checks').addClass('is-hidden');
+        $(this).parent().hide();
 
-        selFilter.find('input:checkbox').not('.hide-zeros').on('click', function (e) {
-            let targ=e.target;
-            if ($(e.target).parent().find('.collection_info.fa-lg, .analysis_info.fa-lg').length>0){
-                $(targ).prop("checked",!$(targ).prop("checked"));
-                window.displayInfo(targ);
-            } else {
-              handleFilterSelectionUpdate(this, true, true);
-            }
-        });
+        let extras = $(this).closest('.list-group-item__body, .collection-list, .list-group-sub-item__body')
+            .children('.search-checkbox-list')
+            .children('.extra-values');
 
-        selFilter.find('.show-more').on('click', function () {
-            $(this).parent().parent().children('.less-checks').show();
-            $(this).parent().parent().children('.less-checks').removeClass('is-hidden');
-            $(this).parent().parent().children('.more-checks').addClass('is-hidden');
+        if (($(this).closest('.search-configuration').find('.hide-zeros').length>0)
+            && ($(this).closest('.search-configuration').find('.hide-zeros').prop('checked'))){
+            extras=extras.not('.zeroed');
+        }
+        extras.removeClass('is-hidden');
+        e.stopPropagation();
+        e.preventDefault();
+    });
 
-            $(this).parent().hide();
-            var extras = $(this).closest('.list-group-item__body, .collection-list, .list-group-sub-item__body')
-                .children('.search-checkbox-list')
-                .children('.extra-values')
+    filter_panel.on('click', '.show-less', function(e) {
+        $(this).parent().parent().children('.more-checks').show();
+        $(this).parent().parent().children('.more-checks').removeClass('is-hidden');
+        $(this).parent().parent().children('.less-checks').addClass('is-hidden');
 
-            if ( (selFilter.closest('.search-configuration').find('.hide-zeros').length>0)
-                && ($('#'+filterId).closest('.search-configuration').find('.hide-zeros').prop('checked'))){
-                extras=extras.not('.zeroed');
-            }
-            extras.removeClass('is-hidden');
-        });
+        $(this).parent().hide();
+        $(this).closest('.list-group-item__body, .collection-list, .list-group-sub-item__body')
+            .children('.search-checkbox-list').children('.extra-values').addClass('is-hidden');
+        e.stopPropagation();
+        e.preventDefault();
+    });
 
-        selFilter.find('.show-less').on('click', function () {
-            $(this).parent().parent().children('.more-checks').show();
-            $(this).parent().parent().children('.more-checks').removeClass('is-hidden');
-            $(this).parent().parent().children('.less-checks').addClass('is-hidden');
+    filter_panel.on('click', '.check-all', function (e) {
+        !is_cohort && filterutils.checkUncheckAll(this, true, true);
+        e.stopPropagation();
+        e.preventDefault();
+    });
 
-            $(this).parent().hide();
-            $(this).closest('.list-group-item__body, .collection-list, .list-group-sub-item__body')
-                .children('.search-checkbox-list').children('.extra-values').addClass('is-hidden');
-        });
+    filter_panel.on('click', '.uncheck-all', function (e) {
+        !is_cohort && filterutils.checkUncheckAll(this, false, false);
+        e.stopPropagation();
+        e.preventDefault();
+    });
 
-        selFilter.find('.check-all').on('click', function () {
-            if (!is_cohort) {
-                filterutils.checkUncheckAll(this, true, true);
-            }
-        });
-
-        $('#' + filterId).find('.uncheck-all').on('click', function () {
-          if (!is_cohort){
-              filterutils.checkUncheckAll(this, false, false);
-
-          }
-        });
-    };
+    filter_panel.on('click', '.join_val', function (e) {
+        let attribute = $(this).closest('.list-group-item__body, .list-group-sub-item__body','.collections-list')[0].id;
+        if (filterObj.hasOwnProperty(attribute) && (window.filterObj[attribute]['values'].length >= 1)){
+            filterutils.mkFiltText();
+            filterObj[attribute]['op']=$(this).attr('value');
+            updateFacetsData(true);
+            e.stopPropagation();
+        }
+    });
 
     const save_anonymous_selection_data = function() {
         let groups = [];
@@ -611,13 +609,6 @@ require([
      $(document).ready(async function () {
         tables.initializeTableCacheData();
         tables.initializeTableViewedItemsData();
-        filterItemBindings('access_set');
-        filterItemBindings('program_set');
-        filterItemBindings('analysis_set');
-
-        filterItemBindings('search_orig_set');
-        filterItemBindings('search_derived_set');
-        filterItemBindings('search_related_set');
 
         max = Math.ceil(parseInt($('#age_at_diagnosis').data('data-max')));
         min = Math.floor(parseInt($('#age_at_diagnosis').data('data-min')));
@@ -696,11 +687,11 @@ require([
                 ).attr("style","display: none;")
         );
 
-        if(shared_cart) {
-            await cartutils.load_shared_cart(shared_cart);
+        if(window.shared_cart) {
+            await cartutils.load_shared_cart(window.shared_cart);
             let cart_url = $('.cart-share-url');
-            cart_url.attr('data-cart-id', shared_cart['cart_id']);
-            !shared_cart['active_version'] && cart_url.parent().addClass('.cart-old-version');
+            cart_url.attr('data-cart-id', window.shared_cart['cart_id']);
+            !window.shared_cart['active_version'] && cart_url.parent().addClass('cart-old-version');
             await update_shared_cart();
         } else {
             var cartSel = new Object();

@@ -587,8 +587,7 @@ td.license, th.license {
 
 .icon-stale {
     display: none;
-    height: 36px;
-    padding-top: 4px;
+    padding-top: 10px;
     color: #db5d00
 }
 
@@ -602,7 +601,6 @@ td.license, th.license {
 
 .icon-old {
     display: none;
-    height: 36px;
     padding-top: 4px;
     color: #0045af;
 }
@@ -694,7 +692,13 @@ svg {
     color: #fff;
 }
 
-.filter-download-menu-container[disabled="disabled"], .cart-download-menu-container[disabled="disabled"] {
+.filter-activated-span, .cart-activated-span {
+    display: inline;
+}
+
+.filter-download-menu-container[disabled="disabled"], .cart-download-menu-container[disabled="disabled"],
+.filter-activated-controls[disabled="disabled"],.cart-activated-controls[disabled="disabled"],
+.filter-activated-controls.disabled,.cart-activated-controls.disabled{
     cursor: not-allowed;
 }
 
@@ -737,6 +741,10 @@ tr:not(.someInCart).ckbx:has(.fa-cart-shopping) {
 
 .cart-info-tip.case3 {
     background-color:transparent;
+}
+
+.shopping-cart-holder.is-disabled>.shopping-cart {
+    opacity: 60%;
 }
 
 #projects_table tr.someInCart:not(.extraInItem) .ckbx .fa-cart-shopping {
@@ -876,4 +884,33 @@ li.cartlist {
 .citations-button .fa-quote-right {
     top: 2px;
     margin-left: -1px;
+}
+
+.filter-panel .collection_info, .filter-panel .analysis_info {
+    padding-left: 3px;
+    padding-top: 2px;
+    position: absolute;
+}
+
+.collection_info:hover, .analysis_info:hover {
+    color: #389e00;
+    font-size: 1.25em;
+}
+.collex-tbl-btn-span {
+    position: absolute;
+}
+.collex-tbl-btn-span i {
+    padding-left: 5px;
+}
+.collex-tbl-btn-span .collection_info {
+    position: absolute;
+    padding-top: 2px;
+}
+.collex-tbl-btn-span .copy-this:hover {
+    color: #0a53be;
+}
+
+
+.less-checks {
+    display: flow-root;
 }

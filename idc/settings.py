@@ -38,10 +38,8 @@ if not exists(join(dirname(__file__), '../{}.env'.format(SECURE_LOCAL_PATH))):
 
 dotenv.read_dotenv(join(dirname(__file__), '../{}.env'.format(SECURE_LOCAL_PATH)))
 
-APP_ENGINE_FLEX = 'aef-'
-APP_ENGINE = 'Google App Engine/'
-
-BASE_DIR                = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)) + os.sep
+WEBAPP_KEY = os.environ.get('WEBAPP_KEY', None)
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)) + os.sep
 
 SHARED_SOURCE_DIRECTORIES = [
     'IDC-Common'
@@ -677,7 +675,9 @@ DICOM_VIEWER = os.environ.get('DICOM_VIEWER', None)
 SOLR_URI            = os.environ.get('SOLR_URI', '')
 SOLR_LOGIN          = os.environ.get('SOLR_LOGIN', '')
 SOLR_PASSWORD       = os.environ.get('SOLR_PASSWORD', '')
-SOLR_CERT           = join(dirname(dirname(__file__)), "{}{}".format(SECURE_LOCAL_PATH, os.environ.get('SOLR_CERT', '')))
+SOLR_CERT = None
+if os.environ.get('SOLR_CERT', None):
+    SOLR_CERT = join(dirname(dirname(__file__)), "{}{}".format(SECURE_LOCAL_PATH, os.environ.get('SOLR_CERT', '')))
 DEFAULT_FETCH_COUNT = os.environ.get('DEFAULT_FETCH_COUNT', 10)
 
 
