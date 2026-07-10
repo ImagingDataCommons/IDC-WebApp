@@ -18,15 +18,16 @@ logger = logging.getLogger(__name__)
 
 manifest_src = "https://www.cancerimagingarchive.net/wp-content/uploads/"
 manifest_list = [
-    "ISPY2-Cohort1-inclu-ACRIN6698-full-manifest.tcia",
-    "ISPY2-719-patients-only-manifest-Jan-2022.tcia",
-    "S0819-manifest-March-30-2023.tcia",
-    "S0819_Tumor-Annotations-manifest_v4_11-04-2025.tcia",
-    "BSC-DBT-Train-manifest.tcia",
-    "ACRIN-6698-I-SPY2-Breast-DWI-manifest.tcia",
-    "PROSTATEx-v1-doiJNLP.tcia",
-    "COVID-19-NY-SBU-manifest_20210810.tcia",
-    "EAY131_Tumor_Annotations_v2manifest-2026-03-24.tcia"
+    "ACRIN-6698-Primary-Analysis-Subgroup-manifest.tcia", "ACRIN-6698-Test-retest-set_20210506.tcia",
+    "BMMR2-Training-set_20210506.tcia", "BMMR2-Testing-set_20210506.tcia", "BSC-DBT-Train-manifest.tcia",
+    "BSC-DBT-Validation-manifest.tcia", "BSC-DBT-Test-manifest.tcia", "CPTAC-RareKidney_v14_20250707.tcia",
+    "LIDC-IDRI-StandardizedRepresentation-March2020-manifest.tcia", "TCGA-BRCA_SR.tcia", "ISPY1_SR.tcia",
+    "BREAST-DIAGNOSIS_SR.tcia", "Breast-MRI-NACT-Pilot_SR.tcia", "BreastAndFGT_MRI_SEG_only_20220609.tcia",
+    "ISPY2-Cohort1-inclu-ACRIN6698-full-manifest.tcia", "LDCT-and-Projection-data-Phantom-April-6-2020.tcia",
+    "Pseudo-Phi-DICOM-Evaluation-dataset-April-7-2021.tcia",
+    "Pseudo-PHI-DICOM-De-id-Evaluation-dataset-April-7-2021.tcia", "qin-dce-mri-challenge_Matlab.tcia",
+    "QIN-Multi-site-Lung-SEG-Only-minus-Stanford.tcia", "QIN-Multi-site-Lung-CTs-and-SEG-minus-Stanford.tcia",
+    "RIDER-Lung-CT-RTSTRUCTS-DICOM-SEGS-Leonard-Wee-Feb-10-2020.tcia"
 ]
 
 PART_TEMPLATE = {
@@ -80,14 +81,16 @@ try:
         cart = copy.deepcopy(CART_TEMPLATE)
         manifest_res = requests.get(manifest_src + manifest, stream=True)
         if manifest_res.status_code != 200:
-            raise Exception(f"Saw {manifest_res.status_code} response code for manifest {manifest}")
+            raise Exception(f"Saw {manifest_res.status_code} response code for manifest {manifest}--cancelling!")
         for line in manifest_res.iter_lines():
             line = line.decode("utf-8")
             if re.match(r'^[^\d]',line):
-                print("Saw header--skipping.")
+                continue
             else:
-                series_ids.append(line)
-        if len(series_ids):
+                if len(line) > 1:
+                    series_ids.append(line)
+        if len(series_ids) and len(series_ids) <= 64000:
+            print(f"Pulling IDC v24 for {manifest}...")
             res = query_solr_and_format_result({
                 'collection': 'dicom_derived_series_v24',
                 'fields': ['collection_id', 'PatientID','StudyInstanceUID','SeriesInstanceUID'],
@@ -107,6 +110,16 @@ try:
             if not res['numFound']:
                 logger.warning(f"No results returned for {manifest}--skipping!")
             else:
+                print(f"{res['numFound']} series identified for {manifest}")
+                if res['numFound'] != len(series_ids):
+                    print(f"[WARNING] COUNT MISMATCH in {manifest}, expected {len(series_ids)}, saw {res['numFound']}")
+                    with open(f"{manifest}_mismatch.txt", "a") as f:
+                        f.write(f"TCIA manifest count: {len(series_ids)},IDC v24 series IDs: {res['numFound']}\n")
+                        f.write("TCIA series IDs from manifest:\n")
+                        f.write("\n".join(series_ids))
+                        f.write("\n")
+                        f.write("IDC series found in v24:\n")
+                        f.write("\n".join([x['SeriesInstanceUID'] for x in res['docs']]))
                 curr_collex = None
                 curr_case = None
                 curr_study = None
@@ -140,9 +153,10 @@ try:
                 new_cart = SharedCart.objects.create(
                     source_ip="10.0.0.2", series_ids=";".join(series_ids),
                     definition=json.dumps(cart),
-                    idc_version=ImagingDataCommonsVersion.objects.get(active=True)
+                    idc_version=ImagingDataCommonsVersion.objects.get(active=True), cart_id=manifest.split(".")[0]
                 )
-
+        else:
+            raise Exception(f"No series IDs found!" if not len(series_ids) else "Greater than 64k series IDs seen--skipping!")
 except Exception as e:
     logger.exception(e)
     logger.error(e)

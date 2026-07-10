@@ -679,6 +679,7 @@ SOLR_CERT = None
 if os.environ.get('SOLR_CERT', None):
     SOLR_CERT = join(dirname(dirname(__file__)), "{}{}".format(SECURE_LOCAL_PATH, os.environ.get('SOLR_CERT', '')))
 DEFAULT_FETCH_COUNT = os.environ.get('DEFAULT_FETCH_COUNT', 10)
+MAX_PARTITION_CLAUSES = os.environ.get('MAX_PARTITION_CLAUSES', 300)
 
 
 # Explicitly check for known problems in descriptions and names provided by users
