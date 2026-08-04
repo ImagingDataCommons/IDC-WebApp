@@ -1066,8 +1066,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                         '<a class="dropdown-toggle btnGroupDropViewers" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa-solid fa-caret-down"></i></a>' +
                                         '<ul class="dropdown-menu viewer-menu">' +
                                         '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer">OHIF v3</a></li>' +
-                                        v2_element +
-                                        volView_element +
                                         '</ul>' +
                                         '</div>';
                                 }
@@ -1440,8 +1438,6 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 '<a class="dropdown-toggle btnGroupDropViewers" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa-solid fa-caret-down"></i></a>' +
                                 '<ul class="dropdown-menu viewer-menu">' +
                                 '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer">OHIF v3</a></li>' +
-                                v2_element +
-                                volView_element +
                                 '</ul></div>';
                         }
                     }
