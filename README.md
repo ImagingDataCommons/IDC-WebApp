@@ -62,7 +62,19 @@ To run your server in PyCharm:
  2. Once the VM is built, you will need to update the kernel headers and Guest Additions
   * Kernel header update: `sudo apt-get -y install dkms build-essential linux-headers-$(uname -r)`
     * NOTE: you may get a 'package not found' error here; if so, you'll need to look up the current header package for this install and use that instead.
-  * Guest Additions ISO mounting and installation: https://docs.bitnami.com/virtual-machine/faq/configuration/install-virtualbox-guest-additions/
+    * see: https://packages.debian.org/bookworm/linux-headers-amd64
+  * Guest Additions ISO mounting and installation: 
+    * From https://docs.bitnami.com/virtual-machine/faq/configuration/install-virtualbox-guest-additions/:
+    * Tools > Vagrant > Halt
+    * Open VirtualBox and right-click on the VM. Choose 'Settings'
+    * Scroll down to 'Storage' and click under the SATA controller, then click 'Add Device' (Floppy Disk icon with a +)
+    * Choose 'Optical Drive', and a selector will open. VBoxGuestAdditions.iso should be a choice; select it, then click the 'Choose' button at the bottom of the dialog.
+    * Tools > Vagrant > Up
+    * Tools > Start SSH Session > your VM
+      * sudo mkdir /mnt/cdrom
+      * sudo mount /dev/cdrom /mnt/cdrom
+      * cd /mnt/cdrom
+      * sudo sh ./VBoxLinuxAdditions.run --nox11
   * NOTE: in newer versions of VirtualBox the CD/DVD drives are added under Basic>Storage
  3. Next, set the `shell/python-su.sh` script to executable in the vagrant machine's command line with the command `chmod +x /home/vagrant/www/shell/python-su.sh`
  4. You can now click on the Run or Debug icons in the toolbar (upper-right corner of the PyCharm GUI)
@@ -73,7 +85,7 @@ To run your server in PyCharm:
 
 To add Python Libraries or Dependencies, you should add them to the requirements.txt file and they will automatically be pulled down when a new developer starts the system.
  * Double-check any new libraries to make sure they don't introduce conflicts.
- * Note that sometimes a library will function fine on a local build but fail on the deployment, so always test on the mvm deployment as soon as your PR has been merged into master.
+ * Note that sometimes a library will function fine on a local build but fail on the deployment, so always test on the dev deployment as soon as your PR has been merged in.
 
 To update your existing python dependencies because of a change, or to pull down additional libraries you need, SSH into the virtual machine and run `pip3 install`. Through PyCharm, you can take the following steps:
 
