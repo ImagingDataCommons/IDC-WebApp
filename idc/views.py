@@ -268,12 +268,17 @@ def populate_tables(request):
         path_arr = [nstr for nstr in request.path.split('/') if nstr]
         table_type = path_arr[len(path_arr)-1]
         table_search = req.get("table_search", "false").lower() == 'true'
+        shared_cart = req.get("shared_cart", None)
         fields = None
         collapse_on = None
         filters = json.loads(req.get('filters', '{}'))
 
         filtergrp_list = json.loads(req.get('filtergrp_list', '{}'))
-        partitions = json.loads(req.get('partitions', '{}'))
+        partitions = None
+        if shared_cart:
+            partitions = json.loads(SharedCart.objects.get(cart_id=shared_cart).definition)['partitions']
+        else:
+            partitions = json.loads(req.get('partitions', '{}'))
 
         offset = int(req.get('offset', '0'))
         limit = int(req.get('limit', '500'))
@@ -437,9 +442,13 @@ def explore_data_page(request, filter_path=False, path_filters=None):
                         context['shared_cart'] = json.loads(this_cart.definition)
                         context['shared_cart']['cart_id'] = shared_cart
                         context['shared_cart']['active_version'] = bool(this_cart.idc_version.active == 1)
+                        context['shared_cart']['type'] = context['shared_cart'].get('cart_type','user')
                     except ObjectDoesNotExist:
                         logger.error("[ERROR] That cart does not exist!")
-                        del context['shared_cart']
+                        messages.warning(request,"No cart with that ID was found!")
+                        return redirect(reverse('explore_data'))
+                else:
+                    context['shared_cart'] = None
 
             context['hist'] = ''
 
@@ -591,8 +600,12 @@ def cart_data(request):
         results_level = req.get('results_level', 'StudyInstanceUID')
         dois_only = bool(req.get('dois_only', 'false').lower() == 'true')
         size_only = bool(req.get('size_only', 'false').lower() == 'true')
+        shared_cart = req.get('shared_cart',None)
 
-        partitions = json.loads(req.get('partitions', '{}'))
+        if shared_cart:
+            partitions = json.loads(SharedCart.objects.get(cart_id=shared_cart).definition)['partitions']
+        else:
+            partitions = json.loads(req.get('partitions', '{}'))
 
         limit = min(int(req.get('limit', 500)),500)
         offset = int(req.get('offset', 0))
@@ -625,7 +638,7 @@ def cart_data(request):
     except Exception as e:
         logger.error("[ERROR] While loading cart:")
         logger.exception(e)
-        status = 400
+        status = 500
 
     return JsonResponse(response, status=status)
 
@@ -742,6 +755,162 @@ def get_series(request, collection_id=None, patient_id=None, study_uid=None, ser
         return response
     return JsonResponse(response, status=status)
 
+
+def validate_cart(partitions, filter_group_list, cart_history, projects):
+    cart_schema = {
+        "type": "object",
+        "properties": {
+            "partitions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "filt": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "id": {
+                            "type":"array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "not": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "null": {
+                            "type": "boolean"
+                        }
+                    }
+                }
+            },
+            "cart_history": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "filter": {
+                            "type": "object",
+                            "properties": {
+                                "Modality": {
+                                    "type": "object",
+                                    "properties": {
+                                        "values": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "op": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "patternProperties": {
+                                "^[A-Za-z\d\_\-\.]+": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "partitions": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "selections": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "added": {
+                                        "type": "boolean"
+                                    },
+                                    "sel": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "filter_group_list": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "Modality": {
+                            "type": "object",
+                            "properties": {
+                                "values": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                "op": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "patternProperties": {
+                        "^[A-Za-z\d\_\-\.]+": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "projects": {
+                "type": "object",
+                "patternProperties": {
+                    "^[a-z\d\_]+": {
+                        "type": "object",
+                        "properties": {
+                            "cases": {
+                                "type": "number"
+                            },
+                            "studies": {
+                                "type": "number"
+                            },
+                            "series": {
+                                "type": "number"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    # TODO: validate cart JSON
+    return True
+
+
 def get_shared_cart(request):
     response = {'message': 'Invalid shared cart request.'}
     status = 400
@@ -764,6 +933,8 @@ def get_shared_cart(request):
         filtergrp_list = body.get("filtergrp_list", {})
         cart_history = body.get("cart_hist", {})
         proj_in_cart = body.get("proj_in_cart", [])
+        if not validate_cart(partitions, filtergrp_list, cart_history, proj_in_cart):
+            return JsonResponse({'message': 'A valid cart was not provided.'}, status=400)
         new_cart = SharedCart.objects.create(
             source_ip=req_ip, series_ids=series_ids,
             definition=json.dumps({'partitions': partitions, 'filtergrp_list': filtergrp_list, 'cart_hist': cart_history, 'proj_in_cart': proj_in_cart}),

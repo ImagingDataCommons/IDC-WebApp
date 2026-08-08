@@ -68,9 +68,9 @@ define(['jquery', 'base'], function($, base) {
             $('.filter-placeholder').show();
             $('.filter-activated-controls').each(function(){
                 if(!$(this).attr('data-pending-manifest')) {
+                    $(this).addClass('filters-empty');
                     !$(this).hasClass('dropdown-toggle') && $(this).attr("disabled","disabled");
                     $(this).hasClass('dropdown-toggle') && $(this).addClass('disabled');
-                    !$(this).hasClass('tip-titled') && $(this).attr("title","Select a filter to enable this feature.");
                 }
             })
             $('.bq-string, .citations-list').html("");
@@ -90,7 +90,7 @@ define(['jquery', 'base'], function($, base) {
             $('.filter-placeholder').hide();
             $('.filter-activated-controls').each((function(){
                 if(!$(this).attr('data-pending-manifest')) {
-                     !$(this).hasClass('tip-titled') && $(this).attr("title", $(this).attr("data-default-title"));
+                    $(this).removeClass('filters-empty');
                     $(this).removeAttr("disabled");
                     $(this).removeClass('disabled');
                 }

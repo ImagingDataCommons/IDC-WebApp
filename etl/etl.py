@@ -737,7 +737,7 @@ def load_tooltips(source_objs, attr_name, source_tooltip, obj_id_col=None):
         # In some cases, the data sourcing the tooltip does not have an ID column with a name which matches
         # the attribute name (eg. in Collections, analysis results and collections both have a collection_id,
         # but in Attributes, analysis_result_id and collection_id are distinct attributes).
-        # Used obi_id_col to specify the column in which the ID of the value to associate with the tooltip source in
+        # Used obj_id_col to specify the column in which the ID of the value to associate with the tooltip source in
         # the case the attribute name is different from the source object's column ID
         if not obj_id_col:
             obj_id_col = attr_name
@@ -780,6 +780,7 @@ def load_tooltips(source_objs, attr_name, source_tooltip, obj_id_col=None):
     except Exception as e:
         ERRORS_SEEN.append("Error seen while attempting to load tooltips, check logs.")
         logger.error("[ERROR] While attempting to load tooltips:")
+        logger.error(f"[ERROR] {attr_name}, {source_tooltip}, {obj_id_col}")
         logger.exception(e)
 
 
