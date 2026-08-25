@@ -228,7 +228,7 @@ require([
                         const instance = keys[keys.length - 1];
                         if(instance.length > 0) {
                             s3_urls.push({
-                                'url': `https://${this.bucket}.s3.us-east-1.amazonaws.com/${key}`,
+                                'url': `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`,
                                 'study': this.study_id,
                                 'collection': this.collection_id,
                                 'series': this.series_id,
@@ -391,7 +391,7 @@ require([
         }
         let thisWorker = event.target;
         let true_error = event.data.message === 'error' && event.data.error.name !== "AbortError";
-        let cancellation = downloader_manager.pending_cancellation || (event.data.message === 'error' && event.data.error.name === "AbortError");
+        let cancellation = downloader_manager.pending_cancellation || event.data.message === 'aborted' || (event.data.message === 'error' && event.data.error.name === "AbortError");
         if (true_error) {
             console.error("Saw worker Error: ",event.data['error']);
             console.error(event.data['text']);
@@ -459,10 +459,27 @@ require([
         workerCode = `
             const abort_controller = new AbortController();
             let pending_abort = false;
+            let MAX_ATTEMPTS = 40;
+            let WAIT_TIME = 10;
+            let MAX_WAIT = 10000;
             function abortFetch(msg) {
                 abort_controller.abort({"name": "AbortError", "reason": msg || "Fetch aborted."});
                 pending_abort = true;
             };
+            
+            function doRetry(status_code) {
+                return (status_code == 408 || status_code == 429 || status_code > 500);
+            }
+            
+            function random_btw(min, max) {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }            
+            
+            function sleep(duration) {
+                return new Promise(res => setTimeout(res,duration));
+            }
             
             async function createNestedDirectories(topLevelDirectoryHandle, path) {
                 const pathSegments = path.split('/').filter((segment) => segment !== '');
@@ -516,22 +533,37 @@ require([
                     response = await fetch(s3_url, {
                         signal: abort_controller.signal
                     });
-                    if (!response.ok) {
+                    let retry_count = 0;
+                    while (!response.ok && retry_count < MAX_ATTEMPTS) {
                         console.error("[Worker] Saw !ok response of ",response.status);
                         if(pending_abort) {
                             console.log('[Worker] User aborted downloads!');
+                            return;
                         } else {
                             console.error('[Worker] Failed to fetch URL: '+s3_url, response.statusText);
-                            self.postMessage({message: "error", error: "Failed to fetch URL"});
+                            if(doRetry(response.status)) {
+                                retry_count += 1;
+                                // see https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+                                await sleep(random_btw(0, min(MAX_WAIT,WAIT_TIME * 2 ** retry_count));
+                                response = await fetch(s3_url, {
+                                    signal: abort_controller.signal
+                                });
+                            } else {
+                                self.postMessage({message: "error", error: "Failed to fetch URL", url: s3_url});
+                                return;
+                            }
                         }
-                        return;
                     }
                     let read = 0;
                     let lastReportTime = -1;
                     let thisChunkTime = -1;
+                    let aborted = false;
                     for await(const chunk of response.body) {
-                        if(abort_controller.signal.aborted) break;               
-                        outputStream.write(chunk);
+                        if(abort_controller.signal.aborted) {
+                            aborted = true;
+                            break;
+                        }               
+                        await outputStream.write(chunk);
                         thisChunkTime = Date.now();
                         read += chunk.length;
                         if(lastReportTime < 0 || ((thisChunkTime-lastReportTime) > 300)) {
@@ -540,9 +572,14 @@ require([
                             read = 0;
                          }
                     }
+                    if (aborted) {
+                        await outputStream.abort();
+                        self.postMessage({ message: "aborted", path: s3_url });
+                        return;
+                    }
                     read > 0 && self.postMessage({message: "update", size: read});
                     await outputStream.close();
-                    self.postMessage({message: "done", path: s3_url, localFilePath: filePath, size: response.headers.get('content-length')});
+                    self.postMessage({message: "done", path: s3_url, localFilePath: filePath, size: read, size_expected: response.headers.get('content-length')});
                 } catch (error) {
                     let msg = (error.name || "Unnamed Error") + " when attempting to fetch URL " + s3_url;
                     if(error.name === "AbortError" || (error.name === undefined && pending_abort)) {
