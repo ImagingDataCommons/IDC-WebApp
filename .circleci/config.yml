@@ -96,7 +96,7 @@ commands:
   install_cloud_sdk:
     steps:
       - run:
-          name: "Install CloudSDK"
+          name: "Install Cloud CLI"
           command: |
             echo "export CLOUDSDK_CORE_DISABLE_PROMPTS=1" >> $BASH_ENV
             sudo apt-get update -qq
