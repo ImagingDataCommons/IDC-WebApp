@@ -98,18 +98,18 @@ fi
 
 echo "Libraries Installed"
 
-# Install Google Cloud SDK
-# If we're not on CircleCI or we are but google-cloud-sdk isn't there, install it
-if [ -z "${CI}" ] || [ ! -d "/usr/lib/google-cloud-sdk" ]; then
-    echo "[STATUS] Installing Google Cloud SDK..."
+# Install Google Cloud CLI
+# If we're not on CircleCI or we are but google-cloud-cli isn't there, install it
+if [ -z "${CI}" ] || [ ! -d "/usr/lib/google-cloud-cli" ]; then
+    echo "[STATUS] Installing Google Cloud CLI..."
     export CLOUDSDK_CORE_DISABLE_PROMPTS=1
-    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-    apt-get -y install apt-transport-https ca-certificates
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
     apt-get update -qq
-    apt-get -y install google-cloud-sdk
-    apt-get -y install google-cloud-sdk-app-engine-python
-    echo "[STATUS] Google Cloud SDK Installed"
+    apt-get install ca-certificates python3-distutils apt-transport-https gnupg curl
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/cloud.google.gpg > /dev/null
+    apt-get update && sudo apt-get install google-cloud-cli -y
+    apt-get -y install google-cloud-cli-app-engine-python
+    echo "[STATUS] Google Cloud CLI Installed"
 fi
 
 # Run dos2unix on the files in shell/ because of line terminator shenanigans with Windows
