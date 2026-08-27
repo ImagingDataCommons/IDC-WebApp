@@ -52,7 +52,7 @@
         </div>
         <a type="button" role="button" target="_blank" class="btn btn-special explore-images action-button default-tip"
            data-default-tip="View this collections images in the IDC data explorer."
-           href="{% if collection_type == "Collection" %}{% url 'parse_explore_filters' %}/?collection_id={{ collection_id }}{% else %}{% url 'parse_explore_filters' %}/?analysis_results_id={{ collection_id }}{% endif %}">
+           href="{% if collection_type == "Collection" %}{% url 'parse_explore_filters' %}?collection_id={{ collection_id }}{% else %}{% url 'parse_explore_filters' %}?analysis_results_id={{ collection_id }}{% endif %}">
             Explore Images
         </a>
     </div>
