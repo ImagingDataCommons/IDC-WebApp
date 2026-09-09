@@ -56,7 +56,7 @@ DEBUG_TOOLBAR           = ((os.environ.get('DEBUG_TOOLBAR', 'False') == 'True') 
 LOCAL_RESPONSE_PAGES    = (os.environ.get('LOCAL_RESPONSE_PAGES', 'False') == 'True')
 SETTINGS_BUCKET         = os.environ.get('SETTINGS_BUCKET', 'idc-deployment-files')
 WARNING_BANNER_CHECK    = (os.environ.get('WARNING_BANNER_CHECK', 'False').lower() == 'true')
-WARNING_BANNER_FILE     = os.environ.get('WARNING_BANNER_FILE', 'dev/warning.txt')
+WARNING_BANNER_FILE     = os.environ.get('WARNING_BANNER_FILE', 'warning.txt')
 WARNING_BANNER_TEXT     = None
 
 if WARNING_BANNER_CHECK:
@@ -68,8 +68,9 @@ if WARNING_BANNER_CHECK:
         blob = bucket.get_blob(WARNING_BANNER_FILE)
         WARNING_BANNER_TEXT = blob.download_as_string().decode("utf-8")
     except Exception as e:
-        print("[WARNING] Saw check for banner but no banner was found! The banner will not be displayed.")
-        print(f"[WARNING] Add the banner file 'warning.txt' to gs://{SETTINGS_BUCKET} and rebuild.")
+        print("[WARNING] Saw check for banner but no banner was found or the file/bucket could not be accessed! The banner will not be displayed.")
+        print(f"[WARNING] Add the banner file '{WARNING_BANNER_FILE}' to gs://{SETTINGS_BUCKET} and rebuild.")
+        print(f"[WARNING] Note the bucket and file name may also be incorrect for this tier and should be double-checked.")
 
 IMG_QUOTA = os.environ.get('IMG_QUOTA', '137')
 
