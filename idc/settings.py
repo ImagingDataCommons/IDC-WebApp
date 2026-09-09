@@ -51,9 +51,30 @@ for directory_name in SHARED_SOURCE_DIRECTORIES:
 
 DEBUG                   = (os.environ.get('DEBUG', 'False') == 'True')
 CONNECTION_IS_LOCAL     = (os.environ.get('DATABASE_HOST', '127.0.0.1') == 'localhost')
-IS_CIRCLE               = (os.environ.get('CI', None) is not None)
+IS_DEV = (os.environ.get('IS_DEV', 'False') == 'True')
+# AppEngine var is set in the app.yaml so this should be false for CI and local dev apps
+IS_APP_ENGINE = bool(os.getenv('IS_APP_ENGINE', 'False') == 'True')
+# $CI is set only on CircleCI run VMs so this should not have a value outside of a deployment build
+IS_CIRCLE_CI = bool(os.getenv('CI', None) is not None)
 DEBUG_TOOLBAR           = ((os.environ.get('DEBUG_TOOLBAR', 'False') == 'True') and CONNECTION_IS_LOCAL)
 LOCAL_RESPONSE_PAGES    = (os.environ.get('LOCAL_RESPONSE_PAGES', 'False') == 'True')
+SETTINGS_BUCKET         = os.environ.get('SETTINGS_BUCKET', 'idc-deployment-files')
+WARNING_BANNER_CHECK    = (os.environ.get('WARNING_BANNER_CHECK', 'False').lower() == 'true')
+WARNING_BANNER_FILE     = os.environ.get('WARNING_BANNER_FILE', 'warning.txt')
+WARNING_BANNER_TEXT     = None
+
+if WARNING_BANNER_CHECK and not IS_CIRCLE_CI:
+    print("[STATUS] Saw check for warning banner, loading text...")
+    from google.cloud import storage
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(SETTINGS_BUCKET)
+    try:
+        blob = bucket.get_blob(WARNING_BANNER_FILE)
+        WARNING_BANNER_TEXT = blob.download_as_string().decode("utf-8")
+    except Exception as e:
+        print("[WARNING] Saw check for banner but no banner was found or the file/bucket could not be accessed! The banner will not be displayed.")
+        print(f"[WARNING] Add the banner file '{WARNING_BANNER_FILE}' to gs://{SETTINGS_BUCKET} and rebuild.")
+        print(f"[WARNING] Note the bucket and file name may also be incorrect for this tier and should be double-checked.")
 
 IMG_QUOTA = os.environ.get('IMG_QUOTA', '137')
 
@@ -135,12 +156,6 @@ if os.environ.get('CI', None) is not None:
 
 DATABASES = database_config
 DB_SOCKET = database_config['default']['HOST'] if 'cloudsql' in database_config['default']['HOST'] else None
-
-IS_DEV = (os.environ.get('IS_DEV', 'False') == 'True')
-# AppEngine var is set in the app.yaml so this should be false for CI and local dev apps
-IS_APP_ENGINE = bool(os.getenv('IS_APP_ENGINE', 'False') == 'True')
-# $CI is set only on CircleCI run VMs so this should not have a value outside of a deployment build
-IS_CI = bool(os.getenv('CI', None) is not None)
 
 VERSION = "{}.{}".format("local-dev", datetime.datetime.now().strftime('%Y%m%d%H%M'))
 
@@ -604,7 +619,7 @@ GOOGLE_APPLICATION_CREDENTIALS = None
 
 if IS_DEV:
     GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS', '')
-elif IS_CI:
+elif IS_CIRCLE_CI:
     GOOGLE_APPLICATION_CREDENTIALS = "deployment.key.json"
 
 if not IS_APP_ENGINE:
@@ -625,7 +640,7 @@ else:
 # Deployed systems will already have a site superuser so this would simply overwrite that user.
 # NEVER ENABLE this in production!
 #
-if (IS_DEV and CONNECTION_IS_LOCAL) or IS_CIRCLE:
+if (IS_DEV and CONNECTION_IS_LOCAL) or IS_CIRCLE_CI:
     INSTALLED_APPS += (
         'finalware',)
 
@@ -683,7 +698,7 @@ MAX_PARTITION_CLAUSES = int(os.environ.get('MAX_PARTITION_CLAUSES', 50))
 
 
 # Explicitly check for known problems in descriptions and names provided by users
-DENYLIST_RE = r'(<script>|</script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|<iframe>|</iframe>)'
+DENYLIST_RE = r'(<script>|</script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|<iframe>|</iframe>|UPDATEXML|CODE_POINTS_TO_STRING)'
 ATTRIBUTE_DISALLOW_RE = r'([^a-zA-Z0-9_])'
 
 if DEBUG and DEBUG_TOOLBAR and not IS_APP_ENGINE:

@@ -79,6 +79,14 @@
     <div class="container-fluid">
         <!-- Site Messages -->
         <div class="row">
+            {% if WARNING_BANNER and WARNING_BANNER_TEXT and WARNING_BANNER_TEXT|length > 0 %}
+            <div class="alert alert-warning alert-dismissible center">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                </button>
+                {{ WARNING_BANNER_TEXT }}
+            </div>
+            {% endif %}
             <div class="col-lg-12 col-md-12 col-sm-12" style="z-index: 100;">
                 {% if messages %}
                     {% autoescape off %}
