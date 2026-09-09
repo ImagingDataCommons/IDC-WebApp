@@ -54,6 +54,22 @@ CONNECTION_IS_LOCAL     = (os.environ.get('DATABASE_HOST', '127.0.0.1') == 'loca
 IS_CIRCLE               = (os.environ.get('CI', None) is not None)
 DEBUG_TOOLBAR           = ((os.environ.get('DEBUG_TOOLBAR', 'False') == 'True') and CONNECTION_IS_LOCAL)
 LOCAL_RESPONSE_PAGES    = (os.environ.get('LOCAL_RESPONSE_PAGES', 'False') == 'True')
+SETTINGS_BUCKET         = os.environ.get('SETTINGS_BUCKET', 'idc-dev-files')
+WARNING_BANNER_CHECK    = (os.environ.get('WARNING_BANNER_CHECK', 'False').lower() == 'true')
+WARNING_BANNER_FILE     = os.environ.get('WARNING_BANNER_FILE', 'warning.txt')
+WARNING_BANNER_TEXT     = None
+
+if WARNING_BANNER_CHECK:
+    print("[STATUS] Saw check for warning banner, loading text...")
+    from google.cloud import storage
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(SETTINGS_BUCKET)
+    try:
+        blob = bucket.get_blob(WARNING_BANNER_FILE)
+        WARNING_BANNER_TEXT = blob.download_as_string().decode("utf-8")
+    except Exception as e:
+        print("[WARNING] Saw check for banner but no banner was found! The banner will not be displayed.")
+        print(f"[WARNING] Add the banner file 'warning.txt' to gs://{SETTINGS_BUCKET} and rebuild.")
 
 IMG_QUOTA = os.environ.get('IMG_QUOTA', '137')
 
@@ -683,7 +699,7 @@ MAX_PARTITION_CLAUSES = int(os.environ.get('MAX_PARTITION_CLAUSES', 50))
 
 
 # Explicitly check for known problems in descriptions and names provided by users
-DENYLIST_RE = r'(<script>|</script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|<iframe>|</iframe>)'
+DENYLIST_RE = r'(<script>|</script>|!\[\]|!!\[\]|\[\]\[\".*\"\]|<iframe>|</iframe>|UPDATEXML|CODE_POINTS_TO_STRING)'
 ATTRIBUTE_DISALLOW_RE = r'([^a-zA-Z0-9_])'
 
 if DEBUG and DEBUG_TOOLBAR and not IS_APP_ENGINE:
