@@ -54,9 +54,9 @@ CONNECTION_IS_LOCAL     = (os.environ.get('DATABASE_HOST', '127.0.0.1') == 'loca
 IS_CIRCLE               = (os.environ.get('CI', None) is not None)
 DEBUG_TOOLBAR           = ((os.environ.get('DEBUG_TOOLBAR', 'False') == 'True') and CONNECTION_IS_LOCAL)
 LOCAL_RESPONSE_PAGES    = (os.environ.get('LOCAL_RESPONSE_PAGES', 'False') == 'True')
-SETTINGS_BUCKET         = os.environ.get('SETTINGS_BUCKET', 'idc-dev-files')
+SETTINGS_BUCKET         = os.environ.get('SETTINGS_BUCKET', 'idc-deployment-files')
 WARNING_BANNER_CHECK    = (os.environ.get('WARNING_BANNER_CHECK', 'False').lower() == 'true')
-WARNING_BANNER_FILE     = os.environ.get('WARNING_BANNER_FILE', 'warning.txt')
+WARNING_BANNER_FILE     = os.environ.get('WARNING_BANNER_FILE', 'dev/warning.txt')
 WARNING_BANNER_TEXT     = None
 
 if WARNING_BANNER_CHECK:
