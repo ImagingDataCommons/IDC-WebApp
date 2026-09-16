@@ -731,6 +731,7 @@ MIDDLEWARE.append('axes.middleware.AxesMiddleware',)
 OHIF_V2_PATH=os.environ.get('OHIF_V2_PATH','')
 OHIF_V3_PATH=os.environ.get('OHIF_V3_PATH','')
 VOLVIEW_PATH=os.environ.get('VOLVIEW_PATH','')
+SLICER_RAD_PATH=os.environ.get('SLICER_RAD_PATH','')
 
 SLIM_VIEWER_PATH=os.environ.get('SLIM_VIEWER_PATH','')
 
