@@ -18,16 +18,25 @@ logger = logging.getLogger(__name__)
 
 manifest_src = "https://www.cancerimagingarchive.net/wp-content/uploads/"
 manifest_list = [
-    "ACRIN-6698-Primary-Analysis-Subgroup-manifest.tcia", "ACRIN-6698-Test-retest-set_20210506.tcia",
-    "BMMR2-Training-set_20210506.tcia", "BMMR2-Testing-set_20210506.tcia", "BSC-DBT-Train-manifest.tcia",
-    "BSC-DBT-Validation-manifest.tcia", "BSC-DBT-Test-manifest.tcia", "CPTAC-RareKidney_v14_20250707.tcia",
-    "LIDC-IDRI-StandardizedRepresentation-March2020-manifest.tcia", "TCGA-BRCA_SR.tcia", "ISPY1_SR.tcia",
-    "BREAST-DIAGNOSIS_SR.tcia", "Breast-MRI-NACT-Pilot_SR.tcia", "BreastAndFGT_MRI_SEG_only_20220609.tcia",
-    "ISPY2-Cohort1-inclu-ACRIN6698-full-manifest.tcia", "LDCT-and-Projection-data-Phantom-April-6-2020.tcia",
-    "Pseudo-Phi-DICOM-Evaluation-dataset-April-7-2021.tcia",
-    "Pseudo-PHI-DICOM-De-id-Evaluation-dataset-April-7-2021.tcia", "qin-dce-mri-challenge_Matlab.tcia",
-    "QIN-Multi-site-Lung-SEG-Only-minus-Stanford.tcia", "QIN-Multi-site-Lung-CTs-and-SEG-minus-Stanford.tcia",
-    "RIDER-Lung-CT-RTSTRUCTS-DICOM-SEGS-Leonard-Wee-Feb-10-2020.tcia"
+    "CBIS-DDSM-All-doiJNLP-zzWs5zfZ.tcia",
+    "CMB-AML_v09_20260702.tcia", "CMB-BRCA_v06_20260702.tcia", "CMB-CRC_v11_20260702.tcia", "CMB-GEC_v09_20260702.tcia",
+    "CMB-LCA_v12_20260702.tcia", "CMB-MEL_v12_20260702.tcia", "CMB-MML_v11_20260702.tcia", "CMB-OV_v04_20260702.tcia",
+    "CMB-PCA_v12_20260702.tcia", "TCIA-CPTAC-CCRCC_v11_20230818.tcia",
+    "CPTAC-HNSCC_Tumor-Annotations-manifest_10-21-2025.tcia",
+    "doiJNLP-J4OtCtbF.tcia", "doiJNLP-ISPY1-full-09-26-2016.tcia", "TCIA_BREAST-DIAGNOSIS_06-22-2015.tcia",
+    "TCIA_TCGA-BRCA_09-16-2015.tcia", "EA1141_v02_20260519.tcia", "EAY131-DA-RAD_v01_20260216.tcia",
+    "ISPY1-Tumor-SEG-Radiomics.tcia", "LDCT-and-Projection-data_v07_20260520_Liver.tcia",
+    "MRI-DIR-06-30-2018-doiJNLP-1UmgA3nc.tcia",
+    "High-Resolution-Prostate-Segmentations-for-the-ProstateX-Challenge-NBIA-manifest_20200917.tcia",
+    "ProstateX-Zone-Segmentations-manifest_20201125.tcia", "QIN-SARCOMA_2014-09-04.tcia",
+    "Standardization-in-Quatitative-Imaging-DICOM-Segs-3-Subjects-DRO-Toolkit-10-Subjects-QIN.tcia",
+    "Standardization-in-Quantitative-Imaging-DICOM-CTs-3-Subjects-DRO-Toolkit-10-Subjects-QIN.tcia",
+    "manifest-20230519_CC3-NC.tcia", "TCGA-BLCA-August-30-2019-NBIA-manifest.tcia",
+    "TCIA_TCGA-BRCA_09-16-2015.tcia", "TCIA_TCGA-CESC_09-16-2015.tcia", "TCIA_TCGA-COAD_09-16-2015.tcia",
+    "TCIA_TCGA-ESCA-09-16-2015.tcia", "TCIA_TCGA-KIRC_09-16-2015.tcia", "doiJNLP-TCGA-LIHC-01-30-2017.tcia",
+    "doiJNLP-TCGA-LUAD-01-30-2017.tcia", "doiJNLP-TCGA-LUSC-01-30-2017.tcia", "TCIA_TCGA-OV_09-16-2015.tcia",
+    "doiJNLP-Pz8ET39p.tcia", "TCIA_TCGA-READ_09-16-2015.tcia", "TCIA_TCGA-SARC_09-16-2015.tcia",
+    "TCIA_TCGA-STAD_09-16-2015.tcia", "TCIA_TCGA-UCEC-2018-10-24.tcia", "Vestibular-Schwannoma-MC-RC_v2_20260604.tcia"
 ]
 
 PART_TEMPLATE = {
@@ -151,7 +160,7 @@ try:
                         cat = facet_name.split("_")[0]
                         cart['proj_in_cart'][proj][cat] = count
                 new_cart = SharedCart.objects.create(
-                    source_ip="10.0.0.2", series_ids=";".join(series_ids),
+                    source_ip="10.0.0.3", series_ids=";".join(series_ids),
                     definition=json.dumps(cart),
                     idc_version=ImagingDataCommonsVersion.objects.get(active=True), cart_id=manifest.split(".")[0]
                 )
