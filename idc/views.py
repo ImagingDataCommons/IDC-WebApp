@@ -916,7 +916,8 @@ def get_shared_cart(request):
     status = 400
     try:
         req = request.GET if request.method == "GET" else request.POST
-        req_ip = req.META['HTTP_X_FORWARDED_FOR']
+        logger.info(f"[STATUS] in get_shared_cart: {request.META.get('HTTP_X_FORWARDED_FOR',None)}, {request.META.get('REMOTE_ADDR',None)}")
+        req_ip = request.META.get('HTTP_X_FORWARDED_FOR',None) or request.META.get('REMOTE_ADDR',None) or '10.0.0.2'
         ip_carts = SharedCart.get_carts_this_ip(req_ip)
         if ip_carts['carts_per_min'] > SharedCart.CART_PER_MIN_MAX or ip_carts['total_carts'] > SharedCart.CART_MAX_PER_IP:
             return JsonResponse({'message': 'Too many carts being made--please wait.'}, status=400)
