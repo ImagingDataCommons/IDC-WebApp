@@ -46,7 +46,7 @@ class User_Data(models.Model):
 
 class SharedCart(models.Model):
     SERIES_IDS_MAX = 64000
-    CART_MAX_PER_IP = 50
+    CART_MAX_PER_IP = 100
     CART_PER_MIN_MAX = 2
     cart_id = models.CharField(primary_key=True, max_length=256, null=False, blank=False, default=cart_keygen)
     source_ip = models.GenericIPAddressField(null=False, blank=False, default='0.0.0.0')
