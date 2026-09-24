@@ -916,7 +916,10 @@ def get_shared_cart(request):
     status = 400
     try:
         req = request.GET if request.method == "GET" else request.POST
-        req_ip = request.META['REMOTE_ADDR']
+        # We try to use the X-Forwarded-For header from ngnix, but it might not be available
+        # If not we use Remotr-Addr but must bear in mind this will be the AppEngine Load Balancer address and
+        # so easily run afoul of the limits on carts per IP. If neither are available we use a default.
+        req_ip = request.META.get('HTTP_X_FORWARDED_FOR',None) or request.META.get('REMOTE_ADDR',None) or SharedCart.DEFAULT_SOURCE_IP
         ip_carts = SharedCart.get_carts_this_ip(req_ip)
         if ip_carts['carts_per_min'] > SharedCart.CART_PER_MIN_MAX or ip_carts['total_carts'] > SharedCart.CART_MAX_PER_IP:
             return JsonResponse({'message': 'Too many carts being made--please wait.'}, status=400)
