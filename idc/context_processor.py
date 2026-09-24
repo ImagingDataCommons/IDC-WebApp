@@ -20,5 +20,8 @@ def additional_context(request):
             'OHIF_V2_PATH': settings.OHIF_V2_PATH,
             'OHIF_V3_PATH': settings.OHIF_V3_PATH,
             'VOLVIEW_PATH': settings.VOLVIEW_PATH,
-            'SUPPORT_EMAIL': settings.SUPPORT_EMAIL
+            'SLICER_RAD_PATH': settings.SLICER_RAD_PATH,
+            'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
+            'WARNING_BANNER': settings.WARNING_BANNER_CHECK,
+            'WARNING_BANNER_TEXT': settings.WARNING_BANNER_TEXT
     }
