@@ -1040,7 +1040,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                     return '<a href="' + SLIM_VIEWER_PATH + data + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye"></i>'
                                  } else {
                                     let v2_link = is_xc ? "" : OHIF_V2_PATH + data;
-                                    let v3_link = OHIF_V3_PATH + "=" + data;
+                                    let v3_link = `${OHIF_V3_PATH}=${data}`;
+                                    let slicer_link = `${SLICER_RAD_PATH}=${data}`
                                     let v2_element = '<li title="Not available for this modality."><a class="disabled" href="'
                                         + v2_link + '" target="_blank" rel="noopener noreferrer">OHIF v2</a></li>';
                                     let default_viewer = v3_link;
@@ -1065,7 +1066,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                         '<div class="dropdown viewer-toggle">' +
                                         '<a class="dropdown-toggle btnGroupDropViewers" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa-solid fa-caret-down"></i></a>' +
                                         '<ul class="dropdown-menu viewer-menu">' +
-                                        '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer">OHIF v3</a></li>' +
+                                        '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer nofollow">OHIF v3</a></li>' +
+                                        '<li><a href="'+slicer_link+'" target="_blank" rel="noopener noreferrer nofollow">SlicerRAD</a></li>' +
                                         '</ul>' +
                                         '</div>';
                                 }
@@ -1417,7 +1419,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 v2_vv_tooltip_add = " Open this image series at the study level."
                             }
                             let v2_link = (is_xc || !is_v2_vv_modality) ? "" : OHIF_V2_PATH + row['StudyInstanceUID'] + '?SeriesInstanceUID=' + data;
-                            let v3_link = OHIF_V3_PATH + "=" + row['StudyInstanceUID'] + '&initialSeriesInstanceUID=' + data;
+                            let v3_link = `${OHIF_V3_PATH}=${row['StudyInstanceUID']}&initialSeriesInstanceUID=${data}`;
+                            let slicer_link = `${SLICER_RAD_PATH}=${row['StudyInstanceUID']}&SeriesInstanceUIDs=${data}`;
                             let default_viewer = v3_link;
                             let volView_link = (is_xc || !is_v2_vv_modality) ? "" : VOLVIEW_PATH + "=[s3://" + row['aws_bucket'] + '/' + row['crdc_series_uuid']+']"';
                             let v2_element = '<li title="Not available for this modality.'+v2_vv_tooltip_add+'"><a class="disabled" href="'
@@ -1437,7 +1440,8 @@ define(['cartutils','filterutils','tippy','jquery', 'base'], function(cartutils,
                                 '<div class="dropdown viewer-toggle">' +
                                 '<a class="dropdown-toggle btnGroupDropViewers" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><i class="fa-solid fa-caret-down"></i></a>' +
                                 '<ul class="dropdown-menu viewer-menu">' +
-                                '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer">OHIF v3</a></li>' +
+                                '<li><a href="'+v3_link+'" target="_blank" rel="noopener noreferrer nofollow">OHIF v3</a></li>' +
+                                '<li><a href="'+slicer_link+'" target="_blank" rel="noopener noreferrer nofollow">SlicerRAD</a></li>' +
                                 '</ul></div>';
                         }
                     }

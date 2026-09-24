@@ -57,6 +57,7 @@
         const APP_VERSION = '{{ APP_VERSION }}';
         const OHIF_V2_PATH = '{{ OHIF_V2_PATH }}';
         const OHIF_V3_PATH = '{{ OHIF_V3_PATH }}';
+        const SLICER_RAD_PATH = '{{ SLICER_RAD_PATH }}';
         const VOLVIEW_PATH = '{{ VOLVIEW_PATH }}';
         const SLIM_VIEWER_PATH = '{{ SLIM_VIEWER_PATH }}';
         const FETCH_MANIFEST_URL = "{% url 'fetch_user_manifest_base' %}";
@@ -79,6 +80,14 @@
     <div class="container-fluid">
         <!-- Site Messages -->
         <div class="row">
+            {% if WARNING_BANNER and WARNING_BANNER_TEXT and WARNING_BANNER_TEXT|length > 0 %}
+            <div class="alert alert-warning alert-dismissible center">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                </button>
+                {{ WARNING_BANNER_TEXT }}
+            </div>
+            {% endif %}
             <div class="col-lg-12 col-md-12 col-sm-12" style="z-index: 100;">
                 {% if messages %}
                     {% autoescape off %}
