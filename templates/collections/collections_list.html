@@ -62,7 +62,7 @@
                                             data-tooltip="View this {{ collex_type_display }}'s page (opens a new tab)."
                                     {% if collection.collection_type == 'A' %}
                                         href="/analysis_results/{{ collection.collection_id }}" target="_blank" rel="nofollow noreferrer">
-                                        {{ collection.collection_id }}
+                                        {{ collection.name }}
                                     {% else %}
                                         href="/collections/{{ collection.collection_id }}" target="_blank" rel="nofollow noreferrer">
                                         {% if collection.tcia_collection_id|length == 0 %}

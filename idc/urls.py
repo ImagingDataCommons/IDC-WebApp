@@ -68,7 +68,7 @@ urlpatterns = [
     re_path(r'^series_ids/(?P<collection_id>[A-Za-z0-9\.\-_]+)/(?P<patient_id>[A-Za-z0-9\.\-_]+)/(?P<study_uid>[0-9\.]+)/$', views.get_series, name='get_series'),
     re_path(r'^collaborators/$', views.collaborators, name='collaborators'),
     re_path(r'^collections/', include('idc_collections.urls')),
-    re_path(r'^analysis_results/(?P<analysis_result_id>[A-Za-z\d\-\_]+)/$', views.analysis_results_details, name='analysis_results'),
+    re_path(r'^analysis_results/(?P<analysis_results_id>[A-Za-z\d\-\_]+)/$', views.analysis_results_details, name='analysis_results'),
     re_path(r'^citations/', views.get_citations, name='get_citations'),
     re_path(r'^get_shared_cart/', views.get_shared_cart, name='get_shared_cart'),
     # re_path(r'^share/', include('sharing.urls')),

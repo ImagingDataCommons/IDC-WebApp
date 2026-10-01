@@ -98,6 +98,7 @@ CART_TEMPLATE = {
 
 # Change this IP for a simple way to differentiate blocks of additions
 SOURCE_IP="10.0.0.3"
+BATCH="second"
 
 # -> Call Solr for stat block
 # -> make cart def
@@ -200,6 +201,9 @@ try:
                 logger.exception(e)
                 logger.error(f"[ERROR] While generating cart: {e}. It was skipped.")
                 continue
+
+    print("[STATUS] Cart additions complete. Command for saving out:")
+    print(f"mysqldump -t -u root -p dev idc_sharedcart --skip-triggers --no-create-info=TRUE --where=\"source_ip='{SOURCE_IP}'\" > tcia_shared_carts_{BATCH}_batch.sql")
 except Exception as e:
     logger.exception(e)
     logger.error(e)
