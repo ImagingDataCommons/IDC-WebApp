@@ -74,7 +74,7 @@
           "to": "case_barcode"
         }
       ],
-      "attr_from": "idc-dev-etl.idc_v16_pub.dicom_pivot_v16"
+      "attr_from": "bigquery-public-data.idc_v24.dicom_pivot"
     }
   ],
   "deactivate": {
