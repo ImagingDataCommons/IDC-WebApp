@@ -356,7 +356,7 @@ def load_collections(filename, data_version="8.0"):
         new_collection_set = []
         updated_collection_set = {}
         exact_collection_fields = [
-            "collection_id", "collection_uuid", "name", "collections", "image_types", "supporting_data", "subject_count", "doi",
+            "collection_id", "collection_uuid", "title", "name", "collections", "image_types", "supporting_data", "subject_count", "doi",
             "source_url", "cancer_type", "species", "location", "analysis_artifacts", "description", "collection_type",
             "access", "date_updated", "active","total_size", "total_size_with_ar"]
         field_map = FIELD_MAP
@@ -455,6 +455,7 @@ def create_solr_params(schema_src, solr_src):
     solr_src = DataSource.objects.get(name=solr_src)
     schema_src = schema_src.split('.')
     schema = BigQuerySupport.get_table_schema(schema_src[0],schema_src[1],schema_src[2])
+    SOLR_URL="https://ss286239-stenr4gh-us-central1-gcp.searchstax.com"
     solr_schema = []
     solr_index_strings = []
     field_types = ''
@@ -464,9 +465,10 @@ def create_solr_params(schema_src, solr_src):
         field_types = '"add-field-type": { "name":"tokenizedText", "class":"solr.TextField", "analyzer" : { "tokenizer": { "name":"nGram" }}}, '
         copy_fields = ",".join(['{{"source":"{field}","dest":"{field}_tokenized"}}'.format(field=field) for field in TOKENIZED_FIELDS])
         add_copy_field = ', "add-copy-field": [{copy_fields}]'.format(copy_fields=copy_fields)
-    CORE_CREATE_STRING = "sudo -u solr /opt/bitnami/solr/bin/solr create -c {solr_src}"
-    SCHEMA_STRING = "curl -u {solr_user}:{solr_pwd} -X POST -H 'Content-type:application/json' --data-binary '{schema}' https://localhost:8983/solr/{solr_src}/schema --cacert solr-ssl.pem"
-    INDEX_STRING = "curl -u {solr_user}:{solr_pwd} -X POST 'https://localhost:8983/solr/{solr_src}/update?commit=yes{params}' --data-binary @{file_name}.csv -H 'Content-type:application/csv' --cacert solr-ssl.pem"
+    CORE_CREATE_STRING = "curl -u {solr_user}:{solr_pwd} -X POST '{solr_url}/solr/admin/collections?action=CREATE&name={solr_src}&collection.configName=test&numShards=1&replicationFactor=1'"
+    SCHEMA_STRING = "curl -u {solr_user}:{solr_pwd} -X POST -H 'Content-type:application/json' --data-binary '{schema}' {solr_url}/solr/{solr_src}/schema"
+    INDEX_STRING = "curl -u {solr_user}:{solr_pwd} -X POST '{solr_url}/solr/{solr_src}/update?commit=yes{params}' --data-binary @{file_name}.csv -H 'Content-type:application/csv'"
+    DELETE_STRING = "curl -u {solr_user}:{solr_pwd} -X POST -H 'Content-Type: application/json' {solr_url}/solr/{solr_src}/update?commit=true -d '{del_query}'"
     for field in schema:
         # has_ fields do not need to be in the schema, as they are single-value Strings which will parse and be added
         # automatically
@@ -498,21 +500,56 @@ def create_solr_params(schema_src, solr_src):
             fields=solr_schema
         )
         params = "&{}".format("&".join(solr_index_strings))
-        cmd_outfile.write(CORE_CREATE_STRING.format(solr_src=solr_src.name))
+        cmd_outfile.write(CORE_CREATE_STRING.format(
+            solr_src=solr_src.name,
+            solr_user=settings.SOLR_LOGIN,
+            solr_pwd="${SOLR_PWD}",
+            solr_url=SOLR_URL
+        ))
         cmd_outfile.write("\n\n")
         cmd_outfile.write(SCHEMA_STRING.format(
             solr_user=settings.SOLR_LOGIN,
-            solr_pwd=settings.SOLR_PASSWORD,
+            solr_pwd="${SOLR_PWD}",
             solr_src=solr_src.name,
-            schema=schema_array
+            schema=schema_array,
+            solr_url=SOLR_URL
         ))
         cmd_outfile.write("\n\n")
         cmd_outfile.write(INDEX_STRING.format(
             solr_user=settings.SOLR_LOGIN,
-            solr_pwd=settings.SOLR_PASSWORD,
+            solr_pwd="${SOLR_PWD}",
             solr_src=solr_src.name,
             params=params,
-            file_name=solr_src.name
+            file_name=solr_src.name,
+            solr_url=SOLR_URL
+        ))
+        cmd_outfile.write("\n\n")
+        cmd_outfile.write(DELETE_STRING.format(
+            solr_user=settings.SOLR_LOGIN,
+            solr_pwd="${SOLR_PWD}",
+            solr_src=solr_src.name,
+            solr_url=SOLR_URL,
+            del_query='{ "delete":{"query":"*:*"} }'
+        ))
+        cmd_outfile.write("\n\n")
+        cmd_outfile.write("""
+Split command for larger indicies:
+tail -n +2 {solr_src}.csv | split -l 15000 - {solr_src}_split_
+for file in {solr_src}_split_*
+do
+    head -n 1 {solr_src}.csv > tmp_file
+    cat "$file" >> tmp_file
+    mv -f tmp_file "$file"
+    echo "Committing file {file_var} to core:"
+    curl -u {solr_user}:{solr_pwd} -X POST '{solr_url}/solr/{solr_src}/update?commit=yes{params}' --data-binary @"$file" -H 'Content-type:application/csv'
+done        
+        """.format(
+            solr_user=settings.SOLR_LOGIN,
+            solr_pwd="${SOLR_PWD}",
+            solr_src=solr_src.name,
+            params=params,
+            solr_url=SOLR_URL,
+            file_var="${file}"
         ))
 
     cmd_outfile.close()
@@ -732,6 +769,7 @@ def update_display_values(attr, updates):
 
 
 def load_tooltips(source_objs, attr_name, source_tooltip, obj_id_col=None):
+    logger.info(f"[STATUS] Loading tooltips for {attr_name}...")
     try:
         attr = Attribute.objects.get(name=attr_name, active=True)
         # In some cases, the data sourcing the tooltip does not have an ID column with a name which matches

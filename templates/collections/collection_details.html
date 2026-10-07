@@ -2,7 +2,7 @@
 {% load static %}
 {% load custom_tags %}
 {% load idc_collections_custom_tags %}
-{% block title %}Collection Details {{ collection_id }} | IDC{% endblock %}
+{% block title %}Collection Details {{ collection_name }} | IDC{% endblock %}
 {% block extra_css_libs %}
     <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-5.css' %}" />
     <link type="text/css" rel="stylesheet" href="{% static 'css/bootstrap-idc.css' %}" />
@@ -100,7 +100,7 @@
                 <p><b>DOIs</b></p>
                 {% if collection_type == "Analysis Result" %}
                     <p>
-                    <i class="fa-solid fa-globe"></i> {{ collection_id }} <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer">{{ doi }}</a>
+                    <i class="fa-solid fa-globe"></i> {{ collection_name }} <a href="https://doi.org/{{ doi }}" target="_blank" rel="nofollow noreferrer">{{ doi }}</a>
                     </p>
                     <span class="doi-section-title">Collections analyzed:</span>
                     {% with col_count=collections|length %}
@@ -141,7 +141,7 @@
                         <span class="doi-section-title">Analysis Results:</span>
                     <ul class="doi-list fa-ul">
                     {% for ar in analysis_results %}
-                        <li><span class="fa-li"><i class="fa-solid fa-globe"></i></span>{{ ar.collection_id }}<br /> <a href="https://doi.org/{{ ar.doi }}" target="_blank" rel="nofollow noreferrer">{{ ar.doi }}</a></li>
+                        <li><span class="fa-li"><i class="fa-solid fa-globe"></i></span>{{ ar.collection_name }}<br /> <a href="https://doi.org/{{ ar.doi }}" target="_blank" rel="nofollow noreferrer">{{ ar.doi }}</a></li>
                     {% endfor %}
                     </ul></p>
                 {% endif %}

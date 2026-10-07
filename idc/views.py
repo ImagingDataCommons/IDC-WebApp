@@ -110,6 +110,8 @@ def landing_page(request):
         "uterine cervix",
         "Lung, abdomen",
         "Marrow, TSpine, LSpine, Bone",
+        "breast, calf, chest, elbow, knee, leg, shoulder, thigh",
+        "lung, lymph node, skin of body",
         "colon, pancreas, esophagus, breast, rectum, brain, skin of body, lung, stomach, ovary, bladder organ, body of uterus, kidney, liver",
     ]
 
@@ -306,8 +308,8 @@ def populate_tables(request):
 
     return JsonResponse(response, status=status)
 
-def analysis_results_details(request, analysis_result_id):
-    return collection_details(request, analysis_result_id)
+def analysis_results_details(request, analysis_results_id):
+    return collection_details(request, analysis_results_id)
 
 def get_citations(request):
     resp = { 'message': 'error', 'citations': None}

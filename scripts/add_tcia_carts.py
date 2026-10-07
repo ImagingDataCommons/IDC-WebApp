@@ -54,7 +54,20 @@ manifest_list = [
 	"TCIA_TCGA-SARC_09-16-2015.tcia",
 	"TCIA_TCGA-STAD_09-16-2015.tcia",
 	"TCIA_TCGA-UCEC-2018-10-24.tcia",
-	"TCIA-CPTAC-CCRCC_v11_20230818.tcia"
+	"TCIA-CPTAC-CCRCC_v11_20230818.tcia",
+    "CMB-AML_v09_20260702.tcia",
+    "CMB-BRCA_v06_20260702.tcia",
+    "CMB-CRC_v11_20260702.tcia",
+    "CMB-GEC_v09_20260702.tcia",
+    "CMB-LCA_v12_20260702.tcia",
+    "CMB-MEL_v12_20260702.tcia",
+    "CMB-MML_v11_20260702.tcia",
+    "CMB-OV_v04_20260702.tcia",
+    "CMB-PCA_v12_20260702.tcia",
+    "EA1141_v02_20260519.tcia",
+    "MRI-DIR-06-30-2018-doiJNLP-1UmgA3nc.tcia",
+    "QIN-SARCOMA_2014-09-04.tcia",
+    "Vestibular-Schwannoma-MC-RC_v2_20260604.tcia"
 ]
 
 PART_TEMPLATE = {
@@ -98,6 +111,7 @@ CART_TEMPLATE = {
 
 # Change this IP for a simple way to differentiate blocks of additions
 SOURCE_IP="10.0.0.3"
+BATCH="second"
 
 # -> Call Solr for stat block
 # -> make cart def
@@ -106,7 +120,7 @@ carts = []
 
 try:
     with open(f"found_counts.csv", "w") as t:
-        t.write("Manifest Name,TCIA manifest count,IDC v24 Series count\n")
+        t.write("Manifest Name,TCIA manifest count,IDC v25 Series count\n")
         for manifest in manifest_list:
             try:
                 series_ids = []
@@ -123,9 +137,9 @@ try:
                             series_ids.append(line)
                 series_ids = list(set(series_ids))
                 if len(series_ids) and len(series_ids) <= 63999:
-                    print(f"Pulling IDC v24 for {manifest}...")
+                    print(f"Pulling IDC v25 for {manifest}...")
                     res = query_solr_and_format_result({
-                        'collection': 'dicom_derived_series_v24',
+                        'collection': 'dicom_derived_series_v25',
                         'fields': ['collection_id', 'PatientID','StudyInstanceUID','SeriesInstanceUID'],
                         'fqs': ["{!terms f=SeriesInstanceUID}"+f"{','.join(series_ids)}"],
                         'sort': "collection_id asc, PatientID asc, StudyInstanceUID asc, SeriesInstanceUID asc",
@@ -144,15 +158,15 @@ try:
                         logger.warning(f"No results returned for {manifest}--skipping!")
                         t.write(f"{manifest},{len(series_ids)},0\n")
                     else:
-                        idc_v24_series = list(set([x['SeriesInstanceUID'] for x in res['docs']]))
-                        print(f"{res['numFound']} series identified for {manifest} in IDC v24 ({len(idc_v24_series)} unique Series IDs), {len(series_ids)} expected")
-                        t.write(f"{manifest},{len(series_ids)},{len(idc_v24_series)}\n")
-                        if len(idc_v24_series) != len(series_ids):
-                            print(f"[WARNING] COUNT MISMATCH in {manifest}, expected {len(series_ids)} from TCIA manifest, saw {len(idc_v24_series)} in IDC v24")
-                            tcia_not_found=[x for x in series_ids if x not in idc_v24_series]
+                        idc_v25_series = list(set([x['SeriesInstanceUID'] for x in res['docs']]))
+                        print(f"{res['numFound']} series identified for {manifest} in IDC v25 ({len(idc_v25_series)} unique Series IDs), {len(series_ids)} expected")
+                        t.write(f"{manifest},{len(series_ids)},{len(idc_v25_series)}\n")
+                        if len(idc_v25_series) != len(series_ids):
+                            print(f"[WARNING] COUNT MISMATCH in {manifest}, expected {len(series_ids)} from TCIA manifest, saw {len(idc_v25_series)} in IDC v25")
+                            tcia_not_found=[x for x in series_ids if x not in idc_v25_series]
                             with open(f"{manifest}_mismatch.txt", "a") as f:
-                                f.write(f"TCIA manifest count: {len(series_ids)}, IDC v24 series IDs: {res['numFound']}\n")
-                                f.write(f"TCIA series IDs from manifest not seen in IDC v24 ({len(tcia_not_found)}): \n")
+                                f.write(f"TCIA manifest count: {len(series_ids)}, IDC v25 series IDs: {res['numFound']}\n")
+                                f.write(f"TCIA series IDs from manifest not seen in IDC v25 ({len(tcia_not_found)}): \n")
                                 f.write("\n".join(tcia_not_found))
                         curr_collex = None
                         curr_case = None
@@ -200,6 +214,9 @@ try:
                 logger.exception(e)
                 logger.error(f"[ERROR] While generating cart: {e}. It was skipped.")
                 continue
+
+    print("[STATUS] Cart additions complete. Command for saving out:")
+    print(f"mysqldump -t -u root -p dev idc_sharedcart --skip-triggers --no-create-info=TRUE --where=\"source_ip='{SOURCE_IP}'\" > tcia_shared_carts_{BATCH}_batch.sql")
 except Exception as e:
     logger.exception(e)
     logger.error(e)
